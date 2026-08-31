@@ -1,9 +1,9 @@
 from pathlib import Path
 import sqlite3
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = BASE_DIR / "database" / "koreyadak.db"
-
+# مسیر همین پوشه فعلی
+BASE_DIR = Path(__file__).resolve().parent
+DB_PATH = BASE_DIR / "koreyadak.db"  # مستقیم به فایل چسبید
 
 def get_connection():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
