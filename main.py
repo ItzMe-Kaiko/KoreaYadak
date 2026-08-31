@@ -12,6 +12,12 @@ from datetime import datetime, timezone
 from database import get_connection
 
 app = FastAPI(title="Kore Yadak API")
+from fastapi.responses import FileResponse
+
+@app.get("/")
+def read_index():
+    return FileResponse("index.html")
+    
 
 app.add_middleware(
     CORSMiddleware,
