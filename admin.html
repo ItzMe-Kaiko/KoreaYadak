@@ -256,6 +256,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   flex: 1; padding: 8px 4px; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: white; font-family: inherit;
 }
 .btn-stock { background: #0284c7; }
+.btn-price { background: #10b981; }
 .btn-edit { background: #d97706; }
 .btn-delete { background: var(--danger); }
 
@@ -268,7 +269,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   border-radius: 18px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 .modal-box h3 { margin-top: 0; font-size: 18px; margin-bottom: 15px; }
-.modal-box input { width: 100%; margin-bottom: 12px; box-sizing: border-box; }
+.modal-box input, .modal-box select { width: 100%; margin-bottom: 12px; box-sizing: border-box; }
 
 .checkbox-wrap {
   display: flex; align-items: center; justify-content: space-between;
@@ -321,6 +322,7 @@ mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 3px; 
 
     <a class="nav-item" href="/">📊 مشاهده سایت (مهمان)</a>
     <button class="nav-item active" onclick="openAddModal()">➕ افزودن قطعه</button>
+    <button class="nav-item" onclick="openPriceModal()">💰 ویرایش قیمت</button>
     <button class="nav-item" onclick="openAccountModal()">⚙️ تنظیمات حساب</button>
     <button class="nav-item" id="navLoginBtn" style="display:none;" onclick="showLoginModal()">🔐 ورود مدیر</button>
     <button class="nav-item" id="navLogoutBtn" onclick="logout()">🚪 خروج از حساب</button>
@@ -397,7 +399,29 @@ mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 3px; 
   </div>
 </div>
 
-<!-- Modal: ویرایش قطعه -->
+<!-- Modal: ویرایش قیمت اختصاصی -->
+<div id="priceModal" class="modal">
+  <div class="modal-box">
+    <h3>💰 ویرایش قیمت قطعه</h3>
+    <div id="pricePartSelectWrap" style="margin-bottom: 12px;">
+      <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">انتخاب قطعه:</label>
+      <select id="pricePartSelect" class="form-input" onchange="onPriceSelectChange()">
+        <option value="">-- انتخاب قطعه --</option>
+      </select>
+    </div>
+    <div id="pricePartInfo" style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; display: none;">
+      قطعه انتخاب شده: <strong id="pricePartName" style="color: var(--text-main);"></strong>
+    </div>
+    <input type="hidden" id="pricePartId">
+    <input id="priceValue" type="number" class="form-input" placeholder="قیمت جدید (تومان)">
+    
+    <div id="priceError" class="err-msg"></div>
+    <button class="btn-primary" onclick="savePrice()">ثبت قیمت جدید</button>
+    <button class="btn-primary btn-secondary" style="margin-top:8px;" onclick="closeModal('priceModal')">انصراف</button>
+  </div>
+</div>
+
+<!-- Modal: ویرایش کامل قطعه -->
 <div id="editModal" class="modal">
   <div class="modal-box">
     <h3>✏️ ویرایش قطعه</h3>
@@ -488,6 +512,77 @@ function openAddModal() {
   document.getElementById("addPrice").value = "";
   document.getElementById("addGenuine").checked = false;
   showModal('addModal'); 
+}
+
+function openPriceModal(id = null) {
+  clearErrors('priceModal');
+  const selectWrap = document.getElementById("pricePartSelectWrap");
+  const infoWrap = document.getElementById("pricePartInfo");
+  const select = document.getElementById("pricePartSelect");
+  const priceInput = document.getElementById("priceValue");
+  const idInput = document.getElementById("pricePartId");
+
+  select.innerHTML = '<option value="">-- انتخاب قطعه --</option>';
+  Object.values(window.partsData).forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.name} (${p.part_number})`;
+    select.appendChild(opt);
+  });
+
+  if (id && window.partsData[id]) {
+    const p = window.partsData[id];
+    selectWrap.style.display = "none";
+    infoWrap.style.display = "block";
+    document.getElementById("pricePartName").textContent = `${p.name} (${p.part_number})`;
+    idInput.value = p.id;
+    priceInput.value = p.price ?? 0;
+  } else {
+    selectWrap.style.display = "block";
+    infoWrap.style.display = "none";
+    idInput.value = "";
+    priceInput.value = "";
+  }
+
+  showModal("priceModal");
+}
+
+function onPriceSelectChange() {
+  const id = document.getElementById("pricePartSelect").value;
+  if (id && window.partsData[id]) {
+    document.getElementById("pricePartId").value = id;
+    document.getElementById("priceValue").value = window.partsData[id].price ?? 0;
+  } else {
+    document.getElementById("pricePartId").value = "";
+    document.getElementById("priceValue").value = "";
+  }
+}
+
+async function savePrice() {
+  const id = document.getElementById("pricePartId").value;
+  const priceVal = document.getElementById("priceValue").value;
+  const err = document.getElementById("priceError");
+  err.textContent = "";
+
+  if (!id) {
+    err.textContent = "لطفا یک قطعه را انتخاب کنید.";
+    return;
+  }
+  if (priceVal === "" || isNaN(priceVal) || parseFloat(priceVal) < 0) {
+    document.getElementById("priceValue").classList.add("input-error");
+    err.textContent = "لطفا قیمت معتبر وارد کنید.";
+    return;
+  }
+
+  try {
+    await api(`/api/parts/${id}/price`, {
+      method: "PATCH",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ price: parseFloat(priceVal) })
+    });
+    closeModal("priceModal");
+    loadParts();
+  } catch (e) { err.textContent = e.message; }
 }
 
 function openAccountModal() { clearErrors('accountModal'); showModal('accountModal'); }
@@ -655,12 +750,13 @@ async function loadParts() {
             </div>
             <div class="details-item">
               <span>ویرایش‌کننده:</span>
-              <span class="val">${p.updated_by || 'نامشخص'}</span>
+              <span class="val">${p.last_updated_by || 'نامشخص'}</span>
             </div>
           </div>
 
           <div class="card-actions">
             <button class="btn-sm btn-stock" onclick="changeStock(${p.id})">📦 موجودی</button>
+            <button class="btn-sm btn-price" onclick="openPriceModal(${p.id})">💰 قیمت</button>
             <button class="btn-sm btn-edit" onclick="openEditModal(${p.id})">✏️ ویرایش</button>
             <button class="btn-sm btn-delete" onclick="deletePart(${p.id})">🗑️ حذف</button>
           </div>
