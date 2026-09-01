@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pathlib import Path
 import hashlib
@@ -12,13 +13,11 @@ from datetime import datetime, timezone
 from database import get_connection
 
 app = FastAPI(title="Kore Yadak API")
-from fastapi.responses import FileResponse
 
 @app.get("/")
 def read_index():
     return FileResponse("index.html")
-    
-    
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,7 +37,6 @@ def utc_now():
 
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
-    # scrypt is provided by Python's standard library.
     digest = hashlib.scrypt(
         password.encode("utf-8"),
         salt=salt,
@@ -94,8 +92,6 @@ def validate_password(password: str):
     if not 8 <= len(password) <= 32:
         raise ValueError("رمز عبور باید بین 8 تا 32 کاراکتر باشد.")
 
-    # Password may contain ONLY English letters and numbers.
-    # Persian/Arabic letters, spaces, emoji and symbols are rejected.
     if not re.fullmatch(r"[A-Za-z0-9]+", password):
         raise ValueError("رمز عبور فقط می‌تواند شامل حروف انگلیسی و اعداد باشد.")
 
@@ -131,6 +127,39 @@ def ensure_auth_tables():
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
+
+    connection.commit()
+    connection.close()
+
+
+def ensure_parts_table():
+    connection = get_connection()
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS parts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            part_number TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            compatible_cars TEXT NOT NULL,
+            stock INTEGER NOT NULL DEFAULT 0,
+            is_genuine INTEGER NOT NULL DEFAULT 0,
+            price REAL DEFAULT 0,
+            price_updated_at TEXT,
+            last_updated_by TEXT
+        )
+    """)
+
+    # ارتقاء خودکار ساختار جدول قدیمی در صورت وجود
+    existing_cols = [row[1] for row in connection.execute("PRAGMA table_info(parts)").fetchall()]
+
+    if "is_genuine" not in existing_cols:
+        connection.execute("ALTER TABLE parts ADD COLUMN is_genuine INTEGER NOT NULL DEFAULT 0")
+    if "price" not in existing_cols:
+        connection.execute("ALTER TABLE parts ADD COLUMN price REAL DEFAULT 0")
+    if "price_updated_at" not in existing_cols:
+        connection.execute("ALTER TABLE parts ADD COLUMN price_updated_at TEXT")
+    if "last_updated_by" not in existing_cols:
+        connection.execute("ALTER TABLE parts ADD COLUMN last_updated_by TEXT")
 
     connection.commit()
     connection.close()
@@ -183,11 +212,7 @@ class ChangeCredentialsRequest(BaseModel):
 
 
 ensure_auth_tables()
-
-
-@app.get("/")
-def home():
-    return {"message": "Kore Yadak Backend is running!"}
+ensure_parts_table()
 
 
 # -------------------------
@@ -212,7 +237,6 @@ def login(data: LoginRequest):
             detail="نام کاربری یا رمز عبور اشتباه است."
         )
 
-    # One fresh session token is created for each login.
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
@@ -280,7 +304,6 @@ def change_credentials(
     if data.new_password != data.new_password_repeat:
         raise HTTPException(status_code=400, detail="تکرار رمز عبور یکسان نیست.")
 
-    # Prevent changing to the same username only because of casing/spacing surprises.
     connection = get_connection()
 
     duplicate = connection.execute("""
@@ -343,7 +366,6 @@ def get_parts(
     parameters = []
 
     if q.strip():
-        # جداسازی کلمات جستجو شده برای حل مشکل پارت‌نامبرهای چندبخشی
         terms = q.strip().split()
         for term in terms:
             search = f"%{term}%"
@@ -361,7 +383,7 @@ def get_parts(
         parameters.append(f"%{car.strip()}%")
 
     query = """
-        SELECT id, part_number, name, compatible_cars, stock
+        SELECT id, part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by
         FROM parts
     """
 
@@ -381,7 +403,7 @@ def get_part(part_id: int):
     connection = get_connection()
 
     row = connection.execute("""
-        SELECT id, part_number, name, compatible_cars, stock
+        SELECT id, part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by
         FROM parts
         WHERE id = ?
     """, (part_id,)).fetchone()
@@ -413,35 +435,45 @@ def get_cars():
 
     return sorted(cars)
 
+
 class PartCreate(BaseModel):
     name: str
     part_number: str
     compatible_cars: str
     stock: int
+    is_genuine: bool = False
+    price: float = 0.0
+
 
 class PartUpdate(BaseModel):
     name: str
     part_number: str
     compatible_cars: str
     stock: int
+    is_genuine: bool = False
+    price: float | None = None
+
+
+class PriceUpdate(BaseModel):
+    price: float
+
 
 class StockUpdate(BaseModel):
     stock: int
+
 
 @app.post("/api/parts")
 def add_part(
     data: PartCreate,
     authorization: str | None = Header(default=None)
 ):
-    # بررسی لاگین بودن کاربر
     token = get_bearer_token(authorization)
-    authenticate_token(token)
+    user = authenticate_token(token)
 
     part_number = data.part_number.strip()
     
     connection = get_connection()
 
-    # جلوگیری از ثبت پارت نامبر تکراری و برگرداندن نام قطعه قبلی
     duplicate = connection.execute(
         "SELECT id, name FROM parts WHERE part_number = ?", 
         (part_number,)
@@ -454,14 +486,20 @@ def add_part(
             detail=f"این پارت نامبر قبلاً برای «{duplicate['name']}» ثبت شده است."
         )
 
+    now_str = utc_now() if data.price > 0 else None
+
     cursor = connection.execute("""
-        INSERT INTO parts (part_number, name, compatible_cars, stock)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO parts (part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         part_number,
         data.name.strip(),
         data.compatible_cars.strip(),
-        data.stock
+        data.stock,
+        1 if data.is_genuine else 0,
+        data.price,
+        now_str,
+        user["username"]
     ))
 
     new_id = cursor.lastrowid
@@ -481,12 +519,11 @@ def update_part(
     authorization: str | None = Header(default=None)
 ):
     token = get_bearer_token(authorization)
-    authenticate_token(token)
+    user = authenticate_token(token)
 
     part_number = data.part_number.strip()
     connection = get_connection()
 
-    # بررسی اینکه آیا پارت نامبر جدید قبلاً برای یک قطعه دیگر ثبت شده یا نه
     duplicate = connection.execute("""
         SELECT id FROM parts 
         WHERE part_number = ? AND id != ?
@@ -499,15 +536,21 @@ def update_part(
             detail="این پارت نامبر متعلق به قطعه دیگری است."
         )
 
+    now_str = utc_now()
+
     connection.execute("""
         UPDATE parts
-        SET part_number = ?, name = ?, compatible_cars = ?, stock = ?
+        SET part_number = ?, name = ?, compatible_cars = ?, stock = ?, is_genuine = ?, price = COALESCE(?, price), price_updated_at = ?, last_updated_by = ?
         WHERE id = ?
     """, (
         part_number,
         data.name.strip(),
         data.compatible_cars.strip(),
         data.stock,
+        1 if data.is_genuine else 0,
+        data.price,
+        now_str,
+        user["username"],
         part_id
     ))
 
@@ -515,6 +558,28 @@ def update_part(
     connection.close()
 
     return {"message": "اطلاعات قطعه با موفقیت به‌روزرسانی شد."}
+
+
+@app.patch("/api/parts/{part_id}/price")
+def update_price(
+    part_id: int,
+    data: PriceUpdate,
+    authorization: str | None = Header(default=None)
+):
+    token = get_bearer_token(authorization)
+    user = authenticate_token(token)
+
+    connection = get_connection()
+    connection.execute("""
+        UPDATE parts 
+        SET price = ?, price_updated_at = ?, last_updated_by = ? 
+        WHERE id = ?
+    """, (data.price, utc_now(), user["username"], part_id))
+
+    connection.commit()
+    connection.close()
+
+    return {"message": "قیمت با موفقیت به‌روزرسانی شد."}
 
 
 @app.patch("/api/parts/{part_id}/stock")
