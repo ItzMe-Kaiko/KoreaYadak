@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>کُره یدک | پنل مدیریت</title>
+<style>
+:root {
+  --bg-main: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #182234;
+  --border-color: #334155;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #eab308;
+}
+
+body.light {
+  --bg-main: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --border-color: #e2e8f0;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+}
+
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);
+  padding: 25px 15px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+}
+.hero h1 { font-size: 26px; margin: 0 0 6px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.hero p { margin: 0; color: var(--text-muted); font-size: 13px; }
+
+.app-layout {
+  display: flex;
+  max-width: 1300px;
+  margin: 20px auto;
+  gap: 20px;
+  padding: 0 15px;
+}
+
+.main-content { flex: 1; min-width: 0; }
+
+.sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: fit-content;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 5px;
+}
+.brand-badge .logo-icon {
+  background: var(--primary);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.brand-badge div { display: flex; flex-direction: column; }
+.brand-badge .title { font-weight: bold; font-size: 16px; }
+.brand-badge .subtitle { font-size: 11px; color: var(--text-muted); }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: right;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  font-family: inherit;
+}
+.nav-item:hover, .nav-item.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.sticky-header-container {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  background-color: var(--bg-main);
+  padding-top: 5px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 10px 16px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
+.theme-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background-color: #475569; transition: .3s; border-radius: 24px;
+}
+.slider:before {
+  position: absolute; content: ""; height: 18px; width: 18px;
+  left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--primary); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+.search-section { display: flex; gap: 10px; margin-bottom: 8px; }
+.search-section input, .search-section select, .form-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+.search-section input { flex: 2; width: 100%; text-transform: uppercase; }
+.search-section select { flex: 1; cursor: pointer; }
+
+.in-stock-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+.in-stock-btn.active {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+  font-weight: bold;
+}
+
+.input-error {
+  border-color: var(--danger) !important;
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.card-header-right { display: flex; align-items: center; gap: 8px; }
+.card-title { font-weight: bold; font-size: 15px; }
+
+.status-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  display: inline-block; background-color: var(--success); box-shadow: 0 0 8px var(--success);
+}
+.status-dot.off { background-color: var(--text-muted); box-shadow: none; opacity: 0.4; }
+
+.stock-tag {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px; border-radius: 8px; font-size: 12px; color: var(--text-muted);
+}
+
+.part-number-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.part-number {
+  color: #60a5fa; font-family: monospace; font-size: 14px;
+  background: rgba(59, 130, 246, 0.1); padding: 4px 8px; border-radius: 6px; direction: ltr;
+}
+.badge-genuine {
+  background: var(--warning); color: #0f172a; font-weight: bold; font-size: 11px;
+  padding: 3px 10px; border-radius: 12px;
+}
+
+.cars-list { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.car-chip { background: rgba(255, 255, 255, 0.06); padding: 2px 8px; border-radius: 6px; margin: 2px; display: inline-block; }
+
+.cars-row-container { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.accordion-btn {
+  background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
+  border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.accordion-btn.active { transform: rotate(180deg); border-color: var(--primary); color: var(--primary); }
+
+.details-panel {
+  display: none; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-color);
+  border-radius: 10px; padding: 10px 12px; margin-top: 4px; font-size: 12px; color: var(--text-muted);
+  flex-direction: column; gap: 6px;
+}
+.details-panel.open { display: flex; }
+.details-item { display: flex; justify-content: space-between; align-items: center; }
+.details-item span.val { color: var(--text-main); font-weight: 500; }
+
+.card-actions {
+  display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color);
+}
+.btn-sm {
+  flex: 1; padding: 8px 4px; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: white; font-family: inherit;
+}
+.btn-stock { background: #0284c7; }
+.btn-edit { background: #d97706; }
+.btn-delete { background: var(--danger); }
+
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center; z-index: 10000; padding: 15px;
+}
+.modal-box {
+  width: min(440px, 100%); background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 18px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.modal-box h3 { margin-top: 0; font-size: 18px; margin-bottom: 15px; }
+.modal-box input { width: 100%; margin-bottom: 12px; box-sizing: border-box; }
+
+.checkbox-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.25);
+  padding: 10px 14px; border-radius: 12px; margin-bottom: 14px; cursor: pointer; user-select: none;
+}
+.checkbox-wrap span { font-size: 13px; font-weight: bold; color: var(--warning); }
+
+.password-wrap { position: relative; }
+.eye-btn {
+  position: absolute; left: 10px; top: 42%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 16px; opacity: 0.7;
+}
+
+.btn-primary {
+  width: 100%; padding: 12px; background: var(--primary); color: white; border: none;
+  border-radius: 10px; font-size: 14px; cursor: pointer; font-family: inherit;
+}
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+
+.err-msg { color: var(--danger); font-size: 12px; min-height: 20px; margin-bottom: 10px; }
+mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 3px; }
+
+@media (max-width: 850px) {
+  .app-layout { flex-direction: column; padding: 0 10px; margin: 10px auto; }
+  .sidebar { width: 100%; padding: 12px; gap: 8px; }
+  .search-section { flex-direction: column; gap: 8px; }
+  .search-section select, .in-stock-btn { width: 100%; justify-content: center; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>کُره یدک | پنل مدیریت</h1>
+  <p>مدیریت موجودی، قیمت‌ها و قطعات سامانه</p>
+</div>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="brand-badge">
+      <div class="logo-icon">⚙️</div>
+      <div>
+        <span class="title">کُره یدک</span>
+        <span class="subtitle">پنل مدیریت</span>
+      </div>
+    </div>
+
+    <a class="nav-item" href="/">📊 مشاهده سایت (مهمان)</a>
+    <button class="nav-item active" onclick="openAddModal()">➕ افزودن قطعه</button>
+    <button class="nav-item" onclick="openAccountModal()">⚙️ تنظیمات حساب</button>
+    <button class="nav-item" id="navLoginBtn" style="display:none;" onclick="showLoginModal()">🔐 ورود مدیر</button>
+    <button class="nav-item" id="navLogoutBtn" onclick="logout()">🚪 خروج از حساب</button>
+  </aside>
+
+  <main class="main-content">
+    <div class="sticky-header-container">
+      <div class="top-bar">
+        <div style="font-size: 13px; color: var(--text-muted);">
+          👤 مدیر فعال: <strong id="currentUser" style="color:var(--text-main)">...</strong>
+        </div>
+
+        <label class="theme-toggle">
+          <span>حالت تاریک</span>
+          <div class="switch">
+            <input type="checkbox" id="darkToggle" checked>
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+
+      <div class="search-section">
+        <input id="search" autocomplete="off" placeholder="نام قطعه، پارت نامبر یا خودرو را سرچ کن..." dir="auto">
+        <select id="car"><option value="">🚗 همه خودروها</option></select>
+        <button id="inStockBtn" class="in-stock-btn" onclick="toggleInStockFilter()">🟢 فقط موجود</button>
+      </div>
+
+      <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+        <span id="count">0 مورد یافت شد</span>
+        <span>مدیریت کامل محصولات</span>
+      </div>
+    </div>
+
+    <div id="results" class="grid"></div>
+  </main>
+</div>
+
+<!-- Modal: ورود -->
+<div id="loginModal" class="modal">
+  <div class="modal-box">
+    <h3>🔐 ورود مدیر</h3>
+    <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px">جهت دسترسی به پنل مدیریت لاگین کنید.</p>
+    <input id="loginUsername" class="form-input" placeholder="نام کاربری">
+    <div class="password-wrap">
+      <input id="loginPassword" type="password" class="form-input" placeholder="رمز عبور">
+      <button type="button" class="eye-btn" onclick="togglePass('loginPassword', this)">👁️</button>
+    </div>
+    <div id="loginError" class="err-msg"></div>
+    <button class="btn-primary" onclick="login()">ورود</button>
+  </div>
+</div>
+
+<!-- Modal: افزودن قطعه -->
+<div id="addModal" class="modal">
+  <div class="modal-box">
+    <h3>➕ افزودن قطعه جدید</h3>
+    <input id="addName" class="form-input" placeholder="نام قطعه (مثل لنت ترمز)">
+    <input id="addPartNum" class="form-input" dir="ltr" style="font-family:monospace;" placeholder="پارت نامبر">
+    <input id="addCars" class="form-input" placeholder="خودروهای سازگار (با کاما جدا کنید)">
+    <input id="addStock" type="number" class="form-input" placeholder="موجودی انبار">
+    <input id="addPrice" type="number" class="form-input" placeholder="قیمت (تومان)">
+    
+    <label class="checkbox-wrap">
+      <span>⭐ قطعه اصلی (Genuine) است</span>
+      <div class="switch">
+        <input type="checkbox" id="addGenuine">
+        <span class="slider"></span>
+      </div>
+    </label>
+
+    <div id="addError" class="err-msg"></div>
+    <button class="btn-primary" onclick="addPart()">ثبت قطعه</button>
+    <button class="btn-primary btn-secondary" style="margin-top:8px;" onclick="closeModal('addModal')">انصراف</button>
+  </div>
+</div>
+
+<!-- Modal: ویرایش قطعه -->
+<div id="editModal" class="modal">
+  <div class="modal-box">
+    <h3>✏️ ویرایش قطعه</h3>
+    <input type="hidden" id="editId">
+    <input id="editName" class="form-input" placeholder="نام قطعه">
+    <input id="editPartNum" class="form-input" dir="ltr" style="font-family:monospace;" placeholder="پارت نامبر">
+    <input id="editCars" class="form-input" placeholder="خودروهای سازگار">
+    <input id="editStock" type="number" class="form-input" placeholder="موجودی انبار">
+    <input id="editPrice" type="number" class="form-input" placeholder="قیمت (تومان)">
+    
+    <label class="checkbox-wrap">
+      <span>⭐ قطعه اصلی (Genuine) است</span>
+      <div class="switch">
+        <input type="checkbox" id="editGenuine">
+        <span class="slider"></span>
+      </div>
+    </label>
+
+    <div id="editError" class="err-msg"></div>
+    <button class="btn-primary" onclick="saveEdit()">ذخیره تغییرات</button>
+    <button class="btn-primary btn-secondary" style="margin-top:8px;" onclick="closeModal('editModal')">انصراف</button>
+  </div>
+</div>
+
+<!-- Modal: تنظیمات حساب -->
+<div id="accountModal" class="modal">
+  <div class="modal-box">
+    <h3>⚙️ تنظیمات حساب کاربری</h3>
+    <div class="password-wrap">
+      <input id="currentPassword" type="password" class="form-input" placeholder="رمز عبور فعلی">
+      <button type="button" class="eye-btn" onclick="togglePass('currentPassword', this)">👁️</button>
+    </div>
+    <input id="newUsername" class="form-input" placeholder="نام کاربری جدید">
+    <div class="password-wrap">
+      <input id="newPassword" type="password" class="form-input" placeholder="رمز عبور جدید">
+      <button type="button" class="eye-btn" onclick="togglePass('newPassword', this)">👁️</button>
+    </div>
+    <div class="password-wrap">
+      <input id="newPasswordRepeat" type="password" class="form-input" placeholder="تکرار رمز عبور جدید">
+      <button type="button" class="eye-btn" onclick="togglePass('newPasswordRepeat', this)">👁️</button>
+    </div>
+    <div id="accountError" class="err-msg"></div>
+    <button class="btn-primary" onclick="saveAccount()">ذخیره تغییرات</button>
+    <button class="btn-primary btn-secondary" style="margin-top:8px;" onclick="closeModal('accountModal')">انصراف</button>
+  </div>
+</div>
+
+<script>
+const API_BASE = "";
+const TOKEN_KEY = "koreyadak_token";
+
+const search = document.getElementById("search");
+const car = document.getElementById("car");
+const results = document.getElementById("results");
+const count = document.getElementById("count");
+
+let onlyInStock = false;
+window.partsData = {};
+
+function token() { return localStorage.getItem(TOKEN_KEY); }
+function authHeaders() { return token() ? { "Authorization": "Bearer " + token() } : {}; }
+
+async function api(path, options = {}) {
+  const headers = { ...authHeaders(), ...(options.headers || {}) };
+  const response = await fetch(API_BASE + path, { ...options, headers });
+  let data = {};
+  try { data = await response.json(); } catch (_) {}
+  if (!response.ok) throw new Error(data.detail || "خطایی رخ داد.");
+  return data;
+}
+
+function toggleInStockFilter() {
+  onlyInStock = !onlyInStock;
+  document.getElementById("inStockBtn").classList.toggle("active", onlyInStock);
+  loadParts();
+}
+
+function showModal(id) { document.getElementById(id).style.display = "flex"; }
+function closeModal(id) { document.getElementById(id).style.display = "none"; }
+function showLoginModal() { clearErrors('loginModal'); showModal('loginModal'); }
+
+function openAddModal() { 
+  clearErrors('addModal');
+  document.getElementById("addName").value = "";
+  document.getElementById("addPartNum").value = "";
+  document.getElementById("addCars").value = "";
+  document.getElementById("addStock").value = "";
+  document.getElementById("addPrice").value = "";
+  document.getElementById("addGenuine").checked = false;
+  showModal('addModal'); 
+}
+
+function openAccountModal() { clearErrors('accountModal'); showModal('accountModal'); }
+
+document.querySelectorAll('input').forEach(input => {
+  input.addEventListener('input', () => input.classList.remove('input-error'));
+});
+
+function clearErrors(modalId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  modal.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+  modal.querySelectorAll('.err-msg').forEach(el => el.textContent = '');
+}
+
+async function login() {
+  const uInput = document.getElementById("loginUsername");
+  const pInput = document.getElementById("loginPassword");
+  const err = document.getElementById("loginError");
+  err.textContent = "";
+
+  let isValid = true;
+  if (!uInput.value.trim()) { uInput.classList.add("input-error"); isValid = false; }
+  if (!pInput.value.trim()) { pInput.classList.add("input-error"); isValid = false; }
+  if (!isValid) return;
+
+  try {
+    const data = await api("/api/auth/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ username: uInput.value.trim(), password: pInput.value })
+    });
+    localStorage.setItem(TOKEN_KEY, data.token);
+    closeModal("loginModal");
+    checkSession();
+  } catch (e) { err.textContent = e.message; }
+}
+
+async function checkSession() {
+  const t = token();
+  if (!t) {
+    showLoginModal();
+    return;
+  }
+
+  try {
+    const user = await api("/api/auth/me");
+    document.getElementById("currentUser").textContent = user.username;
+    await loadCars();
+    await loadParts();
+  } catch (_) {
+    localStorage.removeItem(TOKEN_KEY);
+    showLoginModal();
+  }
+}
+
+function logout() {
+  localStorage.removeItem(TOKEN_KEY);
+  window.location.href = "/";
+}
+
+async function saveAccount() {
+  const currPass = document.getElementById("currentPassword");
+  const newUser = document.getElementById("newUsername");
+  const newPass = document.getElementById("newPassword");
+  const newPassRep = document.getElementById("newPasswordRepeat");
+  const err = document.getElementById("accountError");
+  err.textContent = "";
+
+  let isValid = true;
+  if (!currPass.value) { currPass.classList.add("input-error"); isValid = false; }
+  if (!newUser.value.trim()) { newUser.classList.add("input-error"); isValid = false; }
+  if (!isValid) return;
+
+  try {
+    await api("/api/auth/change-credentials", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        current_password: currPass.value,
+        new_username: newUser.value.trim(),
+        new_password: newPass.value,
+        new_password_repeat: newPassRep.value
+      })
+    });
+    err.style.color = "var(--success)";
+    err.textContent = "تغییرات با موفقیت اعمال شد.";
+    setTimeout(() => { closeModal("accountModal"); checkSession(); }, 1000);
+  } catch (e) {
+    err.style.color = "var(--danger)";
+    err.textContent = e.message;
+  }
+}
+
+async function loadCars() {
+  try {
+    const cars = await api("/api/cars");
+    car.innerHTML = '<option value="">🚗 همه خودروها</option>';
+    cars.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      car.appendChild(opt);
+    });
+  } catch(_) {}
+}
+
+async function loadParts() {
+  const params = new URLSearchParams();
+  if (search.value.trim()) params.set("q", search.value.trim());
+  if (car.value.trim()) params.set("car", car.value.trim());
+  if (onlyInStock) params.set("in_stock", "true");
+
+  results.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">در حال بارگذاری اطلاعات... ⏳</div>';
+
+  try {
+    let parts = await api("/api/parts?" + params.toString());
+    if (onlyInStock) parts = parts.filter(p => p.stock && p.stock >= 1);
+
+    count.textContent = parts.length + " مورد یافت شد";
+
+    if (!parts.length) {
+      results.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted)">قطعه‌ای با این مشخصات یافت نشد.</div>';
+      return;
+    }
+
+    const q = search.value.trim();
+    window.partsData = {};
+
+    results.innerHTML = parts.map(p => {
+      window.partsData[p.id] = p;
+      const isAvailable = (p.stock && p.stock >= 1);
+      const formattedPrice = p.price ? Number(p.price).toLocaleString('fa-IR') + ' تومان' : 'ثبت نشده';
+      
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-right">
+              <span class="status-dot ${isAvailable ? '' : 'off'}" title="${isAvailable ? 'موجود' : 'ناموجود'}"></span>
+              <div class="card-title">${highlight(p.name, q)}</div>
+            </div>
+            <div class="stock-tag">موجودی: <b>${p.stock ?? 0}</b></div>
+          </div>
+
+          <div class="part-number-row">
+            ${p.is_genuine ? '<span class="badge-genuine">Genuine</span>' : ''}
+            <span class="part-number">${highlight(p.part_number, q)}</span>
+          </div>
+
+          <div class="cars-row-container">
+            <div class="cars-list">
+              <b>خودروها:</b> ${p.compatible_cars ? p.compatible_cars.split(/[،,]/).map(c => `<span class="car-chip">${highlight(c.trim(), q)}</span>`).join('') : 'نامشخص'}
+            </div>
+            <button class="accordion-btn" title="مشاهده جزئیات قیمت و تاریخ" onclick="toggleAccordion(${p.id}, this)">▼</button>
+          </div>
+
+          <div id="details-${p.id}" class="details-panel">
+            <div class="details-item">
+              <span>قیمت قطعه:</span>
+              <span class="val">${formattedPrice}</span>
+            </div>
+            <div class="details-item">
+              <span>آخرین تغییر قیمت:</span>
+              <span class="val">${formatDate(p.price_updated_at)}</span>
+            </div>
+            <div class="details-item">
+              <span>ویرایش‌کننده:</span>
+              <span class="val">${p.updated_by || 'نامشخص'}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn-sm btn-stock" onclick="changeStock(${p.id})">📦 موجودی</button>
+            <button class="btn-sm btn-edit" onclick="openEditModal(${p.id})">✏️ ویرایش</button>
+            <button class="btn-sm btn-delete" onclick="deletePart(${p.id})">🗑️ حذف</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  } catch (e) {
+    results.innerHTML = `<div style="color:var(--danger)">خطا: ${e.message}</div>`;
+  }
+}
+
+function toggleAccordion(id, btn) {
+  const panel = document.getElementById(`details-${id}`);
+  if (!panel) return;
+  panel.classList.toggle("open");
+  btn.classList.toggle("active");
+}
+
+async function addPart() {
+  const nameEl = document.getElementById("addName");
+  const numEl = document.getElementById("addPartNum");
+  const err = document.getElementById("addError");
+  err.textContent = "";
+
+  let isValid = true;
+  if (!nameEl.value.trim()) { nameEl.classList.add("input-error"); isValid = false; }
+  if (!numEl.value.trim()) { numEl.classList.add("input-error"); isValid = false; }
+  if (!isValid) return;
+
+  try {
+    await api("/api/parts", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        name: nameEl.value.trim(),
+        part_number: numEl.value.trim().toUpperCase(),
+        compatible_cars: document.getElementById("addCars").value.trim(),
+        stock: parseInt(document.getElementById("addStock").value || "0"),
+        price: parseFloat(document.getElementById("addPrice").value || "0"),
+        is_genuine: document.getElementById("addGenuine").checked
+      })
+    });
+    closeModal("addModal");
+    loadParts();
+  } catch (e) { err.textContent = e.message; }
+}
+
+function openEditModal(id) {
+  const p = window.partsData[id];
+  document.getElementById("editId").value = p.id;
+  document.getElementById("editName").value = p.name;
+  document.getElementById("editPartNum").value = p.part_number;
+  document.getElementById("editCars").value = p.compatible_cars || "";
+  document.getElementById("editStock").value = p.stock ?? 0;
+  document.getElementById("editPrice").value = p.price ?? 0;
+  document.getElementById("editGenuine").checked = !!p.is_genuine;
+  clearErrors('editModal');
+  showModal("editModal");
+}
+
+async function saveEdit() {
+  const id = document.getElementById("editId").value;
+  const nameEl = document.getElementById("editName");
+  const numEl = document.getElementById("editPartNum");
+  const err = document.getElementById("editError");
+
+  let isValid = true;
+  if (!nameEl.value.trim()) { nameEl.classList.add("input-error"); isValid = false; }
+  if (!numEl.value.trim()) { numEl.classList.add("input-error"); isValid = false; }
+  if (!isValid) return;
+
+  try {
+    await api(`/api/parts/${id}`, {
+      method: "PUT",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        name: nameEl.value.trim(),
+        part_number: numEl.value.trim().toUpperCase(),
+        compatible_cars: document.getElementById("editCars").value.trim(),
+        stock: parseInt(document.getElementById("editStock").value || "0"),
+        price: parseFloat(document.getElementById("editPrice").value || "0"),
+        is_genuine: document.getElementById("editGenuine").checked
+      })
+    });
+    closeModal("editModal");
+    loadParts();
+  } catch (e) { err.textContent = e.message; }
+}
+
+async function deletePart(id) {
+  if (!confirm("آیا از حذف این قطعه مطمئن هستید؟")) return;
+  try {
+    await api(`/api/parts/${id}`, { method: "DELETE" });
+    loadParts();
+  } catch (e) { alert(e.message); }
+}
+
+async function changeStock(id) {
+  const p = window.partsData[id];
+  const val = prompt(`موجودی جدید برای ${p.name}:`, p.stock);
+  if (val === null) return;
+  try {
+    await api(`/api/parts/${id}/stock`, {
+      method: "PATCH",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ stock: parseInt(val || "0") })
+    });
+    loadParts();
+  } catch (e) { alert(e.message); }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'ثبت نشده';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('fa-IR');
+  } catch (_) { return dateStr; }
+}
+
+function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function highlight(text, q) {
+  if (!text || !q) return text || "";
+  const words = q.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
+  if (!words.length) return text;
+  const reg = new RegExp("(" + words.join("|") + ")", "gi");
+  return text.replace(reg, "<mark>$1</mark>");
+}
+
+function togglePass(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === "password") { el.type = "text"; btn.textContent = "🙈"; }
+  else { el.type = "password"; btn.textContent = "👁️"; }
+}
+
+let searchTimer;
+search.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadParts, 250);
+});
+car.addEventListener("change", loadParts);
+
+document.getElementById("darkToggle").addEventListener("change", (e) => {
+  document.body.classList.toggle("light", !e.target.checked);
+});
+
+checkSession();
+</script>
+</body>
+</html>
