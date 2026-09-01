@@ -13,10 +13,15 @@ from datetime import datetime, timezone
 from database import get_connection
 
 app = FastAPI(title="Kore Yadak API")
-
+# مسیر صفحه مهمان (از قبل دارید)
 @app.get("/")
-def read_index():
+async def serve_guest():
     return FileResponse("index.html")
+
+# مسیر جدید برای پنل مدیریت (که فقط این را اضافه می‌کنید)
+@app.get("/admin")
+async def serve_admin():
+    return FileResponse("admin.html")
 
 app.add_middleware(
     CORSMiddleware,
