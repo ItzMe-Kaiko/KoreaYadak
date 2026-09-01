@@ -149,7 +149,6 @@ def ensure_parts_table():
         )
     """)
 
-    # ارتقاء خودکار ساختار جدول قدیمی در صورت وجود
     existing_cols = [row[1] for row in connection.execute("PRAGMA table_info(parts)").fetchall()]
 
     if "is_genuine" not in existing_cols:
@@ -358,7 +357,8 @@ def logout(authorization: str | None = Header(default=None)):
 @app.get("/api/parts")
 def get_parts(
     q: str = Query(default=""),
-    car: str = Query(default="")
+    car: str = Query(default=""),
+    in_stock: bool = Query(default=False)
 ):
     connection = get_connection()
 
@@ -381,6 +381,9 @@ def get_parts(
     if car.strip():
         conditions.append("compatible_cars LIKE ?")
         parameters.append(f"%{car.strip()}%")
+
+    if in_stock:
+        conditions.append("stock > 0")
 
     query = """
         SELECT id, part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by
@@ -524,6 +527,14 @@ def update_part(
     part_number = data.part_number.strip()
     connection = get_connection()
 
+    existing = connection.execute("""
+        SELECT price, price_updated_at FROM parts WHERE id = ?
+    """, (part_id,)).fetchone()
+
+    if existing is None:
+        connection.close()
+        raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
+
     duplicate = connection.execute("""
         SELECT id FROM parts 
         WHERE part_number = ? AND id != ?
@@ -536,11 +547,17 @@ def update_part(
             detail="این پارت نامبر متعلق به قطعه دیگری است."
         )
 
-    now_str = utc_now()
+    new_price = data.price if data.price is not None else existing["price"]
+
+    # تنها در صورتی که قیمت واقعاً تغییر کرده باشد، تاریخ تغییر قیمت آپدیت می‌شود
+    if float(new_price) != float(existing["price"] or 0):
+        price_updated_at = utc_now()
+    else:
+        price_updated_at = existing["price_updated_at"]
 
     connection.execute("""
         UPDATE parts
-        SET part_number = ?, name = ?, compatible_cars = ?, stock = ?, is_genuine = ?, price = COALESCE(?, price), price_updated_at = ?, last_updated_by = ?
+        SET part_number = ?, name = ?, compatible_cars = ?, stock = ?, is_genuine = ?, price = ?, price_updated_at = ?, last_updated_by = ?
         WHERE id = ?
     """, (
         part_number,
@@ -548,8 +565,8 @@ def update_part(
         data.compatible_cars.strip(),
         data.stock,
         1 if data.is_genuine else 0,
-        data.price,
-        now_str,
+        new_price,
+        price_updated_at,
         user["username"],
         part_id
     ))
@@ -570,11 +587,24 @@ def update_price(
     user = authenticate_token(token)
 
     connection = get_connection()
+    existing = connection.execute("""
+        SELECT price, price_updated_at FROM parts WHERE id = ?
+    """, (part_id,)).fetchone()
+
+    if existing is None:
+        connection.close()
+        raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
+
+    if float(data.price) != float(existing["price"] or 0):
+        price_updated_at = utc_now()
+    else:
+        price_updated_at = existing["price_updated_at"]
+
     connection.execute("""
         UPDATE parts 
         SET price = ?, price_updated_at = ?, last_updated_by = ? 
         WHERE id = ?
-    """, (data.price, utc_now(), user["username"], part_id))
+    """, (data.price, price_updated_at, user["username"], part_id))
 
     connection.commit()
     connection.close()
@@ -589,13 +619,14 @@ def update_stock(
     authorization: str | None = Header(default=None)
 ):
     token = get_bearer_token(authorization)
-    authenticate_token(token)
+    user = authenticate_token(token)
 
     connection = get_connection()
-    connection.execute(
-        "UPDATE parts SET stock = ? WHERE id = ?",
-        (data.stock, part_id)
-    )
+    connection.execute("""
+        UPDATE parts 
+        SET stock = ?, last_updated_by = ? 
+        WHERE id = ?
+    """, (data.stock, user["username"], part_id))
 
     connection.commit()
     connection.close()
