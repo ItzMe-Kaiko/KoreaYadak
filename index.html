@@ -216,7 +216,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   transition: border-color 0.2s, box-shadow 0.2s;
   font-family: inherit;
 }
-.search-section input { flex: 2; width: 100%; }
+.search-section input { flex: 2; width: 100%; text-transform: uppercase; }
 .search-section select { flex: 1; cursor: pointer; }
 .search-section input:focus, .form-input:focus {
   border-color: var(--primary);
@@ -663,6 +663,12 @@ async function api(path, options = {}) {
   return data;
 }
 
+/* Tab Management */
+function switchTab(tabName) {
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+}
+
 /* UI Modal Controls */
 function showModal(id) { document.getElementById(id).style.display = "flex"; }
 function closeModal(id) { document.getElementById(id).style.display = "none"; }
@@ -958,7 +964,7 @@ async function saveEdit() {
       body: JSON.stringify({
         name: nameEl.value.trim(),
         part_number: numEl.value.trim().toUpperCase(),
-        compatible_cars: document.getElementById("editCars").value.trim(), // رفع باگ: خوندن از editCars
+        compatible_cars: document.getElementById("editCars").value.trim(),
         stock: parseInt(document.getElementById("editStock").value || "0"),
         price: parseFloat(document.getElementById("editPrice").value || "0"),
         is_genuine: document.getElementById("editGenuine").checked
@@ -994,9 +1000,15 @@ async function changeStock(id) {
 }
 
 /* Helpers */
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function highlight(text, q) {
+  if (!text) return "";
   if (!q) return text;
-  const words = q.trim().split(/\s+/).filter(Boolean);
+  const words = q.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
+  if (!words.length) return text;
   const reg = new RegExp("(" + words.join("|") + ")", "gi");
   return text.replace(reg, "<mark>$1</mark>");
 }
@@ -1008,10 +1020,9 @@ function togglePass(id, btn) {
 }
 
 let searchTimer;
-search.addEventListener("input", (e) => {
-  e.target.value = e.target.value.toUpperCase();
+search.addEventListener("input", () => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(loadParts, 200);
+  searchTimer = setTimeout(loadParts, 250);
 });
 car.addEventListener("change", loadParts);
 
