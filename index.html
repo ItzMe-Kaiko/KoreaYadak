@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>کُره یدک | سامانه استعلام قطعات</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  --bg-main: #0b0f19;
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --bg-sidebar: rgba(24, 34, 52, 0.75);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --danger: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --glass-blur: blur(16px);
+}
+
+body.light {
+  --bg-main: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-sidebar: rgba(255, 255, 255, 0.9);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --glass-blur: blur(12px);
+}
+
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.4s ease, color 0.4s ease;
+  overflow-x: hidden;
+}
+
+/* Icon System Styling */
+.icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  vertical-align: middle;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Hero & WebGL Shader Header */
+.hero {
+  position: relative;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+#shader-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(4px);
+  padding: 15px 25px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.hero h1 { 
+  font-size: 28px; 
+  margin: 0 0 6px; 
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ffffff 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p { margin: 0; color: var(--text-muted); font-size: 13px; }
+
+/* Layout Architecture */
+.app-layout {
+  display: flex;
+  max-width: 1300px;
+  margin: 20px auto;
+  gap: 20px;
+  padding: 0 15px;
+  position: relative;
+  z-index: 2;
+}
+
+.main-content { flex: 1; min-width: 0; }
+
+.sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: fit-content;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 5px;
+}
+.brand-badge .logo-icon {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+.brand-badge div { display: flex; flex-direction: column; }
+.brand-badge .title { font-weight: 700; font-size: 16px; }
+.brand-badge .subtitle { font-size: 11px; color: var(--text-muted); }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  width: 100%;
+  text-align: right;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+  font-family: inherit;
+}
+.nav-item:hover, .nav-item.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+  transform: translateX(-3px);
+}
+
+/* Sticky Header Controls */
+.sticky-header-container {
+  position: sticky;
+  top: 10px;
+  z-index: 900;
+  backdrop-filter: var(--glass-blur);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background-color: #334155; transition: .3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 24px;
+}
+.slider:before {
+  position: absolute; content: ""; height: 18px; width: 18px;
+  left: 3px; bottom: 3px; background-color: white; transition: .3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--primary); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* Search Inputs */
+.search-section { display: flex; gap: 10px; margin-bottom: 10px; }
+.search-section input, .search-section select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.search-section input:focus, .search-section select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+.search-section input { flex: 2; width: 100%; text-transform: uppercase; }
+.search-section select { flex: 1; cursor: pointer; }
+
+.in-stock-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: all 0.25s ease;
+}
+.in-stock-btn:hover { border-color: var(--success); color: var(--text-main); }
+.in-stock-btn.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+/* Card Grid Layout */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+.card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.card-header-right { display: flex; align-items: center; gap: 8px; }
+.card-title { font-weight: 700; font-size: 15px; }
+
+/* Dynamic Animated Indicator */
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block; background-color: var(--success);
+  box-shadow: 0 0 10px var(--success); flex-shrink: 0;
+  position: relative;
+}
+.status-dot::after {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border-radius: 50%;
+  border: 1px solid var(--success);
+  animation: pulseGlow 2s infinite;
+}
+.status-dot.off { background-color: var(--text-muted); box-shadow: none; opacity: 0.4; }
+.status-dot.off::after { display: none; }
+
+.stock-tag {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  padding: 4px 10px; border-radius: 8px; font-size: 12px; color: var(--text-muted);
+}
+
+.part-number-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.part-number {
+  color: #60a5fa; font-family: monospace; font-size: 14px;
+  background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 6px; direction: ltr;
+  border: 1px dashed rgba(59, 130, 246, 0.3);
+}
+.badge-genuine {
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; font-weight: 700; font-size: 11px;
+  padding: 3px 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.cars-list { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.car-chip { background: rgba(255, 255, 255, 0.06); padding: 3px 8px; border-radius: 6px; margin: 2px; display: inline-block; border: 1px solid var(--border-color); }
+
+.cars-row-container { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.accordion-btn {
+  background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
+  border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.accordion-btn:hover { border-color: var(--primary); color: var(--primary); }
+.accordion-btn.active { transform: rotate(180deg); border-color: var(--primary); color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+
+.details-panel {
+  max-height: 0; overflow: hidden; opacity: 0;
+  background: rgba(0, 0, 0, 0.2); border: 1px solid transparent;
+  border-radius: 10px; padding: 0 12px; margin-top: 0; font-size: 12px; color: var(--text-muted);
+  display: flex; flex-direction: column; gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.details-panel.open {
+  max-height: 120px; opacity: 1; padding: 12px; margin-top: 6px;
+  border-color: var(--border-color);
+}
+.details-item { display: flex; justify-content: space-between; align-items: center; }
+.details-item span.val { color: var(--text-main); font-weight: 600; }
+
+mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; border-radius: 3px; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+/* Loader Animation */
+.loader-spinner {
+  width: 32px; height: 32px; border: 3px solid var(--border-color); border-top-color: var(--primary);
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+}
+
+/* Dynamic Keyframes */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulseGlow {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 850px) {
+  .app-layout { flex-direction: column; padding: 0 10px; margin: 10px auto; }
+  .sidebar { width: 100%; padding: 12px; gap: 8px; }
+  .search-section { flex-direction: column; gap: 8px; }
+  .search-section select, .in-stock-btn { width: 100%; justify-content: center; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <canvas id="shader-canvas"></canvas>
+  <div class="hero-content">
+    <h1>کُره یدک</h1>
+    <p>سامانه جامع لیست و استعلام قطعات اصلی خودروهای کره‌ای</p>
+  </div>
+</div>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="brand-badge">
+      <div class="logo-icon">
+        <svg class="icon" style="width:24px;height:24px;" viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </div>
+      <div>
+        <span class="title">کُره یدک</span>
+        <span class="subtitle">نسخه 1.0.0</span>
+      </div>
+    </div>
+    <a class="nav-item active" href="/">
+      <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      لیست قطعات
+    </a>
+    <a class="nav-item" href="/admin">
+      <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      ورود به پنل مدیریت
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div class="sticky-header-container">
+      <div class="top-bar">
+        <div class="user-status">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          وضعیت: <strong style="color:var(--text-main)">مهمان</strong>
+        </div>
+        <label class="theme-toggle">
+          <span>حالت تاریک</span>
+          <div class="switch">
+            <input type="checkbox" id="darkToggle" checked>
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+
+      <div class="search-section">
+        <input id="search" autocomplete="off" placeholder="نام قطعه، پارت نامبر یا خودرو را سرچ کن..." dir="auto">
+        <select id="car">
+          <option value="">همه خودروها</option>
+        </select>
+        <button id="inStockBtn" class="in-stock-btn" onclick="toggleInStockFilter()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          فقط موجود
+        </button>
+      </div>
+
+      <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+        <span id="count">0 مورد یافت شد</span>
+        <span>الگوی رسمی Microcat</span>
+      </div>
+    </div>
+
+    <div id="results" class="grid"></div>
+  </main>
+</div>
+
+<script>
+/* WebGL Three.js Dynamic Animated Shader */
+function initShaderBackground() {
+  const container = document.querySelector('.hero');
+  const canvas = document.getElementById('shader-canvas');
+  
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+  
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      u_time: { value: 0.0 },
+      u_resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float u_time;
+      uniform vec2 u_resolution;
+      varying vec2 vUv;
+
+      void main() {
+        vec2 st = gl_FragCoord.xy / u_resolution.xy;
+        st.x *= u_resolution.x / u_resolution.y;
+
+        vec2 color_st = vUv;
+        float wave1 = sin(color_st.x * 6.0 + u_time * 0.8) * 0.15;
+        float wave2 = cos(color_st.y * 8.0 + u_time * 1.2) * 0.15;
+        
+        float dist = length(st - vec2(0.5 + wave1, 0.5 + wave2));
+        
+        vec3 col1 = vec3(0.06, 0.09, 0.16); // Dark base
+        vec3 col2 = vec3(0.23, 0.51, 0.96); // Vibrant blue wave
+        vec3 col3 = vec3(0.58, 0.2, 0.92);  // Subtle purple highlight
+
+        vec3 color = mix(col1, col2, smoothstep(0.7, 0.0, dist));
+        color += mix(vec3(0.0), col3, smoothstep(0.4, 0.0, length(st - vec2(0.8, 0.2))));
+
+        gl_FragColor = vec4(color, 0.85);
+      }
+    `,
+    transparent: true
+  });
+
+  const geometry = new THREE.PlaneGeometry(2, 2);
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    material.uniforms.u_resolution.value.set(container.clientWidth, container.clientHeight);
+  });
+
+  let startTime = Date.now();
+  function animate() {
+    requestAnimationFrame(animate);
+    material.uniforms.u_time.value = (Date.now() - startTime) * 0.001;
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+
+initShaderBackground();
+
+/* Application Logic */
+const API_BASE = "";
+const search = document.getElementById("search");
+const car = document.getElementById("car");
+const results = document.getElementById("results");
+const count = document.getElementById("count");
+
+let onlyInStock = false;
+
+async function api(path) {
+  const response = await fetch(API_BASE + path);
+  let data = {};
+  try { data = await response.json(); } catch (_) {}
+  if (!response.ok) throw new Error(data.detail || "خطایی رخ داد.");
+  return data;
+}
+
+function toggleInStockFilter() {
+  onlyInStock = !onlyInStock;
+  document.getElementById("inStockBtn").classList.toggle("active", onlyInStock);
+  loadParts();
+}
+
+async function loadCars() {
+  try {
+    const cars = await api("/api/cars");
+    car.innerHTML = '<option value="">همه خودروها</option>';
+    cars.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      car.appendChild(opt);
+    });
+  } catch(_) {}
+}
+
+async function loadParts() {
+  const params = new URLSearchParams();
+  if (search.value.trim()) params.set("q", search.value.trim());
+  if (car.value.trim()) params.set("car", car.value.trim());
+  if (onlyInStock) params.set("in_stock", "true");
+
+  results.innerHTML = `
+    <div style="grid-column:1/-1; text-align:center; padding:50px;">
+      <div class="loader-spinner"></div>
+      <div style="color:var(--text-muted); font-size:14px;">در حال بارگذاری اطلاعات...</div>
+    </div>`;
+
+  try {
+    let parts = await api("/api/parts?" + params.toString());
+    if (onlyInStock) {
+      parts = parts.filter(p => p.stock && p.stock >= 1);
+    }
+
+    count.textContent = parts.length + " مورد یافت شد";
+
+    if (!parts.length) {
+      results.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted)">قطعه‌ای با این مشخصات یافت نشد.</div>';
+      return;
+    }
+
+    const q = search.value.trim();
+
+    results.innerHTML = parts.map((p, index) => {
+      const isAvailable = (p.stock && p.stock >= 1);
+      const formattedPrice = p.price ? Number(p.price).toLocaleString('fa-IR') + ' تومان' : 'ثبت نشده';
+      const animDelay = (index % 12) * 0.05;
+      
+      return `
+        <div class="card" style="animation-delay: ${animDelay}s">
+          <div class="card-header">
+            <div class="card-header-right">
+              <span class="status-dot ${isAvailable ? '' : 'off'}" title="${isAvailable ? 'موجود' : 'ناموجود'}"></span>
+              <div class="card-title">${highlight(p.name, q)}</div>
+            </div>
+            <div class="stock-tag">موجودی: <b>${p.stock ?? 0}</b></div>
+          </div>
+
+          <div class="part-number-row">
+            ${p.is_genuine ? '<span class="badge-genuine">Genuine</span>' : ''}
+            <span class="part-number">${highlight(p.part_number, q)}</span>
+          </div>
+
+          <div class="cars-row-container">
+            <div class="cars-list">
+              <b>خودروها:</b> ${p.compatible_cars ? p.compatible_cars.split(/[،,]/).map(c => `<span class="car-chip">${highlight(c.trim(), q)}</span>`).join('') : 'نامشخص'}
+            </div>
+            <button class="accordion-btn" title="مشاهده جزئیات قیمت" onclick="toggleAccordion(${p.id}, this)">
+              <svg class="icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+
+          <div id="details-${p.id}" class="details-panel">
+            <div class="details-item">
+              <span>قیمت قطعه:</span>
+              <span class="val">${formattedPrice}</span>
+            </div>
+            <div class="details-item">
+              <span>آخرین تغییر قیمت:</span>
+              <span class="val">${formatDate(p.price_updated_at)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  } catch (e) {
+    results.innerHTML = `<div style="color:var(--danger)">خطا: ${e.message}</div>`;
+  }
+}
+
+function toggleAccordion(id, btn) {
+  const panel = document.getElementById(`details-${id}`);
+  if (!panel) return;
+  panel.classList.toggle("open");
+  btn.classList.toggle("active");
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'ثبت نشده';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('fa-IR');
+  } catch (_) {
+    return dateStr;
+  }
+}
+
+function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function highlight(text, q) {
+  if (!text || !q) return text || "";
+  const words = q.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
+  if (!words.length) return text;
+  const reg = new RegExp("(" + words.join("|") + ")", "gi");
+  return text.replace(reg, "<mark>$1</mark>");
+}
+
+let searchTimer;
+search.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadParts, 250);
+});
+car.addEventListener("change", loadParts);
+
+document.getElementById("darkToggle").addEventListener("change", (e) => {
+  document.body.classList.toggle("light", !e.target.checked);
+});
+
+loadCars();
+loadParts();
+</script>
+</body>
+</html>
