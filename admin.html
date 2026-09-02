@@ -41,7 +41,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Icon System Styling */
 .icon {
   width: 18px;
   height: 18px;
@@ -55,7 +54,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Hero & WebGL Shader Header */
 .hero {
   position: relative;
   height: 180px;
@@ -99,7 +97,6 @@ body {
 }
 .hero p { margin: 0; color: var(--text-muted); font-size: 13px; }
 
-/* Layout Architecture */
 .app-layout {
   display: flex;
   max-width: 1300px;
@@ -174,7 +171,6 @@ body {
   transform: translateX(-3px);
 }
 
-/* Sticky Header Controls */
 .sticky-header-container {
   position: sticky;
   top: 10px;
@@ -219,7 +215,6 @@ body {
 input:checked + .slider { background-color: var(--primary); }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* Search Inputs */
 .search-section { display: flex; gap: 10px; margin-bottom: 8px; }
 .search-section input, .search-section select, .form-input {
   background: var(--bg-card);
@@ -268,7 +263,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   background-color: rgba(239, 68, 68, 0.08) !important;
 }
 
-/* Card Grid Layout */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
 
 .card {
@@ -295,7 +289,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .card-header-right { display: flex; align-items: center; gap: 8px; }
 .card-title { font-weight: 700; font-size: 15px; }
 
-/* Dynamic Animated Status Dot */
 .status-dot {
   width: 10px; height: 10px; border-radius: 50%;
   display: inline-block; background-color: var(--success);
@@ -369,7 +362,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .btn-edit { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .btn-delete { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
-/* Animated Modern Modals */
 .modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
   display: none; align-items: center; justify-content: center; z-index: 10000; padding: 15px;
@@ -412,13 +404,11 @@ input:checked + .slider:before { transform: translateX(20px); }
 .err-msg { color: var(--danger); font-size: 12px; min-height: 20px; margin-bottom: 10px; }
 mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; border-radius: 3px; border: 1px solid rgba(245, 158, 11, 0.4); }
 
-/* Loader Animation */
 .loader-spinner {
   width: 32px; height: 32px; border: 3px solid var(--border-color); border-top-color: var(--primary);
   border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;
 }
 
-/* Keyframes */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulseGlow {
   0% { transform: scale(1); opacity: 0.8; }
@@ -476,6 +466,21 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
       <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       ویرایش قیمت
     </button>
+
+    <!-- سه دکمه جدید اضافه شده -->
+    <a class="nav-item" href="/admin/buy">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      فاکتور خرید
+    </a>
+    <a class="nav-item" href="/admin/sell">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      فاکتور فروش
+    </a>
+    <a class="nav-item" href="/admin/report">
+      <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      گزارش
+    </a>
+
     <button class="nav-item" onclick="openAccountModal()">
       <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       تنظیمات حساب
@@ -557,7 +562,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
     <input id="addPartNum" class="form-input" dir="ltr" style="font-family:monospace;" placeholder="پارت نامبر">
     <input id="addCars" class="form-input" placeholder="خودروهای سازگار (با کاما جدا کنید)">
     <input id="addStock" type="number" class="form-input" placeholder="موجودی انبار">
-    <input id="addPrice" type="number" class="form-input" placeholder="قیمت (تومان)">
+    <input id="addPrice" type="text" inputmode="numeric" class="form-input" placeholder="قیمت (تومان)" oninput="formatPriceInput(this)">
     
     <label class="checkbox-wrap">
       <span>
@@ -576,7 +581,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
   </div>
 </div>
 
-<!-- Modal: ویرایش قیمت اختصاصی -->
+<!-- Modal: ویرایش قیمت (بهبود با قابلیت سرچ آسان و کاما) -->
 <div id="priceModal" class="modal">
   <div class="modal-box">
     <div class="modal-header-title">
@@ -584,7 +589,8 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
       <span>ویرایش قیمت قطعه</span>
     </div>
     <div id="pricePartSelectWrap" style="margin-bottom: 12px;">
-      <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">انتخاب قطعه:</label>
+      <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">جستجو و انتخاب قطعه:</label>
+      <input id="pricePartSearch" class="form-input" placeholder="🔍 جستجوی نام یا پارت نامبر..." oninput="filterPriceParts()" style="margin-bottom: 8px;">
       <select id="pricePartSelect" class="form-input" onchange="onPriceSelectChange()">
         <option value="">-- انتخاب قطعه --</option>
       </select>
@@ -593,7 +599,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
       قطعه انتخاب شده: <strong id="pricePartName" style="color: var(--text-main);"></strong>
     </div>
     <input type="hidden" id="pricePartId">
-    <input id="priceValue" type="number" class="form-input" placeholder="قیمت جدید (تومان)">
+    <input id="priceValue" type="text" inputmode="numeric" class="form-input" placeholder="قیمت جدید (تومان)" oninput="formatPriceInput(this)">
     
     <div id="priceError" class="err-msg"></div>
     <button class="btn-primary" onclick="savePrice()">ثبت قیمت جدید</button>
@@ -613,7 +619,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
     <input id="editPartNum" class="form-input" dir="ltr" style="font-family:monospace;" placeholder="پارت نامبر">
     <input id="editCars" class="form-input" placeholder="خودروهای سازگار">
     <input id="editStock" type="number" class="form-input" placeholder="موجودی انبار">
-    <input id="editPrice" type="number" class="form-input" placeholder="قیمت (تومان)">
+    <input id="editPrice" type="text" inputmode="numeric" class="form-input" placeholder="قیمت (تومان)" oninput="formatPriceInput(this)">
     
     <label class="checkbox-wrap">
       <span>
@@ -704,9 +710,9 @@ function initShaderBackground() {
         
         float dist = length(st - vec2(0.5 + wave1, 0.5 + wave2));
         
-        vec3 col1 = vec3(0.06, 0.09, 0.16); // Dark base
-        vec3 col2 = vec3(0.23, 0.51, 0.96); // Vibrant blue wave
-        vec3 col3 = vec3(0.58, 0.2, 0.92);  // Subtle purple highlight
+        vec3 col1 = vec3(0.06, 0.09, 0.16);
+        vec3 col2 = vec3(0.23, 0.51, 0.96);
+        vec3 col3 = vec3(0.58, 0.2, 0.92);
 
         vec3 color = mix(col1, col2, smoothstep(0.7, 0.0, dist));
         color += mix(vec3(0.0), col3, smoothstep(0.4, 0.0, length(st - vec2(0.8, 0.2))));
@@ -752,6 +758,29 @@ window.partsData = {};
 function token() { return localStorage.getItem(TOKEN_KEY); }
 function authHeaders() { return token() ? { "Authorization": "Bearer " + token() } : {}; }
 
+/* جداسازی ۳ رقم ۳ رقم اعداد با کاما */
+function formatPriceInput(input) {
+  let val = input.value.replace(/[^0-9]/g, "");
+  if (val) {
+    input.value = parseInt(val, 10).toLocaleString('en-US');
+  } else {
+    input.value = "";
+  }
+}
+
+function getRawPrice(input) {
+  if (!input || !input.value) return 0;
+  return parseFloat(input.value.replace(/,/g, "")) || 0;
+}
+
+function setFormattedPrice(input, val) {
+  if (val !== null && val !== undefined && val !== "") {
+    input.value = parseInt(val, 10).toLocaleString('en-US');
+  } else {
+    input.value = "";
+  }
+}
+
 async function api(path, options = {}) {
   const headers = { ...authHeaders(), ...(options.headers || {}) };
   const response = await fetch(API_BASE + path, { ...options, headers });
@@ -792,6 +821,22 @@ function openAddModal() {
   showModal('addModal'); 
 }
 
+function filterPriceParts() {
+  const q = document.getElementById("pricePartSearch").value.trim().toLowerCase();
+  const select = document.getElementById("pricePartSelect");
+  select.innerHTML = '<option value="">-- انتخاب قطعه --</option>';
+
+  Object.values(window.partsData).forEach(p => {
+    const text = `${p.name} (${p.part_number})`.toLowerCase();
+    if (!q || text.includes(q)) {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.name} (${p.part_number})`;
+      select.appendChild(opt);
+    }
+  });
+}
+
 function openPriceModal(id = null) {
   clearErrors('priceModal');
   const selectWrap = document.getElementById("pricePartSelectWrap");
@@ -799,14 +844,9 @@ function openPriceModal(id = null) {
   const select = document.getElementById("pricePartSelect");
   const priceInput = document.getElementById("priceValue");
   const idInput = document.getElementById("pricePartId");
+  document.getElementById("pricePartSearch").value = "";
 
-  select.innerHTML = '<option value="">-- انتخاب قطعه --</option>';
-  Object.values(window.partsData).forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.name} (${p.part_number})`;
-    select.appendChild(opt);
-  });
+  filterPriceParts();
 
   if (id && window.partsData[id]) {
     const p = window.partsData[id];
@@ -814,7 +854,7 @@ function openPriceModal(id = null) {
     infoWrap.style.display = "block";
     document.getElementById("pricePartName").textContent = `${p.name} (${p.part_number})`;
     idInput.value = p.id;
-    priceInput.value = p.price ?? 0;
+    setFormattedPrice(priceInput, p.price ?? 0);
   } else {
     selectWrap.style.display = "block";
     infoWrap.style.display = "none";
@@ -827,18 +867,19 @@ function openPriceModal(id = null) {
 
 function onPriceSelectChange() {
   const id = document.getElementById("pricePartSelect").value;
+  const priceInput = document.getElementById("priceValue");
   if (id && window.partsData[id]) {
     document.getElementById("pricePartId").value = id;
-    document.getElementById("priceValue").value = window.partsData[id].price ?? 0;
+    setFormattedPrice(priceInput, window.partsData[id].price ?? 0);
   } else {
     document.getElementById("pricePartId").value = "";
-    document.getElementById("priceValue").value = "";
+    priceInput.value = "";
   }
 }
 
 async function savePrice() {
   const id = document.getElementById("pricePartId").value;
-  const priceVal = document.getElementById("priceValue").value;
+  const priceVal = getRawPrice(document.getElementById("priceValue"));
   const err = document.getElementById("priceError");
   err.textContent = "";
 
@@ -846,7 +887,7 @@ async function savePrice() {
     err.textContent = "لطفا یک قطعه را انتخاب کنید.";
     return;
   }
-  if (priceVal === "" || isNaN(priceVal) || parseFloat(priceVal) < 0) {
+  if (isNaN(priceVal) || priceVal < 0) {
     document.getElementById("priceValue").classList.add("input-error");
     err.textContent = "لطفا قیمت معتبر وارد کنید.";
     return;
@@ -856,7 +897,7 @@ async function savePrice() {
     await api(`/api/parts/${id}/price`, {
       method: "PATCH",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ price: parseFloat(priceVal) })
+      body: JSON.stringify({ price: priceVal })
     });
     closeModal("priceModal");
     loadParts();
@@ -1092,7 +1133,7 @@ async function addPart() {
         part_number: numEl.value.trim().toUpperCase(),
         compatible_cars: document.getElementById("addCars").value.trim(),
         stock: parseInt(document.getElementById("addStock").value || "0"),
-        price: parseFloat(document.getElementById("addPrice").value || "0"),
+        price: getRawPrice(document.getElementById("addPrice")),
         is_genuine: document.getElementById("addGenuine").checked
       })
     });
@@ -1108,7 +1149,7 @@ function openEditModal(id) {
   document.getElementById("editPartNum").value = p.part_number;
   document.getElementById("editCars").value = p.compatible_cars || "";
   document.getElementById("editStock").value = p.stock ?? 0;
-  document.getElementById("editPrice").value = p.price ?? 0;
+  setFormattedPrice(document.getElementById("editPrice"), p.price ?? 0);
   document.getElementById("editGenuine").checked = !!p.is_genuine;
   clearErrors('editModal');
   showModal("editModal");
@@ -1134,7 +1175,7 @@ async function saveEdit() {
         part_number: numEl.value.trim().toUpperCase(),
         compatible_cars: document.getElementById("editCars").value.trim(),
         stock: parseInt(document.getElementById("editStock").value || "0"),
-        price: parseFloat(document.getElementById("editPrice").value || "0"),
+        price: getRawPrice(document.getElementById("editPrice")),
         is_genuine: document.getElementById("editGenuine").checked
       })
     });
