@@ -13,16 +13,9 @@
     </style>
 <script>
         // --- Auth Guard ---
-        // بررسی می‌کنیم توکن با هر اسمی که در لاگین ذخیره شده خوانده شود
-        const token = localStorage.getItem("token") || localStorage.getItem("kore_token");
-        
+        const token = localStorage.getItem("koreyadak_token");
         if (!token) {
-            // اگر توکنی پیدا نشد و روی سرور بودیم برگردد به لاگین
-            if (window.location.protocol.startsWith('http')) {
-                window.location.href = "/";
-            } else {
-                alert("شما فایل را آفلاین باز کرده‌اید. برای عملکرد صحیح باید از طریق سرور (آدرس localhost) وارد شوید.");
-            }
+            window.location.href = "/admin";
         }
 </script>
 </head>
