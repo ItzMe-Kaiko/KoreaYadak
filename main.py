@@ -370,6 +370,132 @@ def logout(authorization: str | None = Header(default=None)):
 
 
 # -------------------------
+# Invoices (Sell)
+# -------------------------
+
+class SellInvoiceItemBase(BaseModel):
+    part_id: int | None
+    part_name: str
+    part_number: str
+    car: str
+    quantity: int
+    unit_price: float
+    total_price: float
+
+class SellInvoiceCreate(BaseModel):
+    title: str
+    shamsi_date: str
+    is_paid: bool
+    deduct_inventory: bool
+    items: list[SellInvoiceItemBase]
+
+def ensure_invoice_tables():
+    connection = get_connection()
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS sell_invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            shamsi_date TEXT NOT NULL,
+            is_paid INTEGER NOT NULL DEFAULT 0,
+            creator_name TEXT,
+            last_editor_name TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS sell_invoice_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            invoice_id INTEGER NOT NULL,
+            part_id INTEGER,
+            part_name TEXT NOT NULL,
+            part_number TEXT NOT NULL,
+            car TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            unit_price REAL NOT NULL,
+            total_price REAL NOT NULL,
+            FOREIGN KEY (invoice_id) REFERENCES sell_invoices(id) ON DELETE CASCADE
+        )
+    """)
+    connection.commit()
+    connection.close()
+
+# اجرای ساخت جداول فاکتور
+ensure_invoice_tables()
+
+@app.get("/api/invoices/sell")
+def get_sell_invoices(authorization: str | None = Header(default=None)):
+    token = get_bearer_token(authorization)
+    authenticate_token(token)
+
+    connection = get_connection()
+    rows = connection.execute("SELECT * FROM sell_invoices ORDER BY id DESC").fetchall()
+    connection.close()
+    return [dict(row) for row in rows]
+
+@app.get("/api/invoices/sell/{invoice_id}")
+def get_sell_invoice(invoice_id: int, authorization: str | None = Header(default=None)):
+    token = get_bearer_token(authorization)
+    authenticate_token(token)
+
+    connection = get_connection()
+    invoice = connection.execute("SELECT * FROM sell_invoices WHERE id = ?", (invoice_id,)).fetchone()
+    if not invoice:
+        connection.close()
+        raise HTTPException(status_code=404, detail="فاکتور یافت نشد")
+    
+    items = connection.execute("SELECT * FROM sell_invoice_items WHERE invoice_id = ?", (invoice_id,)).fetchall()
+    connection.close()
+    
+    result = dict(invoice)
+    result["items"] = [dict(item) for item in items]
+    return result
+
+@app.post("/api/invoices/sell")
+def create_sell_invoice(data: SellInvoiceCreate, authorization: str | None = Header(default=None)):
+    token = get_bearer_token(authorization)
+    user = authenticate_token(token)
+    
+    connection = get_connection()
+    try:
+        cursor = connection.execute("""
+            INSERT INTO sell_invoices (title, shamsi_date, is_paid, creator_name, last_editor_name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (data.title, data.shamsi_date, 1 if data.is_paid else 0, user["username"], user["username"], utc_now(), utc_now()))
+        
+        invoice_id = cursor.lastrowid
+        
+        for item in data.items:
+            connection.execute("""
+                INSERT INTO sell_invoice_items (invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (invoice_id, item.part_id, item.part_name, item.part_number, item.car, item.quantity, item.unit_price, item.total_price))
+            
+            # کسر خودکار از موجودی در صورت تیک خوردن گزینه
+            if data.deduct_inventory and item.part_id:
+                connection.execute("UPDATE parts SET stock = stock - ? WHERE id = ?", (item.quantity, item.part_id))
+                
+        connection.commit()
+        return {"message": "فاکتور با موفقیت ثبت شد", "id": invoice_id}
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        connection.close()
+
+@app.patch("/api/invoices/sell/{invoice_id}/status")
+def update_invoice_status(invoice_id: int, status: dict, authorization: str | None = Header(default=None)):
+    # این تابع فقط وضعیت پرداخت را تغییر می‌دهد و تاریخ ویرایش یا ویرایشگر را عوض نمی‌کند
+    token = get_bearer_token(authorization)
+    authenticate_token(token)
+    
+    is_paid = 1 if status.get("is_paid") else 0
+    connection = get_connection()
+    connection.execute("UPDATE sell_invoices SET is_paid = ? WHERE id = ?", (is_paid, invoice_id))
+    connection.commit()
+    connection.close()
+    return {"message": "وضعیت پرداخت تغییر کرد."}
+# -------------------------
 # Parts
 # -------------------------
 
