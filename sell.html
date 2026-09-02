@@ -11,13 +11,20 @@
         body { font-family: 'Vazirmatn', sans-serif; background-color: #f3f4f6; }
         .autocomplete-dropdown { max-height: 200px; overflow-y: auto; z-index: 50; }
     </style>
-    <script>
+<script>
         // --- Auth Guard ---
-        const token = localStorage.getItem("kore_token");
+        // بررسی می‌کنیم توکن با هر اسمی که در لاگین ذخیره شده خوانده شود
+        const token = localStorage.getItem("token") || localStorage.getItem("kore_token");
+        
         if (!token) {
-            window.location.href = "/";
+            // اگر توکنی پیدا نشد و روی سرور بودیم برگردد به لاگین
+            if (window.location.protocol.startsWith('http')) {
+                window.location.href = "/";
+            } else {
+                alert("شما فایل را آفلاین باز کرده‌اید. برای عملکرد صحیح باید از طریق سرور (آدرس localhost) وارد شوید.");
+            }
         }
-    </script>
+</script>
 </head>
 <body class="text-gray-800">
 
