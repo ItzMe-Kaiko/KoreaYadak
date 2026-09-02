@@ -13,15 +13,29 @@ from datetime import datetime, timezone
 from database import get_connection
 
 app = FastAPI(title="Kore Yadak API")
-# مسیر صفحه مهمان (از قبل دارید)
+
+# -------------------------
+# Routes (HTML Serving)
+# -------------------------
 @app.get("/")
 async def serve_guest():
     return FileResponse("index.html")
 
-# مسیر جدید برای پنل مدیریت (که فقط این را اضافه می‌کنید)
 @app.get("/admin")
 async def serve_admin():
     return FileResponse("admin.html")
+
+@app.get("/admin/buy")
+async def serve_buy():
+    return FileResponse("buy.html")
+
+@app.get("/admin/sell")
+async def serve_sell():
+    return FileResponse("sell.html")
+
+@app.get("/admin/report")
+async def serve_report():
+    return FileResponse("report.html")
 
 app.add_middleware(
     CORSMiddleware,
@@ -554,7 +568,6 @@ def update_part(
 
     new_price = data.price if data.price is not None else existing["price"]
 
-    # تنها در صورتی که قیمت واقعاً تغییر کرده باشد، تاریخ تغییر قیمت آپدیت می‌شود
     if float(new_price) != float(existing["price"] or 0):
         price_updated_at = utc_now()
     else:
