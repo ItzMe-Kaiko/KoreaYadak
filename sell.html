@@ -319,7 +319,8 @@
                 </div>
 
                 <div class="overflow-x-auto border border-gray-700/40 rounded-xl">
-                    <table class="w-full text-right border-collapse text-xs">
+    <!-- عبارت min-w-[850px] اضافه شد -->
+                    <table class="w-full text-right border-collapse text-xs min-w-[850px]">
                         <thead class="bg-slate-800/80 text-gray-300">
                             <tr>
                                 <th class="p-2.5 w-1/4">نام قطعه (جستجو در دیتابیس)</th>
@@ -471,10 +472,10 @@
             tr.className = "hover:bg-slate-800/30 transition";
             
             tr.innerHTML = `
-                <td class="p-2 relative">
-                    <input type="text" id="name-${id}" oninput="searchPart(this, ${id})" placeholder="نام قطعه را تایپ کنید..." autocomplete="off" class="w-full form-input-custom">
-                    <!-- باکس پیشنهادات هوشمند -->
-                    <ul id="sug-${id}" class="absolute right-0 left-0 top-full bg-slate-900 border border-gray-700 shadow-2xl rounded-lg mt-1 hidden divide-y divide-gray-800 z-50 max-h-48 overflow-y-auto"></ul>
+               <td class="p-2 relative">
+                   <input type="text" id="name-${id}" oninput="searchPart(this, ${id})" placeholder="نام قطعه را تایپ کنید..." autocomplete="off" class="w-full form-input-custom">
+                   <!-- باکس پیشنهادات هوشمند (کلاس‌های عرض و z-index اصلاح شد) -->
+                   <ul id="sug-${id}" class="absolute right-0 top-full w-[300px] md:w-[500px] bg-slate-900 border border-gray-700 shadow-2xl rounded-lg mt-1 hidden divide-y divide-gray-800 z-[100] max-h-48 overflow-y-auto"></ul>
                 </td>
                 <td class="p-2">
                     <input type="text" id="pn-${id}" class="w-full form-input-custom uppercase dir-ltr font-mono text-center" placeholder="پارت نامبر">
@@ -483,7 +484,8 @@
                     <input type="text" id="car-${id}" class="w-full form-input-custom" placeholder="خودرو سازگار">
                 </td>
                 <td class="p-2">
-                    <input type="number" id="qty-${id}" value="1" min="1" oninput="calcRow(${id})" class="w-full form-input-custom text-center">
+    <!-- عبارت min-w-[60px] اضافه شد -->
+                    <input type="number" id="qty-${id}" value="1" min="1" oninput="calcRow(${id})" class="w-full min-w-[60px] form-input-custom text-center">
                 </td>
                 <td class="p-2">
                     <input type="text" id="price-${id}" oninput="this.value=formatNumber(this.value); calcRow(${id})" placeholder="0" class="w-full form-input-custom dir-ltr text-right">
