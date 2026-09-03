@@ -237,60 +237,24 @@ ensure_parts_table()
 # Authentication
 # -------------------------
 
-@app.post("/api/parts")
-def add_part(
-    data: PartCreate,
-    authorization: str | None = Header(default=None)
-):
-    token = get_bearer_token(authorization)
-    user = authenticate_token(token)
+@app.post("/api/auth/login")
+def login(data: LoginRequest):
+    username = data.username.strip()
 
-    # بررسی جلوگیری از موجودی و قیمت منفی
-    if data.stock < 0:
-        raise HTTPException(status_code=400, detail="موجودی نمی‌تواند کمتر از صفر باشد.")
-    if data.price < 0:
-        raise HTTPException(status_code=400, detail="قیمت نمی‌تواند منفی باشد.")
-
-    part_number = data.part_number.strip()
-    
     connection = get_connection()
+    user = connection.execute("""
+        SELECT id, username, password_hash, must_change_password
+        FROM users
+        WHERE username = ?
+    """, (username,)).fetchone()
 
-    duplicate = connection.execute(
-        "SELECT id, name FROM parts WHERE part_number = ?", 
-        (part_number,)
-    ).fetchone()
-
-    if duplicate is not None:
+    if user is None or not verify_password(data.password, user["password_hash"]):
         connection.close()
         raise HTTPException(
-            status_code=409,
-            detail=f"این پارت نامبر قبلاً برای «{duplicate['name']}» ثبت شده است."
+            status_code=401,
+            detail="نام کاربری یا رمز عبور اشتباه است."
         )
 
-    now_str = utc_now() if data.price > 0 else None
-
-    cursor = connection.execute("""
-        INSERT INTO parts (part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        part_number,
-        data.name.strip(),
-        data.compatible_cars.strip(),
-        data.stock,
-        1 if data.is_genuine else 0,
-        data.price,
-        now_str,
-        user["username"]
-    ))
-
-    new_id = cursor.lastrowid
-    connection.commit()
-    connection.close()
-
-    return {
-        "message": "قطعه جدید با موفقیت اضافه شد.",
-        "id": new_id
-    }
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
@@ -456,7 +420,6 @@ def ensure_invoice_tables():
     connection.commit()
     connection.close()
 
-# اجرای ساخت جداول فاکتور
 ensure_invoice_tables()
 
 @app.get("/api/invoices/sell")
@@ -507,7 +470,6 @@ def create_sell_invoice(data: SellInvoiceCreate, authorization: str | None = Hea
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (invoice_id, item.part_id, item.part_name, item.part_number, item.car, item.quantity, item.unit_price, item.total_price))
             
-            # کسر خودکار از موجودی در صورت تیک خوردن گزینه
             if data.deduct_inventory and item.part_id:
                 connection.execute("UPDATE parts SET stock = stock - ? WHERE id = ?", (item.quantity, item.part_id))
                 
@@ -525,23 +487,19 @@ def update_sell_invoice(invoice_id: int, data: SellInvoiceCreate, authorization:
     user = authenticate_token(token)
     
     connection = get_connection()
-    # بررسی وجود فاکتور
     invoice = connection.execute("SELECT id FROM sell_invoices WHERE id = ?", (invoice_id,)).fetchone()
     if not invoice:
         connection.close()
         raise HTTPException(status_code=404, detail="فاکتور یافت نشد")
         
-    # حذف اقلام قبلی و ثبت اقلام جدید
     connection.execute("DELETE FROM sell_invoice_items WHERE invoice_id = ?", (invoice_id,))
     
-    # آپدیت هدر فاکتور
     connection.execute("""
         UPDATE sell_invoices 
         SET title = ?, shamsi_date = ?, is_paid = ?, last_editor_name = ?, updated_at = ?
         WHERE id = ?
     """, (data.title, data.shamsi_date, 1 if data.is_paid else 0, user["username"], utc_now(), invoice_id))
     
-    # ثبت مجدد اقلام با بررسی تعداد مثبت
     for item in data.items:
         if item.quantity <= 0:
             connection.close()
@@ -558,7 +516,6 @@ def update_sell_invoice(invoice_id: int, data: SellInvoiceCreate, authorization:
 
 @app.patch("/api/invoices/sell/{invoice_id}/status")
 def update_invoice_status(invoice_id: int, status: dict, authorization: str | None = Header(default=None)):
-    # این تابع فقط وضعیت پرداخت را تغییر می‌دهد و تاریخ ویرایش یا ویرایشگر را عوض نمی‌کند
     token = get_bearer_token(authorization)
     authenticate_token(token)
     
@@ -568,6 +525,8 @@ def update_invoice_status(invoice_id: int, status: dict, authorization: str | No
     connection.commit()
     connection.close()
     return {"message": "وضعیت پرداخت تغییر کرد."}
+
+
 # -------------------------
 # Parts
 # -------------------------
@@ -690,6 +649,11 @@ def add_part(
 ):
     token = get_bearer_token(authorization)
     user = authenticate_token(token)
+
+    if data.stock < 0:
+        raise HTTPException(status_code=400, detail="موجودی نمی‌تواند کمتر از صفر باشد.")
+    if data.price < 0:
+        raise HTTPException(status_code=400, detail="قیمت نمی‌تواند منفی باشد.")
 
     part_number = data.part_number.strip()
     
@@ -835,7 +799,7 @@ def update_stock(
     data: StockUpdate,
     authorization: str | None = Header(default=None)
 ):
-    token = get_bearer_token(authorization)
+    token = `get_bearer_token`(authorization)
     user = authenticate_token(token)
 
     connection = get_connection()
