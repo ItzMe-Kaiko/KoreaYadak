@@ -237,24 +237,60 @@ ensure_parts_table()
 # Authentication
 # -------------------------
 
-@app.post("/api/auth/login")
-def login(data: LoginRequest):
-    username = data.username.strip()
+@app.post("/api/parts")
+def add_part(
+    data: PartCreate,
+    authorization: str | None = Header(default=None)
+):
+    token = get_bearer_token(authorization)
+    user = authenticate_token(token)
 
+    # بررسی جلوگیری از موجودی و قیمت منفی
+    if data.stock < 0:
+        raise HTTPException(status_code=400, detail="موجودی نمی‌تواند کمتر از صفر باشد.")
+    if data.price < 0:
+        raise HTTPException(status_code=400, detail="قیمت نمی‌تواند منفی باشد.")
+
+    part_number = data.part_number.strip()
+    
     connection = get_connection()
-    user = connection.execute("""
-        SELECT id, username, password_hash, must_change_password
-        FROM users
-        WHERE username = ?
-    """, (username,)).fetchone()
 
-    if user is None or not verify_password(data.password, user["password_hash"]):
+    duplicate = connection.execute(
+        "SELECT id, name FROM parts WHERE part_number = ?", 
+        (part_number,)
+    ).fetchone()
+
+    if duplicate is not None:
         connection.close()
         raise HTTPException(
-            status_code=401,
-            detail="نام کاربری یا رمز عبور اشتباه است."
+            status_code=409,
+            detail=f"این پارت نامبر قبلاً برای «{duplicate['name']}» ثبت شده است."
         )
 
+    now_str = utc_now() if data.price > 0 else None
+
+    cursor = connection.execute("""
+        INSERT INTO parts (part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        part_number,
+        data.name.strip(),
+        data.compatible_cars.strip(),
+        data.stock,
+        1 if data.is_genuine else 0,
+        data.price,
+        now_str,
+        user["username"]
+    ))
+
+    new_id = cursor.lastrowid
+    connection.commit()
+    connection.close()
+
+    return {
+        "message": "قطعه جدید با موفقیت اضافه شد.",
+        "id": new_id
+    }
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
