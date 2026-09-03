@@ -368,7 +368,17 @@ def logout(authorization: str | None = Header(default=None)):
 
     return {"message": "خروج با موفقیت انجام شد."}
 
-
+# جلوگیری از ثبت موجودی منفی در قطعات
+@app.post("/api/parts")
+def create_part(data: PartCreate, authorization: str | None = Header(default=None)):
+    token = get_bearer_token(authorization)
+    authenticate_token(token)
+    
+    if data.stock < 0:
+        raise HTTPException(status_code=400, detail="موجودی نمی‌تواند کمتر از صفر باشد.")
+    if data.price < 0:
+        raise HTTPException(status_code=400, detail="قیمت نمی‌تواند منفی باشد.")
+    # ادامه کدهای اینسرت دیتابیس...
 # -------------------------
 # Invoices (Sell)
 # -------------------------
@@ -482,6 +492,44 @@ def create_sell_invoice(data: SellInvoiceCreate, authorization: str | None = Hea
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         connection.close()
+
+# متد آپدیت فاکتور (برای حل مشکل عدم امکان ویرایش)
+@app.put("/api/invoices/sell/{invoice_id}")
+def update_sell_invoice(invoice_id: int, data: SellInvoiceCreate, authorization: str | None = Header(default=None)):
+    token = get_bearer_token(authorization)
+    user = authenticate_token(token)
+    
+    connection = get_connection()
+    # بررسی وجود فاکتور
+    invoice = connection.execute("SELECT id FROM sell_invoices WHERE id = ?", (invoice_id,)).fetchone()
+    if not invoice:
+        connection.close()
+        raise HTTPException(status_code=404, detail="فاکتور یافت نشد")
+        
+    # حذف اقلام قبلی و ثبت اقلام جدید (ساده‌ترین راه آپدیت)
+    connection.execute("DELETE FROM sell_invoice_items WHERE invoice_id = ?", (invoice_id,))
+    
+    # آپدیت هدر فاکتور
+    connection.execute("""
+        UPDATE sell_invoices 
+        SET title = ?, shamsi_date = ?, is_paid = ?, last_editor_name = ?, updated_at = ?
+        WHERE id = ?
+    """, (data.title, data.shamsi_date, int(data.is_paid), user["username"], utc_now(), invoice_id))
+    
+    # ثبت مجدد اقلام با بررسی موجودی منفی
+    for item in data.items:
+        if item.quantity <= 0:
+            raise HTTPException(status_code=400, detail="تعداد کالا باید بیشتر از صفر باشد.")
+            
+        connection.execute("""
+            INSERT INTO sell_invoice_items (invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (invoice_id, item.part_id, item.part_name, item.part_number, item.car, item.quantity, item.unit_price, item.total_price))
+    
+    connection.commit()
+    connection.close()
+    return {"message": "فاکتور با موفقیت ویرایش شد"}
+    
 
 @app.patch("/api/invoices/sell/{invoice_id}/status")
 def update_invoice_status(invoice_id: int, status: dict, authorization: str | None = Header(default=None)):
