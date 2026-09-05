@@ -397,14 +397,7 @@ class SellInvoiceCreate(BaseModel):
     shamsi_date: str
     is_paid: bool
     deduct_inventory: bool
-    items: list[SellInvoiceItemBase]
-
-    class SellInvoiceCreate(BaseModel):
-    title: str
-    shamsi_date: str
-    is_paid: bool
-    deduct_inventory: bool
-    update_price: bool = False  # این خط اضافه شد
+    update_price: bool = False
     items: list[SellInvoiceItemBase]
 
 def ensure_invoice_tables():
@@ -415,12 +408,22 @@ def ensure_invoice_tables():
             title TEXT NOT NULL,
             shamsi_date TEXT NOT NULL,
             is_paid INTEGER NOT NULL DEFAULT 0,
+            deduct_inventory INTEGER NOT NULL DEFAULT 1,
+            update_price INTEGER NOT NULL DEFAULT 0,
             creator_name TEXT,
             last_editor_name TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         )
     """)
+    
+    # آپدیت جدول قدیمی برای جلوگیری از خطا در فاکتورهای قبلی
+    existing_cols = [row[1] for row in connection.execute("PRAGMA table_info(sell_invoices)").fetchall()]
+    if "deduct_inventory" not in existing_cols:
+        connection.execute("ALTER TABLE sell_invoices ADD COLUMN deduct_inventory INTEGER NOT NULL DEFAULT 1")
+    if "update_price" not in existing_cols:
+        connection.execute("ALTER TABLE sell_invoices ADD COLUMN update_price INTEGER NOT NULL DEFAULT 0")
+
     connection.execute("""
         CREATE TABLE IF NOT EXISTS sell_invoice_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -477,9 +480,9 @@ def create_sell_invoice(data: SellInvoiceCreate, authorization: str | None = Hea
     connection = get_connection()
     try:
         cursor = connection.execute("""
-            INSERT INTO sell_invoices (title, shamsi_date, is_paid, creator_name, last_editor_name, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (data.title, data.shamsi_date, 1 if data.is_paid else 0, user["username"], user["username"], utc_now(), utc_now()))
+            INSERT INTO sell_invoices (title, shamsi_date, is_paid, deduct_inventory, update_price, creator_name, last_editor_name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (data.title, data.shamsi_date, 1 if data.is_paid else 0, 1 if data.deduct_inventory else 0, 1 if data.update_price else 0, user["username"], user["username"], utc_now(), utc_now()))
         
         invoice_id = cursor.lastrowid
         
@@ -530,9 +533,9 @@ def update_sell_invoice(invoice_id: int, data: SellInvoiceCreate, authorization:
     # آپدیت هدر فاکتور
     connection.execute("""
         UPDATE sell_invoices 
-        SET title = ?, shamsi_date = ?, is_paid = ?, last_editor_name = ?, updated_at = ?
+        SET title = ?, shamsi_date = ?, is_paid = ?, deduct_inventory = ?, update_price = ?, last_editor_name = ?, updated_at = ?
         WHERE id = ?
-    """, (data.title, data.shamsi_date, int(data.is_paid), user["username"], utc_now(), invoice_id))
+    """, (data.title, data.shamsi_date, int(data.is_paid), int(data.deduct_inventory), int(data.update_price), user["username"], utc_now(), invoice_id))
     
     # ثبت مجدد اقلام با بررسی موجودی منفی
     for item in data.items:
