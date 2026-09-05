@@ -79,6 +79,8 @@
             background: linear-gradient(135deg, #ffffff 0%, #60a5fa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            line-height: 1.6;      /* این خط اضافه شود */
+            padding-bottom: 5px;   /* این خط اضافه شود */
         }
 
         /* Layout */
@@ -308,7 +310,7 @@
                         </label>
                     </div>
                     <!-- گزینه بروزرسانی قیمت -->
-                    <div class="flex items-center gap-2 pt-5">
+                    <div class="flex items-center gap-2 pt-5" id="updatePriceWrapper">
                         <input type="checkbox" id="chkUpdatePrice" class="w-4 h-4 text-purple-500 rounded">
                         <label for="chkUpdatePrice" class="text-xs font-bold text-purple-400 cursor-pointer" title="با زدن این تیک، قیمت‌های وارد شده در این فاکتور در دیتابیس قطعات ذخیره می‌شوند">
                             <i class="fa-solid fa-tag ml-1"></i> بروزرسانی قیمت
@@ -456,8 +458,10 @@
             document.getElementById('chkReduceStock').checked = true;
             document.getElementById('reduceStockWrapper').classList.remove('opacity-50', 'cursor-not-allowed');
             
-            // گزینه بروزرسانی قیمت به طور پیش فرض خاموش باشد
+            // بازگرداندن تنظیمات بروزرسانی قیمت به حالت فعال
+            document.getElementById('chkUpdatePrice').disabled = false;
             document.getElementById('chkUpdatePrice').checked = false;
+            document.getElementById('updatePriceWrapper').classList.remove('opacity-50', 'cursor-not-allowed');
 
             document.getElementById('invCreator').innerText = "-";
             document.getElementById('invEditor').innerText = "-";
@@ -704,8 +708,10 @@
                 document.getElementById('chkReduceStock').disabled = true;
                 document.getElementById('reduceStockWrapper').classList.add('opacity-50', 'cursor-not-allowed');
                 
-                // بروزرسانی قیمت خاموش باشد
+                // در حالت ویرایش، بروزرسانی قیمت غیرفعال می‌شود
                 document.getElementById('chkUpdatePrice').checked = false;
+                document.getElementById('chkUpdatePrice').disabled = true;
+                document.getElementById('updatePriceWrapper').classList.add('opacity-50', 'cursor-not-allowed');
 
                 const saveBtn = document.getElementById('saveBtn');
                 saveBtn.innerText = "بروزرسانی فاکتور";
