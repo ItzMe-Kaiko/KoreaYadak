@@ -498,7 +498,7 @@
                    <ul id="sug-${id}" class="absolute right-0 top-full min-w-[700px] bg-slate-900 border border-blue-500/50 shadow-2xl rounded-lg mt-1 hidden divide-y divide-gray-800 z-[100] max-h-60 overflow-y-auto"></ul>
                 </td>
                 <td class="p-2">
-                    <input type="text" id="pn-${id}" class="w-full form-input-custom uppercase dir-ltr font-mono text-center" placeholder="پارت نامبر">
+                   <input type="text" id="pn-${id}" oninput="searchPart(this, ${id})" autocomplete="off" class="w-full form-input-custom uppercase dir-ltr font-mono text-center" placeholder="پارت نامبر">
                 </td>
                 <td class="p-2">
                     <input type="text" id="car-${id}" class="w-full form-input-custom" placeholder="خودرو سازگار">
@@ -703,13 +703,13 @@
                 document.getElementById('invEditor').innerText = inv.last_editor_name || "-";
                 document.getElementById('chkPaid').checked = !!inv.is_paid;
                 
-                // در حالت ویرایش، کسر از انبار غیرفعال می‌شود
-                document.getElementById('chkReduceStock').checked = inv.reduce_stock !== false;
+                // نمایش و غیرفعال کردن تیک کسر از انبار
+                document.getElementById('chkReduceStock').checked = inv.deduct_inventory === 1;
                 document.getElementById('chkReduceStock').disabled = true;
                 document.getElementById('reduceStockWrapper').classList.add('opacity-50', 'cursor-not-allowed');
-                
-                // در حالت ویرایش، بروزرسانی قیمت غیرفعال می‌شود
-                document.getElementById('chkUpdatePrice').checked = false;
+
+                // نمایش و غیرفعال کردن تیک بروزرسانی قیمت
+                document.getElementById('chkUpdatePrice').checked = inv.update_price === 1;
                 document.getElementById('chkUpdatePrice').disabled = true;
                 document.getElementById('updatePriceWrapper').classList.add('opacity-50', 'cursor-not-allowed');
 
