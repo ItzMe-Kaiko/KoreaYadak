@@ -399,6 +399,14 @@ class SellInvoiceCreate(BaseModel):
     deduct_inventory: bool
     items: list[SellInvoiceItemBase]
 
+    class SellInvoiceCreate(BaseModel):
+    title: str
+    shamsi_date: str
+    is_paid: bool
+    deduct_inventory: bool
+    update_price: bool = False  # این خط اضافه شد
+    items: list[SellInvoiceItemBase]
+
 def ensure_invoice_tables():
     connection = get_connection()
     connection.execute("""
@@ -484,6 +492,16 @@ def create_sell_invoice(data: SellInvoiceCreate, authorization: str | None = Hea
             # کسر خودکار از موجودی در صورت تیک خوردن گزینه
             if data.deduct_inventory and item.part_id:
                 connection.execute("UPDATE parts SET stock = stock - ? WHERE id = ?", (item.quantity, item.part_id))
+
+            # === این بخش اضافه شود ===
+            # بروزرسانی قیمت، تاریخ و نام ویرایش‌کننده در صورت تیک خوردن گزینه
+            if data.update_price and item.part_id:
+                connection.execute("""
+                    UPDATE parts 
+                    SET price = ?, price_updated_at = ?, last_updated_by = ? 
+                    WHERE id = ?
+                """, (item.unit_price, utc_now(), user["username"], item.part_id))
+            # ==========================
                 
         connection.commit()
         return {"message": "فاکتور با موفقیت ثبت شد", "id": invoice_id}
@@ -543,6 +561,27 @@ def update_invoice_status(invoice_id: int, status: dict, authorization: str | No
     connection.commit()
     connection.close()
     return {"message": "وضعیت پرداخت تغییر کرد."}
+
+@app.delete("/api/invoices/sell/{invoice_id}")
+def delete_sell_invoice(invoice_id: int, authorization: str | None = Header(default=None)):
+    token = get_bearer_token(authorization)
+    authenticate_token(token)
+    
+    connection = get_connection()
+    
+    # بررسی اینکه آیا فاکتور وجود دارد
+    invoice = connection.execute("SELECT id FROM sell_invoices WHERE id = ?", (invoice_id,)).fetchone()
+    if not invoice:
+        connection.close()
+        raise HTTPException(status_code=404, detail="فاکتور یافت نشد")
+        
+    # حذف اقلام فاکتور و خود فاکتور
+    connection.execute("DELETE FROM sell_invoice_items WHERE invoice_id = ?", (invoice_id,))
+    connection.execute("DELETE FROM sell_invoices WHERE id = ?", (invoice_id,))
+    
+    connection.commit()
+    connection.close()
+    return {"message": "فاکتور با موفقیت حذف شد."}
 # -------------------------
 # Parts
 # -------------------------
