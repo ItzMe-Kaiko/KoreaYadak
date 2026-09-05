@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>کُره یدک | فاکتور فروش</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css');
+
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --bg-sidebar: rgba(24, 34, 52, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --glass-blur: blur(16px);
+        }
+
+        body.light {
+            --bg-main: #f1f5f9;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-sidebar: rgba(255, 255, 255, 0.9);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --glass-blur: blur(12px);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Vazir', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+        }
+
+        /* Hero Shader */
+        .hero {
+            position: relative;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        #shader-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+            padding: 12px 24px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .hero h1 {
+            font-size: 24px; font-weight: 800; margin: 0 0 4px;
+            background: linear-gradient(135deg, #ffffff 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Layout */
+        .app-layout {
+            display: flex;
+            max-width: 1400px;
+            margin: 20px auto;
+            gap: 20px;
+            padding: 0 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-sidebar);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: fit-content;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; border-radius: 10px;
+            color: var(--text-muted); background: transparent;
+            border: 1px solid transparent; width: 100%; text-align: right;
+            font-size: 13px; cursor: pointer; transition: all 0.25s ease;
+            text-decoration: none;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #60a5fa; transform: translateX(-3px);
+        }
+
+        .main-content { flex: 1; min-width: 0; }
+
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        /* Theme Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background-color: #334155; transition: .3s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Modal Custom Styles */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px); display: none; align-items: center;
+            justify-content: center; z-index: 1000; padding: 15px; opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-box {
+            background: var(--bg-sidebar); border: 1px solid var(--border-color);
+            transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+
+        /* Custom Input Dark */
+        .form-input-custom {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        body.light .form-input-custom {
+            background: #ffffff;
+            color: #0f172a;
+        }
+        .form-input-custom:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 850px) {
+            .app-layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+        }
+    </style>
+</head>
+<body class="text-sm">
+
+    <!-- شیدر هدر بالایی -->
+    <div class="hero">
+        <canvas id="shader-canvas"></canvas>
+        <div class="hero-content">
+            <h1>کُره یدک | مدیریت فاکتور فروش</h1>
+            <p class="text-xs text-gray-300">ثبت، صدور و بررسی فاکتورهای فروش قطعات</p>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- منوی راست -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 pb-3 mb-2 border-b border-gray-700/50">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
+                </div>
+                <div>
+                    <div class="font-bold">کُره یدک</div>
+                    <div class="text-xs text-gray-400">پنل فاکتورها</div>
+                </div>
+            </div>
+
+            <a class="nav-item" href="/admin">
+                <i class="fa-solid fa-boxes-stacked"></i> مدیریت قطعات
+            </a>
+            <a class="nav-item" href="/admin/buy">
+                <i class="fa-solid fa-cart-shopping"></i> فاکتور خرید
+            </a>
+            <a class="nav-item active" href="/admin/sell">
+                <i class="fa-solid fa-file-invoice text-blue-400"></i> فاکتور فروش
+            </a>
+            <a class="nav-item" href="/admin/report">
+                <i class="fa-solid fa-chart-pie"></i> گزارش‌ها
+            </a>
+        </aside>
+
+        <!-- محتوای اصلی -->
+        <main class="main-content">
+            <!-- نوار ابزار بالا -->
+            <div class="glass-card p-4 mb-6 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> ایجاد فاکتور جدید
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400">حالت تاریک</span>
+                    <label class="switch">
+                        <input type="checkbox" id="darkToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- جدول فاکتورها -->
+            <div class="glass-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <!-- کلاس min-w-[750px] برای جلوگیری از شکستن در موبایل اضافه شد -->
+                    <table class="w-full text-right text-xs md:text-sm min-w-[750px]">
+                        <thead class="bg-slate-800/60 text-gray-300 border-b border-gray-700/50">
+                            <tr>
+                                <th class="p-3.5">شماره</th>
+                                <th class="p-3.5">عنوان / مشتری</th>
+                                <th class="p-3.5">تاریخ</th>
+                                <th class="p-3.5 hidden md:table-cell">ثبت کننده</th>
+                                <th class="p-3.5">وضعیت</th>
+                                <th class="p-3.5 text-center">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoicesList" class="divide-y divide-gray-700/40">
+                            <!-- لیست فاکتورها لود می‌شود -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- مودال ثبت / ویرایش فاکتور -->
+    <div id="invoiceModal" class="modal-overlay">
+        <div class="modal-box w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+            
+            <!-- هدر مودال -->
+            <div class="p-4 border-b border-gray-700/50 flex justify-between items-center bg-slate-900/60">
+                <h2 id="modalTitle" class="text-base md:text-lg font-bold text-blue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-receipt"></i> ثبت فاکتور جدید
+                </h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-400 text-xl transition">&times;</button>
+            </div>
+
+            <!-- بدنه مودال -->
+            <div class="p-4 overflow-y-auto flex-1 space-y-4">
+                
+                <!-- اطلاعات پایه فاکتور -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">عنوان / نام مشتری</label>
+                        <input type="text" id="invTitle" placeholder="مثال: مشتری آقای علی‌نژاد" class="w-full form-input-custom">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">تاریخ فاکتور</label>
+                        <input type="text" id="invDate" class="w-full form-input-custom">
+                    </div>
+                    <div class="flex items-center gap-2 pt-5">
+                        <input type="checkbox" id="chkPaid" class="w-4 h-4 text-blue-600 rounded">
+                        <label for="chkPaid" class="text-xs font-bold text-gray-300 cursor-pointer">پرداخت شده</label>
+                    </div>
+                    <!-- گزینه کسر از انبار -->
+                    <div class="flex items-center gap-2 pt-5" id="reduceStockWrapper">
+                        <input type="checkbox" id="chkReduceStock" checked class="w-4 h-4 text-emerald-500 rounded">
+                        <label for="chkReduceStock" class="text-xs font-bold text-emerald-400 cursor-pointer" title="در صورت فعال بودن، موجودی قطعات انتخابی از انبار کسر خواهد شد">
+                            <i class="fa-solid fa-boxes-packing ml-1"></i> کسر از انبار
+                        </label>
+                    </div>
+                    <!-- گزینه بروزرسانی قیمت -->
+                    <div class="flex items-center gap-2 pt-5">
+                        <input type="checkbox" id="chkUpdatePrice" class="w-4 h-4 text-purple-500 rounded">
+                        <label for="chkUpdatePrice" class="text-xs font-bold text-purple-400 cursor-pointer" title="با زدن این تیک، قیمت‌های وارد شده در این فاکتور در دیتابیس قطعات ذخیره می‌شوند">
+                            <i class="fa-solid fa-tag ml-1"></i> بروزرسانی قیمت
+                        </label>
+                    </div>
+                </div>
+
+                <!-- جدول اقلام -->
+                <div class="flex justify-between items-center pt-2">
+                    <span class="font-bold text-xs md:text-sm text-gray-300 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-blue-400"></i> اقلام فاکتور
+                    </span>
+                    <button onclick="addRow()" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> افزودن سطر
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto border border-gray-700/40 rounded-xl">
+                    <!-- کلاس min-w-[850px] جهت جلوگیری از شکستن در موبایل اضافه شد -->
+                    <table class="w-full text-right border-collapse text-xs min-w-[850px]">
+                        <thead class="bg-slate-800/80 text-gray-300">
+                            <tr>
+                                <th class="p-2.5 w-[30%]">نام قطعه (جستجو در دیتابیس)</th>
+                                <th class="p-2.5 w-[20%]">پارت نامبر</th>
+                                <th class="p-2.5 w-[20%]">خودرو</th>
+                                <th class="p-2.5 w-20">تعداد</th>
+                                <th class="p-2.5 w-[30%]">قیمت واحد (تومان)</th>
+                                <th class="p-2.5 w-1/5">مبلغ کل (تومان)</th>
+                                <th class="p-2.5 w-10 text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsBody" class="divide-y divide-gray-700/30">
+                            <!-- سطرها اینجا اضافه می‌شوند -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- فوتر مودال -->
+            <div class="p-4 border-t border-gray-700/50 bg-slate-900/80 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-xs text-gray-400 flex gap-4">
+                    <span>ثبت کننده: <strong id="invCreator" class="text-gray-200">-</strong></span>
+                    <span>آخرین ویرایش: <strong id="invEditor" class="text-gray-200">-</strong></span>
+                </div>
+                <div class="flex items-center gap-4 w-full md:w-auto justify-end">
+                    <div class="text-sm font-bold text-blue-400 bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-xl text-center">
+                        جمع کل: <span id="grandTotal" class="text-white text-base">0</span> تومان
+                    </div>
+                    <button id="saveBtn" onclick="saveInvoice()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold transition shadow-lg">
+                        ثبت فاکتور
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* Three.js Background Shader */
+        function initShaderBackground() {
+            const container = document.querySelector('.hero');
+            const canvas = document.getElementById('shader-canvas');
+            if(!canvas) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    u_time: { value: 0.0 },
+                    u_resolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
+                `,
+                fragmentShader: `
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    varying vec2 vUv;
+
+                    void main() {
+                        vec2 st = gl_FragCoord.xy / u_resolution.xy;
+                        st.x *= u_resolution.x / u_resolution.y;
+
+                        float wave1 = sin(vUv.x * 6.0 + u_time * 0.8) * 0.15;
+                        float wave2 = cos(vUv.y * 8.0 + u_time * 1.2) * 0.15;
+                        float dist = length(st - vec2(0.5 + wave1, 0.5 + wave2));
+
+                        vec3 col1 = vec3(0.05, 0.08, 0.15);
+                        vec3 col2 = vec3(0.15, 0.35, 0.75);
+                        vec3 color = mix(col1, col2, smoothstep(0.7, 0.0, dist));
+
+                        gl_FragColor = vec4(color, 0.85);
+                    }
+                `,
+                transparent: true
+            });
+
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+            scene.add(mesh);
+
+            window.addEventListener('resize', () => {
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                material.uniforms.u_resolution.value.set(container.clientWidth, container.clientHeight);
+            });
+
+            let startTime = Date.now();
+            function animate() {
+                requestAnimationFrame(animate);
+                material.uniforms.u_time.value = (Date.now() - startTime) * 0.001;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+        initShaderBackground();
+
+        /* Application Logic */
+        const API_HEADERS = () => ({
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + (localStorage.getItem("token") || localStorage.getItem("koreyadak_token") || "")
+        });
+
+        let invoiceItemsCount = 0;
+        let currentInvoiceId = null;
+
+        function formatNumber(num) {
+            if (!num && num !== 0) return "";
+            return num.toString().replace(/,/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function openModal() {
+            currentInvoiceId = null;
+            document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-receipt"></i> ثبت فاکتور جدید';
+            document.getElementById('invTitle').value = "";
+            document.getElementById('invDate').value = new Intl.DateTimeFormat('fa-IR').format(new Date());
+            document.getElementById('chkPaid').checked = false;
+            
+            // بازگرداندن تنظیمات کسر از انبار به حالت فعال
+            document.getElementById('chkReduceStock').disabled = false;
+            document.getElementById('chkReduceStock').checked = true;
+            document.getElementById('reduceStockWrapper').classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // گزینه بروزرسانی قیمت به طور پیش فرض خاموش باشد
+            document.getElementById('chkUpdatePrice').checked = false;
+
+            document.getElementById('invCreator').innerText = "-";
+            document.getElementById('invEditor').innerText = "-";
+            document.getElementById('itemsBody').innerHTML = '';
+            
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerText = "ثبت فاکتور";
+            saveBtn.onclick = saveInvoice;
+            
+            addRow();
+            
+            const modal = document.getElementById('invoiceModal');
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('invoiceModal');
+            modal.classList.remove('active');
+        }
+
+        /* افزودن ردیف فاکتور */
+        function addRow() {
+            invoiceItemsCount++;
+            const id = invoiceItemsCount;
+            const tr = document.createElement('tr');
+            tr.id = `row-${id}`;
+            tr.dataset.partId = ""; 
+            tr.className = "hover:bg-slate-800/30 transition";
+            
+            tr.innerHTML = `
+               <td class="p-2 relative">
+                   <input type="text" id="name-${id}" oninput="searchPart(this, ${id})" placeholder="نام قطعه را تایپ کنید..." autocomplete="off" class="w-full form-input-custom">
+                   <!-- باکس پیشنهادات: عرض آن افزایش یافته تا زیر تمام ستون‌ها کشیده شود -->
+                   <ul id="sug-${id}" class="absolute right-0 top-full min-w-[700px] bg-slate-900 border border-blue-500/50 shadow-2xl rounded-lg mt-1 hidden divide-y divide-gray-800 z-[100] max-h-60 overflow-y-auto"></ul>
+                </td>
+                <td class="p-2">
+                    <input type="text" id="pn-${id}" class="w-full form-input-custom uppercase dir-ltr font-mono text-center" placeholder="پارت نامبر">
+                </td>
+                <td class="p-2">
+                    <input type="text" id="car-${id}" class="w-full form-input-custom" placeholder="خودرو سازگار">
+                </td>
+                <td class="p-2">
+                    <!-- کلاس min-w-[60px] اضافه شد -->
+                    <input type="number" id="qty-${id}" value="1" min="1" oninput="calcRow(${id})" class="w-full min-w-[60px] form-input-custom text-center">
+                </td>
+                <td class="p-2">
+                    <input type="text" id="price-${id}" oninput="this.value=formatNumber(this.value); calcRow(${id})" placeholder="0" class="w-full form-input-custom dir-ltr text-right">
+                </td>
+                <td class="p-2 font-bold text-blue-400 text-center">
+                    <span id="total-text-${id}">0</span>
+                    <input type="hidden" id="total-${id}" value="0">
+                </td>
+                <td class="p-2 text-center">
+                    <button onclick="removeRow(${id})" class="text-red-400 hover:text-red-600 transition p-1"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            document.getElementById('itemsBody').appendChild(tr);
+        }
+
+        function removeRow(id) {
+            document.getElementById(`row-${id}`)?.remove();
+            calcTotal();
+        }
+
+        function calcRow(id) {
+            const qty = parseFloat(document.getElementById(`qty-${id}`).value) || 0;
+            const price = parseFloat(document.getElementById(`price-${id}`).value.replace(/,/g, '')) || 0;
+            const total = qty * price;
+            document.getElementById(`total-${id}`).value = total;
+            document.getElementById(`total-text-${id}`).innerText = formatNumber(total);
+            calcTotal();
+        }
+
+        function calcTotal() {
+            let grand = 0;
+            const totals = document.querySelectorAll('[id^="total-"]');
+            totals.forEach(t => {
+                if(t.type === "hidden") grand += parseFloat(t.value) || 0;
+            });
+            document.getElementById('grandTotal').innerText = formatNumber(grand);
+        }
+
+        /* سرچ هوشمند قطعه در دیتابیس */
+        let searchTimers = {};
+        function searchPart(input, rowId) {
+            clearTimeout(searchTimers[rowId]);
+            const val = input.value.trim();
+            const sugBox = document.getElementById(`sug-${rowId}`);
+            
+            if (val.length < 2) { 
+                sugBox.classList.add('hidden'); 
+                return; 
+            }
+
+            searchTimers[rowId] = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/parts?q=${encodeURIComponent(val)}`, { headers: API_HEADERS() });
+                    if(!res.ok) return;
+                    const parts = await res.json();
+                    
+                    sugBox.innerHTML = '';
+                    if (parts && parts.length > 0) {
+                        parts.slice(0, 6).forEach(p => {
+                            const li = document.createElement('li');
+                            li.className = "p-2 hover:bg-blue-600/30 cursor-pointer text-xs transition flex items-center";
+                            const carInfo = p.compatible_cars || '-';
+                            const priceFormatted = p.price ? formatNumber(p.price) + ' تومان' : 'بدون قیمت';
+
+                            // اختصاص درصد عرض به هر بخش برای هم‌ترازی با ستون‌های جدول
+                            li.innerHTML = `
+                                <div class="w-[30%] text-right font-bold text-gray-200 px-2 truncate" title="${p.name}">${p.name}</div>
+                                <div class="w-[20%] text-blue-400 font-mono px-2 text-center truncate" dir="ltr">${p.part_number || '-'}</div>
+                                <div class="w-[20%] text-gray-400 px-2 text-center truncate">${carInfo}</div>
+                                <div class="w-[30%] text-emerald-400 font-bold px-2 text-left">${priceFormatted}</div>
+                            `;
+                            
+                            li.onclick = () => {
+                                document.getElementById(`row-${rowId}`).dataset.partId = p.id;
+                                document.getElementById(`name-${rowId}`).value = p.name;
+                                document.getElementById(`pn-${rowId}`).value = p.part_number;
+                                document.getElementById(`car-${rowId}`).value = p.compatible_cars || '';
+                                document.getElementById(`price-${rowId}`).value = formatNumber(p.price || 0);
+                                sugBox.classList.add('hidden');
+                                calcRow(rowId);
+                            };
+                            sugBox.appendChild(li);
+                        });
+                        sugBox.classList.remove('hidden');
+                    } else {
+                        sugBox.classList.add('hidden');
+                    }
+                } catch (e) { console.error(e); }
+            }, 200);
+        }
+
+        /* جمع‌آوری داده‌های فاکتور */
+        function getFormData() {
+            const items = [];
+            const rows = document.querySelectorAll('#itemsBody tr');
+            rows.forEach(row => {
+                const id = row.id.split('-')[1];
+                const qty = parseFloat(document.getElementById(`qty-${id}`).value);
+                if (qty > 0) {
+                    items.push({
+                        part_id: row.dataset.partId || null,
+                        part_name: document.getElementById(`name-${id}`).value,
+                        part_number: document.getElementById(`pn-${id}`).value,
+                        car: document.getElementById(`car-${id}`).value,
+                        quantity: qty,
+                        unit_price: parseFloat(document.getElementById(`price-${id}`).value.replace(/,/g, '')) || 0,
+                        total_price: parseFloat(document.getElementById(`total-${id}`).value) || 0
+                    });
+                }
+            });
+
+            return {
+                title: document.getElementById('invTitle').value,
+                shamsi_date: document.getElementById('invDate').value,
+                is_paid: document.getElementById('chkPaid').checked,
+                deduct_inventory: document.getElementById('chkReduceStock').checked, 
+                update_price: document.getElementById('chkUpdatePrice').checked, // ارسال دستور بروزرسانی قیمت
+                items: items
+            };
+        }
+
+        /* مدیریت تمیز خطاهای API برای جلوگیری از [object Object] */
+        async function handleApiResponseError(res) {
+            try {
+                const err = await res.json();
+                if (typeof err.detail === 'string') return err.detail;
+                if (typeof err.detail === 'object') return JSON.stringify(err.detail);
+                if (err.message) return err.message;
+                return "خطا در پردازش درخواست";
+            } catch (_) {
+                return "خطایی از سمت سرور رخ داد (" + res.status + ")";
+            }
+        }
+
+        /* ثبت فاکتور */
+        async function saveInvoice() {
+            const data = getFormData();
+            if(data.items.length === 0) return alert("لطفاً حداقل یک کالا به فاکتور اضافه کنید.");
+
+            try {
+                const res = await fetch("/api/invoices/sell", {
+                    method: "POST",
+                    headers: API_HEADERS(),
+                    body: JSON.stringify(data)
+                });
+
+                if(res.ok) {
+                    closeModal();
+                    loadInvoices();
+                } else {
+                    const errText = await handleApiResponseError(res);
+                    alert("خطا: " + errText);
+                }
+            } catch (e) { 
+                alert("خطای ارتباط با شبکه: " + e.message); 
+            }
+        }
+
+        /* بروزرسانی فاکتور */
+        async function updateInvoice() {
+            const data = getFormData();
+            if(data.items.length === 0) return alert("لطفاً حداقل یک کالا به فاکتور اضافه کنید.");
+
+            try {
+                const res = await fetch(`/api/invoices/sell/${currentInvoiceId}`, {
+                    method: "PUT",
+                    headers: API_HEADERS(),
+                    body: JSON.stringify(data)
+                });
+
+                if(res.ok) {
+                    closeModal();
+                    loadInvoices();
+                } else {
+                    const errText = await handleApiResponseError(res);
+                    alert("خطا: " + errText);
+                }
+            } catch (e) { 
+                alert("خطای شبکه: " + e.message); 
+            }
+        }
+
+        /* باز کردن فاکتور برای مشاهده/ویرایش */
+        async function viewInvoice(id) {
+            try {
+                const res = await fetch(`/api/invoices/sell/${id}`, { headers: API_HEADERS() });
+                if (!res.ok) throw new Error(await handleApiResponseError(res));
+                const inv = await res.json();
+                
+                currentInvoiceId = id;
+                document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> ویرایش فاکتور شماره ${id}`;
+                document.getElementById('invTitle').value = inv.title || '';
+                document.getElementById('invDate').value = inv.shamsi_date || '';
+                document.getElementById('invCreator').innerText = inv.creator_name || "-";
+                document.getElementById('invEditor').innerText = inv.last_editor_name || "-";
+                document.getElementById('chkPaid').checked = !!inv.is_paid;
+                
+                // در حالت ویرایش، کسر از انبار غیرفعال می‌شود
+                document.getElementById('chkReduceStock').checked = inv.reduce_stock !== false;
+                document.getElementById('chkReduceStock').disabled = true;
+                document.getElementById('reduceStockWrapper').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // بروزرسانی قیمت خاموش باشد
+                document.getElementById('chkUpdatePrice').checked = false;
+
+                const saveBtn = document.getElementById('saveBtn');
+                saveBtn.innerText = "بروزرسانی فاکتور";
+                saveBtn.onclick = updateInvoice;
+                
+                document.getElementById('itemsBody').innerHTML = '';
+                (inv.items || []).forEach(item => {
+                    addRow();
+                    const rowId = invoiceItemsCount;
+                    document.getElementById(`row-${rowId}`).dataset.partId = item.part_id || '';
+                    document.getElementById(`name-${rowId}`).value = item.part_name || '';
+                    document.getElementById(`pn-${rowId}`).value = item.part_number || '';
+                    document.getElementById(`car-${rowId}`).value = item.car || '';
+                    document.getElementById(`qty-${rowId}`).value = item.quantity || 1;
+                    document.getElementById(`price-${rowId}`).value = formatNumber(item.unit_price || 0);
+                    calcRow(rowId);
+                });
+                
+                document.getElementById('invoiceModal').classList.add('active');
+            } catch (e) {
+                alert("خطا در دریافت فاکتور: " + e.message);
+            }
+        }
+
+        /* حذف فاکتور */
+        async function deleteInvoice(id) {
+            if(!confirm(`آیا از حذف فاکتور شماره ${id} اطمینان دارید؟ این عمل غیرقابل بازگشت است.`)) return;
+            
+            try {
+                const res = await fetch(`/api/invoices/sell/${id}`, {
+                    method: "DELETE",
+                    headers: API_HEADERS()
+                });
+
+                if(res.ok) {
+                    loadInvoices(); // رفرش کردن جدول
+                } else {
+                    const errText = await handleApiResponseError(res);
+                    alert("خطا در حذف فاکتور: " + errText);
+                }
+            } catch (e) { 
+                alert("خطای شبکه: " + e.message); 
+            }
+        }
+
+        /* لود لیست فاکتورها */
+        async function loadInvoices() {
+            const listEl = document.getElementById('invoicesList');
+            try {
+                const res = await fetch('/api/invoices/sell', { headers: API_HEADERS() });
+                if(!res.ok) return;
+                const invoices = await res.json();
+                
+                if(!invoices || invoices.length === 0) {
+                    listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">هیچ فاکتوری ثبت نشده است.</td></tr>`;
+                    return;
+                }
+
+                listEl.innerHTML = invoices.map(inv => `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="p-3.5 font-bold text-blue-400">#${inv.id}</td>
+                        <td class="p-3.5 font-bold">${inv.title || 'بدون عنوان'}</td>
+                        <td class="p-3.5 text-gray-300">${inv.shamsi_date}</td>
+                        <td class="p-3.5 hidden md:table-cell text-gray-400">${inv.creator_name || '-'}</td>
+                        <td class="p-3.5 whitespace-nowrap">
+                            ${inv.is_paid 
+                                ? '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs">پرداخت شده</span>' 
+                                : '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-xs">تسویه نشده</span>'}
+                        </td>
+                        <td class="p-3.5 text-center flex justify-center gap-2 min-w-[120px]">
+                            <button onclick="viewInvoice(${inv.id})" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-lg transition" title="مشاهده/ویرایش">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteInvoice(${inv.id})" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg transition" title="حذف فاکتور">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // بستن پیشنهادات با کلیک خارج از کادر
+        document.addEventListener('click', (e) => {
+            if(!e.target.closest('.relative')) {
+                document.querySelectorAll('[id^="sug-"]').forEach(el => el.classList.add('hidden'));
+            }
+        });
+
+        // سوئیچ تم
+        document.getElementById("darkToggle")?.addEventListener("change", (e) => {
+            document.body.classList.toggle("light", !e.target.checked);
+        });
+
+        // بارگذاری اولیه
+        loadInvoices();
+    </script>
+</body>
+</html>
