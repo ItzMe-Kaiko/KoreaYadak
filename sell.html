@@ -554,26 +554,24 @@
           if (!token) {
             window.location.replace("/login");
             return;
-          }
-
-          try {
-            const res = await fetch("/api/auth/me", {
-              headers: { "Authorization": "Bearer " + token }
-            });
-    
-            if (!res.ok) throw new Error("Unauthorized");
-
-            // نمایش صفحه پس از اطمینان از معتبر بودن لاگین
-            document.body.style.display = "block"; // یا "flex" بسته به چیدمان بدنه
-
-          } catch (e) {
-            localStorage.removeItem("koreyadak_token");
-            window.location.replace("/login");
-          }
         }
 
-// اجرای تابع بررسی در هنگام بارگذاری
-checkSession();
+        try {
+          const res = await fetch("/api/auth/me", {
+            headers: { "Authorization": "Bearer " + token }
+          });
+    
+          if (!res.ok) throw new Error("Unauthorized");
+
+        // اگر متغیرهای دیگر یا لود دیتایی دارید اینجا اجرا می‌شود
+
+        } catch (e) {
+          localStorage.removeItem("koreyadak_token");
+          window.location.replace("/login");
+        }
+      }
+
+      checkSession();
         
         function calcTotal() {
             let grand = 0;
