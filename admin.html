@@ -12,7 +12,7 @@
 </script>
 
 <style>
-/* ۲. تثبیت رنگ تم دارک برای جلوگیری از هرگونه فلش سفید */
+  /* تثبیت رنگ تم دارک برای جلوگیری از هرگونه فلش یا سفید شدن صفحه */
   html, body {
     background-color: #0b0f19 !important;
     color: #f8fafc;
@@ -480,7 +480,6 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
       ویرایش قیمت
     </button>
 
-    <!-- سه دکمه جدید اضافه شده -->
     <a class="nav-item" href="/admin/buy">
       <svg class="icon" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
       فاکتور خرید
@@ -544,7 +543,6 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
   </main>
 </div>
 
-
 <!-- Modal: افزودن قطعه -->
 <div id="addModal" class="modal">
   <div class="modal-box">
@@ -575,7 +573,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
   </div>
 </div>
 
-<!-- Modal: ویرایش قیمت (بهبود با قابلیت سرچ آسان و کاما) -->
+<!-- Modal: ویرایش قیمت -->
 <div id="priceModal" class="modal">
   <div class="modal-box">
     <div class="modal-header-title">
@@ -669,6 +667,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
 function initShaderBackground() {
   const container = document.querySelector('.hero');
   const canvas = document.getElementById('shader-canvas');
+  if (!container || !canvas) return;
   
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -802,8 +801,6 @@ function closeModal(id) {
   setTimeout(() => modal.style.display = "none", 300);
 }
 
-function showLoginModal() { clearErrors('loginModal'); showModal('loginModal'); }
-
 function openAddModal() { 
   clearErrors('addModal');
   document.getElementById("addName").value = "";
@@ -835,7 +832,6 @@ function openPriceModal(id = null) {
   clearErrors('priceModal');
   const selectWrap = document.getElementById("pricePartSelectWrap");
   const infoWrap = document.getElementById("pricePartInfo");
-  const select = document.getElementById("pricePartSelect");
   const priceInput = document.getElementById("priceValue");
   const idInput = document.getElementById("pricePartId");
   document.getElementById("pricePartSearch").value = "";
@@ -911,31 +907,8 @@ function clearErrors(modalId) {
   modal.querySelectorAll('.err-msg').forEach(el => el.textContent = '');
 }
 
-async function login() {
-  const uInput = document.getElementById("loginUsername");
-  const pInput = document.getElementById("loginPassword");
-  const err = document.getElementById("loginError");
-  err.textContent = "";
-
-  let isValid = true;
-  if (!uInput.value.trim()) { uInput.classList.add("input-error"); isValid = false; }
-  if (!pInput.value.trim()) { pInput.classList.add("input-error"); isValid = false; }
-  if (!isValid) return;
-
-  try {
-    const data = await api("/api/auth/login", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ username: uInput.value.trim(), password: pInput.value })
-    });
-    localStorage.setItem(TOKEN_KEY, data.token);
-    closeModal("loginModal");
-    checkSession();
-  } catch (e) { err.textContent = e.message; }
-}
-
 async function checkSession() {
-  const token = localStorage.getItem("koreyadak_token");
+  const token = localStorage.getItem(TOKEN_KEY);
   if (!token) {
     window.location.replace("/login");
     return;
@@ -946,8 +919,14 @@ async function checkSession() {
       headers: { "Authorization": "Bearer " + token }
     });
     
-    if (!res.ok) throw new Error("Unauthorized");شما
+    if (!res.ok) throw new Error("Unauthorized");
     
+    const userData = await res.json();
+    if (userData && userData.username) {
+      const userEl = document.getElementById("currentUser");
+      if (userEl) userEl.textContent = userData.username;
+    }
+
     await loadCars();
     await loadParts();
   } catch (_) {
@@ -1244,12 +1223,6 @@ car.addEventListener("change", loadParts);
 document.getElementById("darkToggle").addEventListener("change", (e) => {
   document.body.classList.toggle("light", !e.target.checked);
 });
-
-  } catch (e) {
-    localStorage.removeItem("koreyadak_token");
-    window.location.replace("/login");
-  }
-}
 
 checkSession();
 </script>
