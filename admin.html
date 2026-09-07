@@ -531,25 +531,6 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
   </main>
 </div>
 
-<!-- Modal: ورود -->
-<div id="loginModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-header-title">
-      <svg class="icon" style="color:var(--primary);width:22px;height:22px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span>ورود مدیر</span>
-    </div>
-    <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px">جهت دسترسی به پنل مدیریت لاگین کنید.</p>
-    <input id="loginUsername" class="form-input" placeholder="نام کاربری">
-    <div class="password-wrap">
-      <input id="loginPassword" type="password" class="form-input" placeholder="رمز عبور">
-      <button type="button" class="eye-btn" onclick="togglePass('loginPassword', this)">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      </button>
-    </div>
-    <div id="loginError" class="err-msg"></div>
-    <button class="btn-primary" onclick="login()">ورود</button>
-  </div>
-</div>
 
 <!-- Modal: افزودن قطعه -->
 <div id="addModal" class="modal">
