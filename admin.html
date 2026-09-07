@@ -12,10 +12,12 @@
 </script>
 
 <style>
-    /* مخفی کردن بدنه صفحه تا زمان تایید نهایی توکن */
-    body {
-      display: none;
-    }
+/* ۲. تثبیت رنگ تم دارک برای جلوگیری از هرگونه فلش سفید */
+  html, body {
+    background-color: #0b0f19 !important;
+    color: #f8fafc;
+    margin: 0;
+  }
 
 :root {
   --bg-main: #0b0f19;
@@ -933,18 +935,18 @@ async function login() {
 }
 
 async function checkSession() {
-  const t = token();
-  if (!t) {
+  const token = localStorage.getItem("koreyadak_token");
+  if (!token) {
     window.location.replace("/login");
     return;
   }
 
   try {
-    const user = await api("/api/auth/me");
-    document.getElementById("currentUser").textContent = user.username;
+    const res = await fetch("/api/auth/me", {
+      headers: { "Authorization": "Bearer " + token }
+    });
     
-    // نمایش صفحه بعد از اطمینان از معتبر بودن لاگین
-    document.body.style.display = "block"; // یا "flex" بسته به استایل اصلی body شما
+    if (!res.ok) throw new Error("Unauthorized");شما
     
     await loadCars();
     await loadParts();
@@ -1242,6 +1244,12 @@ car.addEventListener("change", loadParts);
 document.getElementById("darkToggle").addEventListener("change", (e) => {
   document.body.classList.toggle("light", !e.target.checked);
 });
+
+  } catch (e) {
+    localStorage.removeItem("koreyadak_token");
+    window.location.replace("/login");
+  }
+}
 
 checkSession();
 </script>
