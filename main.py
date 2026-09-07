@@ -40,6 +40,10 @@ async def serve_sell():
 async def serve_report():
     return FileResponse("report.html")
 
+@app.get("/login")
+async def serve_login():
+    return FileResponse("login.html")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
