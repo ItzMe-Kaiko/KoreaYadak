@@ -2,12 +2,10 @@ from fastapi import FastAPI, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from pathlib import Path
 import hashlib
 import hmac
 import secrets
 import re
-import sqlite3
 from datetime import datetime, timezone
 
 from database import get_connection
@@ -125,11 +123,12 @@ def validate_password(password: str):
 
 def ensure_auth_tables():
     connection = get_connection()
+    cursor = connection.cursor()
 
-    connection.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL COLLATE NOCASE UNIQUE,
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             must_change_password INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL,
@@ -137,26 +136,27 @@ def ensure_auth_tables():
         )
     """)
 
-    connection.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             token_hash TEXT NOT NULL UNIQUE,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            created_at TEXT NOT NULL
         )
     """)
 
     connection.commit()
+    cursor.close()
     connection.close()
 
 
 def ensure_parts_table():
     connection = get_connection()
+    cursor = connection.cursor()
 
-    connection.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS parts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             part_number TEXT NOT NULL UNIQUE,
             name TEXT NOT NULL,
             compatible_cars TEXT NOT NULL,
@@ -168,18 +168,8 @@ def ensure_parts_table():
         )
     """)
 
-    existing_cols = [row[1] for row in connection.execute("PRAGMA table_info(parts)").fetchall()]
-
-    if "is_genuine" not in existing_cols:
-        connection.execute("ALTER TABLE parts ADD COLUMN is_genuine INTEGER NOT NULL DEFAULT 0")
-    if "price" not in existing_cols:
-        connection.execute("ALTER TABLE parts ADD COLUMN price REAL DEFAULT 0")
-    if "price_updated_at" not in existing_cols:
-        connection.execute("ALTER TABLE parts ADD COLUMN price_updated_at TEXT")
-    if "last_updated_by" not in existing_cols:
-        connection.execute("ALTER TABLE parts ADD COLUMN last_updated_by TEXT")
-
     connection.commit()
+    cursor.close()
     connection.close()
 
 
@@ -190,15 +180,18 @@ def authenticate_token(token: str):
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
 
     connection = get_connection()
-    row = connection.execute("""
+    cursor = connection.cursor()
+    cursor.execute("""
         SELECT
             u.id,
             u.username,
             u.must_change_password
         FROM sessions s
         JOIN users u ON u.id = s.user_id
-        WHERE s.token_hash = ?
-    """, (token_hash,)).fetchone()
+        WHERE s.token_hash = %s
+    """, (token_hash,))
+    row = cursor.fetchone()
+    cursor.close()
     connection.close()
 
     if row is None:
@@ -229,10 +222,6 @@ class ChangeCredentialsRequest(BaseModel):
     new_password_repeat: str
 
 
-ensure_auth_tables()
-ensure_parts_table()
-
-
 # -------------------------
 # Authentication
 # -------------------------
@@ -242,13 +231,16 @@ def login(data: LoginRequest):
     username = data.username.strip()
 
     connection = get_connection()
-    user = connection.execute("""
+    cursor = connection.cursor()
+    cursor.execute("""
         SELECT id, username, password_hash, must_change_password
         FROM users
-        WHERE username = ?
-    """, (username,)).fetchone()
+        WHERE username = %s
+    """, (username,))
+    user = cursor.fetchone()
 
     if user is None or not verify_password(data.password, user["password_hash"]):
+        cursor.close()
         connection.close()
         raise HTTPException(
             status_code=401,
@@ -258,12 +250,13 @@ def login(data: LoginRequest):
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
-    connection.execute("""
+    cursor.execute("""
         INSERT INTO sessions (user_id, token_hash, created_at)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
     """, (user["id"], token_hash, utc_now()))
 
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {
@@ -290,10 +283,13 @@ def me(authorization: str | None = Header(default=None)):
 
 def get_password_hash(user_id: int):
     connection = get_connection()
-    row = connection.execute(
-        "SELECT password_hash FROM users WHERE id = ?",
+    cursor = connection.cursor()
+    cursor.execute(
+        "SELECT password_hash FROM users WHERE id = %s",
         (user_id,)
-    ).fetchone()
+    )
+    row = cursor.fetchone()
+    cursor.close()
     connection.close()
 
     if row is None:
@@ -323,28 +319,32 @@ def change_credentials(
         raise HTTPException(status_code=400, detail="تکرار رمز عبور یکسان نیست.")
 
     connection = get_connection()
+    cursor = connection.cursor()
 
-    duplicate = connection.execute("""
+    cursor.execute("""
         SELECT id FROM users
-        WHERE username = ? AND id != ?
-    """, (new_username, user["id"])).fetchone()
+        WHERE username = %s AND id != %s
+    """, (new_username, user["id"]))
+    duplicate = cursor.fetchone()
 
     if duplicate is not None:
+        cursor.close()
         connection.close()
         raise HTTPException(status_code=409, detail="این نام کاربری قبلاً استفاده شده است.")
 
     new_hash = hash_password(data.new_password)
 
-    connection.execute("""
+    cursor.execute("""
         UPDATE users
-        SET username = ?,
-            password_hash = ?,
+        SET username = %s,
+            password_hash = %s,
             must_change_password = 0,
-            updated_at = ?
-        WHERE id = ?
+            updated_at = %s
+        WHERE id = %s
     """, (new_username, new_hash, utc_now(), user["id"]))
 
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {
@@ -359,26 +359,18 @@ def logout(authorization: str | None = Header(default=None)):
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
 
     connection = get_connection()
-    connection.execute(
-        "DELETE FROM sessions WHERE token_hash = ?",
+    cursor = connection.cursor()
+    cursor.execute(
+        "DELETE FROM sessions WHERE token_hash = %s",
         (token_hash,)
     )
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {"message": "خروج با موفقیت انجام شد."}
 
-# جلوگیری از ثبت موجودی منفی در قطعات
-@app.post("/api/parts")
-def create_part(data: PartCreate, authorization: str | None = Header(default=None)):
-    token = get_bearer_token(authorization)
-    authenticate_token(token)
-    
-    if data.stock < 0:
-        raise HTTPException(status_code=400, detail="موجودی نمی‌تواند کمتر از صفر باشد.")
-    if data.price < 0:
-        raise HTTPException(status_code=400, detail="قیمت نمی‌تواند منفی باشد.")
-    # ادامه کدهای اینسرت دیتابیس...
+
 # -------------------------
 # Invoices (Sell)
 # -------------------------
@@ -402,9 +394,11 @@ class SellInvoiceCreate(BaseModel):
 
 def ensure_invoice_tables():
     connection = get_connection()
-    connection.execute("""
+    cursor = connection.cursor()
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS sell_invoices (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             title TEXT NOT NULL,
             shamsi_date TEXT NOT NULL,
             is_paid INTEGER NOT NULL DEFAULT 0,
@@ -416,33 +410,24 @@ def ensure_invoice_tables():
             updated_at TEXT NOT NULL
         )
     """)
-    
-    # آپدیت جدول قدیمی برای جلوگیری از خطا در فاکتورهای قبلی
-    existing_cols = [row[1] for row in connection.execute("PRAGMA table_info(sell_invoices)").fetchall()]
-    if "deduct_inventory" not in existing_cols:
-        connection.execute("ALTER TABLE sell_invoices ADD COLUMN deduct_inventory INTEGER NOT NULL DEFAULT 1")
-    if "update_price" not in existing_cols:
-        connection.execute("ALTER TABLE sell_invoices ADD COLUMN update_price INTEGER NOT NULL DEFAULT 0")
 
-    connection.execute("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS sell_invoice_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            invoice_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            invoice_id INTEGER NOT NULL REFERENCES sell_invoices(id) ON DELETE CASCADE,
             part_id INTEGER,
             part_name TEXT NOT NULL,
             part_number TEXT NOT NULL,
             car TEXT NOT NULL,
             quantity INTEGER NOT NULL,
             unit_price REAL NOT NULL,
-            total_price REAL NOT NULL,
-            FOREIGN KEY (invoice_id) REFERENCES sell_invoices(id) ON DELETE CASCADE
+            total_price REAL NOT NULL
         )
     """)
     connection.commit()
+    cursor.close()
     connection.close()
 
-# اجرای ساخت جداول فاکتور
-ensure_invoice_tables()
 
 @app.get("/api/invoices/sell")
 def get_sell_invoices(authorization: str | None = Header(default=None)):
@@ -450,9 +435,12 @@ def get_sell_invoices(authorization: str | None = Header(default=None)):
     authenticate_token(token)
 
     connection = get_connection()
-    rows = connection.execute("SELECT * FROM sell_invoices ORDER BY id DESC").fetchall()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM sell_invoices ORDER BY id DESC")
+    rows = cursor.fetchall()
+    cursor.close()
     connection.close()
-    return [dict(row) for row in rows]
+    return list(rows)
 
 @app.get("/api/invoices/sell/{invoice_id}")
 def get_sell_invoice(invoice_id: int, authorization: str | None = Header(default=None)):
@@ -460,16 +448,21 @@ def get_sell_invoice(invoice_id: int, authorization: str | None = Header(default
     authenticate_token(token)
 
     connection = get_connection()
-    invoice = connection.execute("SELECT * FROM sell_invoices WHERE id = ?", (invoice_id,)).fetchone()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM sell_invoices WHERE id = %s", (invoice_id,))
+    invoice = cursor.fetchone()
     if not invoice:
+        cursor.close()
         connection.close()
         raise HTTPException(status_code=404, detail="فاکتور یافت نشد")
     
-    items = connection.execute("SELECT * FROM sell_invoice_items WHERE invoice_id = ?", (invoice_id,)).fetchall()
+    cursor.execute("SELECT * FROM sell_invoice_items WHERE invoice_id = %s", (invoice_id,))
+    items = cursor.fetchall()
+    cursor.close()
     connection.close()
     
     result = dict(invoice)
-    result["items"] = [dict(item) for item in items]
+    result["items"] = list(items)
     return result
 
 @app.post("/api/invoices/sell")
@@ -478,33 +471,31 @@ def create_sell_invoice(data: SellInvoiceCreate, authorization: str | None = Hea
     user = authenticate_token(token)
     
     connection = get_connection()
+    cursor = connection.cursor()
     try:
-        cursor = connection.execute("""
+        cursor.execute("""
             INSERT INTO sell_invoices (title, shamsi_date, is_paid, deduct_inventory, update_price, creator_name, last_editor_name, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
         """, (data.title, data.shamsi_date, 1 if data.is_paid else 0, 1 if data.deduct_inventory else 0, 1 if data.update_price else 0, user["username"], user["username"], utc_now(), utc_now()))
         
-        invoice_id = cursor.lastrowid
+        invoice_id = cursor.fetchone()["id"]
         
         for item in data.items:
-            connection.execute("""
+            cursor.execute("""
                 INSERT INTO sell_invoice_items (invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (invoice_id, item.part_id, item.part_name, item.part_number, item.car, item.quantity, item.unit_price, item.total_price))
             
-            # کسر خودکار از موجودی در صورت تیک خوردن گزینه
             if data.deduct_inventory and item.part_id:
-                connection.execute("UPDATE parts SET stock = stock - ? WHERE id = ?", (item.quantity, item.part_id))
+                cursor.execute("UPDATE parts SET stock = stock - %s WHERE id = %s", (item.quantity, item.part_id))
 
-            # === این بخش اضافه شود ===
-            # بروزرسانی قیمت، تاریخ و نام ویرایش‌کننده در صورت تیک خوردن گزینه
             if data.update_price and item.part_id:
-                connection.execute("""
+                cursor.execute("""
                     UPDATE parts 
-                    SET price = ?, price_updated_at = ?, last_updated_by = ? 
-                    WHERE id = ?
+                    SET price = %s, price_updated_at = %s, last_updated_by = %s 
+                    WHERE id = %s
                 """, (item.unit_price, utc_now(), user["username"], item.part_id))
-            # ==========================
                 
         connection.commit()
         return {"message": "فاکتور با موفقیت ثبت شد", "id": invoice_id}
@@ -512,56 +503,60 @@ def create_sell_invoice(data: SellInvoiceCreate, authorization: str | None = Hea
         connection.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
+        cursor.close()
         connection.close()
 
-# متد آپدیت فاکتور (برای حل مشکل عدم امکان ویرایش)
 @app.put("/api/invoices/sell/{invoice_id}")
 def update_sell_invoice(invoice_id: int, data: SellInvoiceCreate, authorization: str | None = Header(default=None)):
     token = get_bearer_token(authorization)
     user = authenticate_token(token)
     
     connection = get_connection()
-    # بررسی وجود فاکتور
-    invoice = connection.execute("SELECT id FROM sell_invoices WHERE id = ?", (invoice_id,)).fetchone()
+    cursor = connection.cursor()
+    
+    cursor.execute("SELECT id FROM sell_invoices WHERE id = %s", (invoice_id,))
+    invoice = cursor.fetchone()
     if not invoice:
+        cursor.close()
         connection.close()
         raise HTTPException(status_code=404, detail="فاکتور یافت نشد")
         
-    # حذف اقلام قبلی و ثبت اقلام جدید (ساده‌ترین راه آپدیت)
-    connection.execute("DELETE FROM sell_invoice_items WHERE invoice_id = ?", (invoice_id,))
+    cursor.execute("DELETE FROM sell_invoice_items WHERE invoice_id = %s", (invoice_id,))
     
-    # آپدیت هدر فاکتور
-    connection.execute("""
+    cursor.execute("""
         UPDATE sell_invoices 
-        SET title = ?, shamsi_date = ?, is_paid = ?, deduct_inventory = ?, update_price = ?, last_editor_name = ?, updated_at = ?
-        WHERE id = ?
+        SET title = %s, shamsi_date = %s, is_paid = %s, deduct_inventory = %s, update_price = %s, last_editor_name = %s, updated_at = %s
+        WHERE id = %s
     """, (data.title, data.shamsi_date, int(data.is_paid), int(data.deduct_inventory), int(data.update_price), user["username"], utc_now(), invoice_id))
     
-    # ثبت مجدد اقلام با بررسی موجودی منفی
     for item in data.items:
         if item.quantity <= 0:
+            cursor.close()
+            connection.close()
             raise HTTPException(status_code=400, detail="تعداد کالا باید بیشتر از صفر باشد.")
             
-        connection.execute("""
+        cursor.execute("""
             INSERT INTO sell_invoice_items (invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (invoice_id, item.part_id, item.part_name, item.part_number, item.car, item.quantity, item.unit_price, item.total_price))
     
     connection.commit()
+    cursor.close()
     connection.close()
     return {"message": "فاکتور با موفقیت ویرایش شد"}
     
 
 @app.patch("/api/invoices/sell/{invoice_id}/status")
 def update_invoice_status(invoice_id: int, status: dict, authorization: str | None = Header(default=None)):
-    # این تابع فقط وضعیت پرداخت را تغییر می‌دهد و تاریخ ویرایش یا ویرایشگر را عوض نمی‌کند
     token = get_bearer_token(authorization)
     authenticate_token(token)
     
     is_paid = 1 if status.get("is_paid") else 0
     connection = get_connection()
-    connection.execute("UPDATE sell_invoices SET is_paid = ? WHERE id = ?", (is_paid, invoice_id))
+    cursor = connection.cursor()
+    cursor.execute("UPDATE sell_invoices SET is_paid = %s WHERE id = %s", (is_paid, invoice_id))
     connection.commit()
+    cursor.close()
     connection.close()
     return {"message": "وضعیت پرداخت تغییر کرد."}
 
@@ -571,20 +566,23 @@ def delete_sell_invoice(invoice_id: int, authorization: str | None = Header(defa
     authenticate_token(token)
     
     connection = get_connection()
+    cursor = connection.cursor()
     
-    # بررسی اینکه آیا فاکتور وجود دارد
-    invoice = connection.execute("SELECT id FROM sell_invoices WHERE id = ?", (invoice_id,)).fetchone()
+    cursor.execute("SELECT id FROM sell_invoices WHERE id = %s", (invoice_id,))
+    invoice = cursor.fetchone()
     if not invoice:
+        cursor.close()
         connection.close()
         raise HTTPException(status_code=404, detail="فاکتور یافت نشد")
         
-    # حذف اقلام فاکتور و خود فاکتور
-    connection.execute("DELETE FROM sell_invoice_items WHERE invoice_id = ?", (invoice_id,))
-    connection.execute("DELETE FROM sell_invoices WHERE id = ?", (invoice_id,))
+    cursor.execute("DELETE FROM sell_invoice_items WHERE invoice_id = %s", (invoice_id,))
+    cursor.execute("DELETE FROM sell_invoices WHERE id = %s", (invoice_id,))
     
     connection.commit()
+    cursor.close()
     connection.close()
     return {"message": "فاکتور با موفقیت حذف شد."}
+
 # -------------------------
 # Parts
 # -------------------------
@@ -596,6 +594,7 @@ def get_parts(
     in_stock: bool = Query(default=False)
 ):
     connection = get_connection()
+    cursor = connection.cursor()
 
     conditions = []
     parameters = []
@@ -606,15 +605,15 @@ def get_parts(
             search = f"%{term}%"
             conditions.append("""
                 (
-                    part_number LIKE ?
-                    OR name LIKE ?
-                    OR compatible_cars LIKE ?
+                    part_number ILIKE %s
+                    OR name ILIKE %s
+                    OR compatible_cars ILIKE %s
                 )
             """)
             parameters.extend([search, search, search])
 
     if car.strip():
-        conditions.append("compatible_cars LIKE ?")
+        conditions.append("compatible_cars ILIKE %s")
         parameters.append(f"%{car.strip()}%")
 
     if in_stock:
@@ -630,22 +629,27 @@ def get_parts(
 
     query += " ORDER BY id"
 
-    rows = connection.execute(query, parameters).fetchall()
+    cursor.execute(query, parameters)
+    rows = cursor.fetchall()
+    cursor.close()
     connection.close()
 
-    return [dict(row) for row in rows]
+    return list(rows)
 
 
 @app.get("/api/parts/{part_id}")
 def get_part(part_id: int):
     connection = get_connection()
+    cursor = connection.cursor()
 
-    row = connection.execute("""
+    cursor.execute("""
         SELECT id, part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by
         FROM parts
-        WHERE id = ?
-    """, (part_id,)).fetchone()
+        WHERE id = %s
+    """, (part_id,))
+    row = cursor.fetchone()
 
+    cursor.close()
     connection.close()
 
     if row is None:
@@ -657,9 +661,10 @@ def get_part(part_id: int):
 @app.get("/api/cars")
 def get_cars():
     connection = get_connection()
-    rows = connection.execute(
-        "SELECT compatible_cars FROM parts"
-    ).fetchall()
+    cursor = connection.cursor()
+    cursor.execute("SELECT compatible_cars FROM parts")
+    rows = cursor.fetchall()
+    cursor.close()
     connection.close()
 
     cars = set()
@@ -708,16 +713,24 @@ def add_part(
     token = get_bearer_token(authorization)
     user = authenticate_token(token)
 
+    if data.stock < 0:
+        raise HTTPException(status_code=400, detail="موجودی نمی‌تواند کمتر از صفر باشد.")
+    if data.price < 0:
+        raise HTTPException(status_code=400, detail="قیمت نمی‌تواند منفی باشد.")
+
     part_number = data.part_number.strip()
     
     connection = get_connection()
+    cursor = connection.cursor()
 
-    duplicate = connection.execute(
-        "SELECT id, name FROM parts WHERE part_number = ?", 
+    cursor.execute(
+        "SELECT id, name FROM parts WHERE part_number = %s", 
         (part_number,)
-    ).fetchone()
+    )
+    duplicate = cursor.fetchone()
 
     if duplicate is not None:
+        cursor.close()
         connection.close()
         raise HTTPException(
             status_code=409,
@@ -726,9 +739,10 @@ def add_part(
 
     now_str = utc_now() if data.price > 0 else None
 
-    cursor = connection.execute("""
+    cursor.execute("""
         INSERT INTO parts (part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
     """, (
         part_number,
         data.name.strip(),
@@ -740,8 +754,9 @@ def add_part(
         user["username"]
     ))
 
-    new_id = cursor.lastrowid
+    new_id = cursor.fetchone()["id"]
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {
@@ -761,21 +776,26 @@ def update_part(
 
     part_number = data.part_number.strip()
     connection = get_connection()
+    cursor = connection.cursor()
 
-    existing = connection.execute("""
-        SELECT price, price_updated_at FROM parts WHERE id = ?
-    """, (part_id,)).fetchone()
+    cursor.execute("""
+        SELECT price, price_updated_at FROM parts WHERE id = %s
+    """, (part_id,))
+    existing = cursor.fetchone()
 
     if existing is None:
+        cursor.close()
         connection.close()
         raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
 
-    duplicate = connection.execute("""
+    cursor.execute("""
         SELECT id FROM parts 
-        WHERE part_number = ? AND id != ?
-    """, (part_number, part_id)).fetchone()
+        WHERE part_number = %s AND id != %s
+    """, (part_number, part_id))
+    duplicate = cursor.fetchone()
 
     if duplicate is not None:
+        cursor.close()
         connection.close()
         raise HTTPException(
             status_code=409,
@@ -789,10 +809,10 @@ def update_part(
     else:
         price_updated_at = existing["price_updated_at"]
 
-    connection.execute("""
+    cursor.execute("""
         UPDATE parts
-        SET part_number = ?, name = ?, compatible_cars = ?, stock = ?, is_genuine = ?, price = ?, price_updated_at = ?, last_updated_by = ?
-        WHERE id = ?
+        SET part_number = %s, name = %s, compatible_cars = %s, stock = %s, is_genuine = %s, price = %s, price_updated_at = %s, last_updated_by = %s
+        WHERE id = %s
     """, (
         part_number,
         data.name.strip(),
@@ -806,6 +826,7 @@ def update_part(
     ))
 
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {"message": "اطلاعات قطعه با موفقیت به‌روزرسانی شد."}
@@ -821,11 +842,15 @@ def update_price(
     user = authenticate_token(token)
 
     connection = get_connection()
-    existing = connection.execute("""
-        SELECT price, price_updated_at FROM parts WHERE id = ?
-    """, (part_id,)).fetchone()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT price, price_updated_at FROM parts WHERE id = %s
+    """, (part_id,))
+    existing = cursor.fetchone()
 
     if existing is None:
+        cursor.close()
         connection.close()
         raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
 
@@ -834,13 +859,14 @@ def update_price(
     else:
         price_updated_at = existing["price_updated_at"]
 
-    connection.execute("""
+    cursor.execute("""
         UPDATE parts 
-        SET price = ?, price_updated_at = ?, last_updated_by = ? 
-        WHERE id = ?
+        SET price = %s, price_updated_at = %s, last_updated_by = %s 
+        WHERE id = %s
     """, (data.price, price_updated_at, user["username"], part_id))
 
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {"message": "قیمت با موفقیت به‌روزرسانی شد."}
@@ -856,13 +882,16 @@ def update_stock(
     user = authenticate_token(token)
 
     connection = get_connection()
-    connection.execute("""
+    cursor = connection.cursor()
+
+    cursor.execute("""
         UPDATE parts 
-        SET stock = ?, last_updated_by = ? 
-        WHERE id = ?
+        SET stock = %s, last_updated_by = %s 
+        WHERE id = %s
     """, (data.stock, user["username"], part_id))
 
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {"message": "موجودی با موفقیت تغییر کرد."}
@@ -877,12 +906,14 @@ def delete_part(
     authenticate_token(token)
 
     connection = get_connection()
-    connection.execute(
-        "DELETE FROM parts WHERE id = ?", 
+    cursor = connection.cursor()
+    cursor.execute(
+        "DELETE FROM parts WHERE id = %s", 
         (part_id,)
     )
 
     connection.commit()
+    cursor.close()
     connection.close()
 
     return {"message": "قطعه با موفقیت حذف شد."}
