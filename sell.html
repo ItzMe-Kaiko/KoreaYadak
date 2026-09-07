@@ -7,7 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    if (!localStorage.getItem("koreyadak_token")) {
+      window.location.replace("/login");
+    }
+    </script>
+
     <style>
+    /* مخفی کردن بدنه صفحه تا زمان تایید نهایی توکن */
+    body {
+      display: none;
+    }
+
+    /* مابقی استایل‌های قبلی فایل sell.html شما */
         @import url('https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css');
 
         :root {
@@ -535,6 +547,32 @@
             calcTotal();
         }
 
+        async function checkSession() {
+          const token = localStorage.getItem("koreyadak_token");
+          if (!token) {
+            window.location.replace("/login");
+            return;
+          }
+
+          try {
+            const res = await fetch("/api/auth/me", {
+              headers: { "Authorization": "Bearer " + token }
+            });
+    
+            if (!res.ok) throw new Error("Unauthorized");
+
+            // نمایش صفحه پس از اطمینان از معتبر بودن لاگین
+            document.body.style.display = "block"; // یا "flex" بسته به چیدمان بدنه
+
+          } catch (e) {
+            localStorage.removeItem("koreyadak_token");
+            window.location.replace("/login");
+          }
+        }
+
+// اجرای تابع بررسی در هنگام بارگذاری
+checkSession();
+        
         function calcTotal() {
             let grand = 0;
             const totals = document.querySelectorAll('[id^="total-"]');
