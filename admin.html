@@ -935,18 +935,22 @@ async function login() {
 async function checkSession() {
   const t = token();
   if (!t) {
-    window.location.replace("/login"); // ریدایرکت به صفحه لاگین جدید
+    window.location.replace("/login");
     return;
   }
 
   try {
     const user = await api("/api/auth/me");
     document.getElementById("currentUser").textContent = user.username;
+    
+    // نمایش صفحه بعد از اطمینان از معتبر بودن لاگین
+    document.body.style.display = "block"; // یا "flex" بسته به استایل اصلی body شما
+    
     await loadCars();
     await loadParts();
   } catch (_) {
     localStorage.removeItem(TOKEN_KEY);
-    window.location.replace("/login"); // ریدایرکت به صفحه لاگین در صورت باطل شدن توکن
+    window.location.replace("/login");
   }
 }
 
