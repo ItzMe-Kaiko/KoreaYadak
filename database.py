@@ -1,14 +1,15 @@
-from pathlib import Path
-import sqlite3
-
-# مسیر همین پوشه فعلی
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "koreyadak.db"  # مستقیم به فایل چسبید
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 def get_connection():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    return connection
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        raise RuntimeError("متغیر محیطی DATABASE_URL تنظیم نشده است!")
+    
+    # Render گاهی آدرس را با postgres:// شروع می‌کند که psycopg2 نیاز به postgresql:// دارد
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+        
+    conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+    return conn
