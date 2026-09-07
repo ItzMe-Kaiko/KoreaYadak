@@ -924,7 +924,7 @@ async function login() {
 async function checkSession() {
   const t = token();
   if (!t) {
-    showLoginModal();
+    window.location.replace("/login"); // ریدایرکت به صفحه لاگین جدید
     return;
   }
 
@@ -935,7 +935,7 @@ async function checkSession() {
     await loadParts();
   } catch (_) {
     localStorage.removeItem(TOKEN_KEY);
-    showLoginModal();
+    window.location.replace("/login"); // ریدایرکت به صفحه لاگین در صورت باطل شدن توکن
   }
 }
 
