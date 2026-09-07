@@ -325,7 +325,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .badge-genuine {
   background: linear-gradient(90deg, #d97706 0%, #fbbf24 30%, #fffbeb 50%, #fbbf24 70%, #d97706 100%);
   background-size: 200% auto;
-  color: #451a03; /* Deep brown/black for crisp contrast */
+  color: #451a03; /* رنگ متن تیره برای خوانایی بالا */
   font-weight: 800;
   font-size: 0.75rem;
   padding: 4px 12px;
@@ -335,7 +335,10 @@ input:checked + .slider:before { transform: translateX(20px); }
   animation: goldShimmer 3s linear infinite;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-block;
 }
+
+/* انیمیشن چرخش و درخشش نور روی بدنه بَج */
 @keyframes goldShimmer {
   to { background-position: -200% center; }
 }
