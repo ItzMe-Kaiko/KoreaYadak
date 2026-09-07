@@ -4,41 +4,81 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>کُره یدک | سامانه استعلام قطعات</title>
+
+<!-- FOUC Prevention: Runs immediately to set the theme before rendering -->
+<script>
+  (function() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    if (savedTheme === 'light' || (!savedTheme && prefersLight)) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
+/* Premium Typography Imports */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css');
+
 :root {
-  --bg-main: #0b0f19;
-  --bg-card: rgba(30, 41, 59, 0.7);
-  --bg-sidebar: rgba(24, 34, 52, 0.75);
-  --border-color: rgba(255, 255, 255, 0.1);
+  /* Fluid Typography Steps */
+  --step-0: clamp(0.875rem, 0.8315rem + 0.2174vw, 1rem); /* 14px to 16px */
+  --step-1: clamp(1.125rem, 0.9946rem + 0.6522vw, 1.5rem); /* 18px to 24px */
+  --step-2: clamp(1.5rem, 1.3261rem + 0.8696vw, 2rem); /* 24px to 32px */
+
+  /* Dark Mode Defaults (Ultra-Premium Deep Blue/Black) */
+  --bg-main: #09090b; 
+  --bg-surface: #18181b; 
+  --bg-card: rgba(24, 24, 27, 0.65);
+  --bg-sidebar: rgba(24, 24, 27, 0.75);
+  --border-color: rgba(255, 255, 255, 0.08);
   --primary: #3b82f6;
   --primary-hover: #2563eb;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --primary-glow: rgba(59, 130, 246, 0.2);
+  --text-main: #fafafa;
+  --text-muted: #a1a1aa;
   --danger: #ef4444;
   --success: #10b981;
   --warning: #f59e0b;
   --glass-blur: blur(16px);
 }
 
-body.light {
-  --bg-main: #f1f5f9;
-  --bg-card: rgba(255, 255, 255, 0.85);
+html[data-theme="light"] {
+  /* Light Mode (Crisp, High Contrast) */
+  --bg-main: #fcfcfc;
+  --bg-surface: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.8);
   --bg-sidebar: rgba(255, 255, 255, 0.9);
   --border-color: rgba(0, 0, 0, 0.08);
-  --text-main: #0f172a;
-  --text-muted: #64748b;
+  --text-main: #09090b;
+  --text-muted: #71717a;
+  --primary: #2563eb;
+  --primary-glow: rgba(37, 99, 235, 0.15);
   --glass-blur: blur(12px);
 }
 
 * { box-sizing: border-box; }
+
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.6;
   margin: 0;
   background-color: var(--bg-main);
   color: var(--text-main);
   transition: background-color 0.4s ease, color 0.4s ease;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Overrides for Part Numbers */
+.part-number, .badge-genuine {
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
 }
 
 /* Icon System Styling */
@@ -86,11 +126,13 @@ body {
   border-radius: 16px;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  animation: fadeInDown 0.8s ease-out;
+  animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hero h1 { 
-  font-size: 28px; 
+  font-size: var(--step-2);
+  font-weight: 800;
+  line-height: 1.2;
   margin: 0 0 6px; 
   letter-spacing: -0.5px;
   background: linear-gradient(135deg, #ffffff 0%, #60a5fa 100%);
@@ -108,6 +150,9 @@ body {
   padding: 0 15px;
   position: relative;
   z-index: 2;
+  opacity: 0;
+  animation: appFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.1s;
 }
 
 .main-content { flex: 1; min-width: 0; }
@@ -123,7 +168,7 @@ body {
   flex-direction: column;
   gap: 10px;
   height: fit-content;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
 }
 
@@ -144,7 +189,7 @@ body {
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px var(--primary-glow);
 }
 .brand-badge div { display: flex; flex-direction: column; }
 .brand-badge .title { font-weight: 700; font-size: 16px; }
@@ -163,9 +208,10 @@ body {
   text-align: right;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   font-family: inherit;
+  will-change: transform;
 }
 .nav-item:hover, .nav-item.active {
   background: rgba(59, 130, 246, 0.12);
@@ -185,7 +231,7 @@ body {
   margin-bottom: 20px;
   background: var(--bg-sidebar);
   border: 1px solid var(--border-color);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 
 .top-bar {
@@ -216,7 +262,7 @@ body {
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
   position: absolute; cursor: pointer; inset: 0;
-  background-color: #334155; transition: .3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 24px;
+  background-color: #3f3f46; transition: .3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 24px;
 }
 .slider:before {
   position: absolute; content: ""; height: 18px; width: 18px;
@@ -228,7 +274,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* Search Inputs */
 .search-section { display: flex; gap: 10px; margin-bottom: 10px; }
 .search-section input, .search-section select {
-  background: var(--bg-card);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   color: var(--text-main);
   padding: 12px 14px;
@@ -240,13 +286,13 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 .search-section input:focus, .search-section select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 .search-section input { flex: 2; width: 100%; text-transform: uppercase; }
 .search-section select { flex: 1; cursor: pointer; }
 
 .in-stock-btn {
-  background: var(--bg-card);
+  background: var(--bg-surface);
   border: 1px solid var(--border-color);
   color: var(--text-muted);
   padding: 10px 16px;
@@ -258,9 +304,17 @@ input:checked + .slider:before { transform: translateX(20px); }
   align-items: center;
   gap: 8px;
   font-family: inherit;
-  transition: all 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  will-change: transform;
 }
-.in-stock-btn:hover { border-color: var(--success); color: var(--text-main); }
+.in-stock-btn:hover { 
+  border-color: var(--success); 
+  color: var(--text-main);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
+}
 .in-stock-btn.active {
   background: rgba(16, 185, 129, 0.15);
   border-color: var(--success);
@@ -282,14 +336,19 @@ input:checked + .slider:before { transform: translateX(20px); }
   flex-direction: column;
   justify-content: space-between;
   gap: 12px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  animation: fadeInUp 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(15px) scale(0.98);
+  animation: cardReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.3s ease;
+  will-change: transform, opacity;
 }
 
 .card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px) scale(1.01);
   border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.2);
 }
 
 .card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -322,12 +381,12 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .part-number-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .part-number {
-  color: #60a5fa; font-family: monospace; font-size: 14px;
-  background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 6px; direction: ltr;
+  color: var(--primary); font-size: 14px;
+  background: var(--primary-glow); padding: 4px 10px; border-radius: 6px; direction: ltr;
   border: 1px dashed rgba(59, 130, 246, 0.3);
 }
 .badge-genuine {
-  background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; font-weight: 700; font-size: 11px;
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: #09090b; font-weight: 700; font-size: 11px;
   padding: 3px 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
@@ -339,22 +398,37 @@ input:checked + .slider:before { transform: translateX(20px); }
   background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
   border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 .accordion-btn:hover { border-color: var(--primary); color: var(--primary); }
-.accordion-btn.active { transform: rotate(180deg); border-color: var(--primary); color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+.accordion-btn.active { transform: rotate(180deg); border-color: var(--primary); color: var(--primary); background: var(--primary-glow); }
 
-.details-panel {
-  max-height: 0; overflow: hidden; opacity: 0;
-  background: rgba(0, 0, 0, 0.2); border: 1px solid transparent;
-  border-radius: 10px; padding: 0 12px; margin-top: 0; font-size: 12px; color: var(--text-muted);
-  display: flex; flex-direction: column; gap: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* High Performance CSS Grid Accordion (No Layout Thrashing) */
+.details-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.details-panel.open {
-  max-height: 120px; opacity: 1; padding: 12px; margin-top: 6px;
-  border-color: var(--border-color);
+.details-wrapper.open {
+  grid-template-rows: 1fr;
 }
-.details-item { display: flex; justify-content: space-between; align-items: center; }
+.details-inner {
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--bg-surface);
+  border-radius: 10px;
+}
+.details-wrapper.open .details-inner {
+  opacity: 1;
+  transform: translateY(0);
+  padding: 12px;
+  margin-top: 6px;
+  border: 1px solid var(--border-color);
+}
+.details-item { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.details-item:last-child { margin-bottom: 0; }
 .details-item span.val { color: var(--text-main); font-weight: 600; }
 
 mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; border-radius: 3px; border: 1px solid rgba(245, 158, 11, 0.4); }
@@ -371,13 +445,16 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
   0% { transform: scale(1); opacity: 0.8; }
   100% { transform: scale(1.8); opacity: 0; }
 }
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-15px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@keyframes appFadeIn {
+  0% { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes cardReveal {
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 850px) {
@@ -430,7 +507,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
         <label class="theme-toggle">
           <span>حالت تاریک</span>
           <div class="switch">
-            <input type="checkbox" id="darkToggle" checked>
+            <input type="checkbox" id="darkToggle">
             <span class="slider"></span>
           </div>
         </label>
@@ -458,7 +535,7 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
 </div>
 
 <script>
-/* WebGL Three.js Dynamic Animated Shader */
+/* WebGL Three.js Dynamic Animated Shader with IntersectionObserver for Performance */
 function initShaderBackground() {
   const container = document.querySelector('.hero');
   const canvas = document.getElementById('shader-canvas');
@@ -497,9 +574,9 @@ function initShaderBackground() {
         
         float dist = length(st - vec2(0.5 + wave1, 0.5 + wave2));
         
-        vec3 col1 = vec3(0.06, 0.09, 0.16); // Dark base
-        vec3 col2 = vec3(0.23, 0.51, 0.96); // Vibrant blue wave
-        vec3 col3 = vec3(0.58, 0.2, 0.92);  // Subtle purple highlight
+        vec3 col1 = vec3(0.06, 0.09, 0.16);
+        vec3 col2 = vec3(0.23, 0.51, 0.96);
+        vec3 col3 = vec3(0.58, 0.2, 0.92); 
 
         vec3 color = mix(col1, col2, smoothstep(0.7, 0.0, dist));
         color += mix(vec3(0.0), col3, smoothstep(0.4, 0.0, length(st - vec2(0.8, 0.2))));
@@ -520,12 +597,25 @@ function initShaderBackground() {
   });
 
   let startTime = Date.now();
+  let animationFrameId;
+
   function animate() {
-    requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
     material.uniforms.u_time.value = (Date.now() - startTime) * 0.001;
     renderer.render(scene, camera);
   }
-  animate();
+
+  // Optimize: Only render WebGL when the hero section is in the viewport
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animate();
+      } else {
+        cancelAnimationFrame(animationFrameId);
+      }
+    });
+  });
+  observer.observe(container);
 }
 
 initShaderBackground();
@@ -538,6 +628,19 @@ const results = document.getElementById("results");
 const count = document.getElementById("count");
 
 let onlyInStock = false;
+
+// Sync Theme Toggle Checkbox State
+const darkToggle = document.getElementById("darkToggle");
+if (document.documentElement.getAttribute("data-theme") === "dark") {
+  darkToggle.checked = true;
+}
+
+darkToggle.addEventListener("change", (e) => {
+  const newTheme = e.target.checked ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem("theme", newTheme);
+});
+
 
 async function api(path) {
   const response = await fetch(API_BASE + path);
@@ -596,7 +699,7 @@ async function loadParts() {
     results.innerHTML = parts.map((p, index) => {
       const isAvailable = (p.stock && p.stock >= 1);
       const formattedPrice = p.price ? Number(p.price).toLocaleString('fa-IR') + ' تومان' : 'ثبت نشده';
-      const animDelay = (index % 12) * 0.05;
+      const animDelay = (index % 12) * 0.05; // Staggered reveal animation 
       
       return `
         <div class="card" style="animation-delay: ${animDelay}s">
@@ -622,28 +725,33 @@ async function loadParts() {
             </button>
           </div>
 
-          <div id="details-${p.id}" class="details-panel">
-            <div class="details-item">
-              <span>قیمت قطعه:</span>
-              <span class="val">${formattedPrice}</span>
-            </div>
-            <div class="details-item">
-              <span>آخرین تغییر قیمت:</span>
-              <span class="val">${formatDate(p.price_updated_at)}</span>
+          <!-- Optimized CSS Grid Accordion -->
+          <div id="wrapper-${p.id}" class="details-wrapper">
+            <div class="details-inner">
+              <div class="details-item">
+                <span>قیمت قطعه:</span>
+                <span class="val">${formattedPrice}</span>
+              </div>
+              <div class="details-item">
+                <span>آخرین تغییر قیمت:</span>
+                <span class="val">${formatDate(p.price_updated_at)}</span>
+              </div>
             </div>
           </div>
+
         </div>
       `;
     }).join("");
   } catch (e) {
-    results.innerHTML = `<div style="color:var(--danger)">خطا: ${e.message}</div>`;
+    results.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--danger)">خطا: ${e.message}</div>`;
   }
 }
 
 function toggleAccordion(id, btn) {
-  const panel = document.getElementById(`details-${id}`);
-  if (!panel) return;
-  panel.classList.toggle("open");
+  // Target the grid wrapper for layout-thrashing-free animation
+  const wrapper = document.getElementById(`wrapper-${id}`);
+  if (!wrapper) return;
+  wrapper.classList.toggle("open");
   btn.classList.toggle("active");
 }
 
@@ -674,10 +782,6 @@ search.addEventListener("input", () => {
   searchTimer = setTimeout(loadParts, 250);
 });
 car.addEventListener("change", loadParts);
-
-document.getElementById("darkToggle").addEventListener("change", (e) => {
-  document.body.classList.toggle("light", !e.target.checked);
-});
 
 loadCars();
 loadParts();
