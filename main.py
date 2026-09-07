@@ -11,6 +11,11 @@ from datetime import datetime, timezone
 from database import get_connection
 
 app = FastAPI(title="Kore Yadak API")
+@app.on_event("startup")
+def startup():
+    ensure_auth_tables()
+    ensure_parts_table()
+    ensure_invoice_tables()
 
 # -------------------------
 # Routes (HTML Serving)
