@@ -847,22 +847,55 @@
    توابع کمکی جستجو و فرمت‌دهی
    ========================================= */
 
-/* تابع اصلاح حروف فارسی (ی/ي و ک/ك) و جلوگیری از خطای Null برای جستجوی دقیق‌تر */
+/* 1. تبدیل اعداد فارسی/عربی به انگلیسی */
+function toEnglishDigits(str) {
+    if (!str) return '';
+    const persianDigits = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+    const arabicDigits  = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+    let result = String(str);
+    for (let i = 0; i < 10; i++) {
+        result = result.replace(persianDigits[i], i).replace(arabicDigits[i], i);
+    }
+    return result;
+}
+
+/* 2. یکسان‌سازی فرمت تاریخ دیتابیس (تبدیل 1405/6/17 به 05/06/17) */
+function normalizeDateString(dateStr) {
+    if (!dateStr) return '';
+    // ابتدا همه اعداد را انگلیسی می‌کنیم
+    let enDate = toEnglishDigits(dateStr);
+    let parts = enDate.split('/');
+    
+    if (parts.length === 3) {
+        let y = parts[0];
+        let m = parts[1];
+        let d = parts[2];
+        
+        // برداشتن 2 رقم آخر سال (اگر 1405 است می‌شود 05)
+        y = y.length >= 2 ? y.slice(-2) : y.padStart(2, '0');
+        // اضافه کردن صفر به ماه‌ها و روزهای یک رقمی (6 می‌شود 06)
+        m = m.padStart(2, '0');
+        d = d.padStart(2, '0');
+        
+        return `${y}/${m}/${d}`;
+    }
+    return enDate;
+}
+
+/* 3. اصلاح حروف فارسی (ی/ي و ک/ك) برای جستجوی نام */
 function normalizeText(text) {
     if (!text) return '';
     return String(text).replace(/ي/g, 'ی').replace(/ك/g, 'ک').toLowerCase().trim();
 }
 
-/* تابع فرمت‌دهی خودکار تاریخ با الگوی YY/MM/DD */
+/* 4. تابع فرمت‌دهی خودکار تاریخ هنگام تایپ */
 function formatSearchDate(e) {
-    // جلوگیری از تداخل هنگام پاک کردن با دکمه Backspace
     if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') return;
     
     const input = e.target;
-    // حذف تمام کاراکترهای غیر عددی
-    let val = input.value.replace(/\D/g, '');
+    // ابتدا اعداد فارسی احتمالی را انگلیسی کرده و سپس اسلش‌ها را برمی‌داریم
+    let val = toEnglishDigits(input.value).replace(/\D/g, '');
     
-    // محدود کردن به ۶ رقم خالص
     if (val.length > 6) val = val.substring(0, 6);
     
     let formatted = '';
@@ -873,7 +906,6 @@ function formatSearchDate(e) {
     input.value = formatted;
 }
 
-
 /* =========================================
    تابع اصلاح شده رندر و فیلتر فاکتورها
    ========================================= */
@@ -881,18 +913,19 @@ function renderInvoices() {
     try {
         const listEl = document.getElementById('invoicesList');
         
-        // دریافت مقادیر با اعمال فیلتر اصلاح حروف فارسی
         const titleQuery = normalizeText(document.getElementById('searchTitle').value);
-        const dateQuery = document.getElementById('searchDate').value.trim();
+        // تاریخ وارد شده توسط کاربر را نیز کاملاً انگلیسی می‌کنیم تا برای مقایسه آماده باشد
+        const dateQuery = toEnglishDigits(document.getElementById('searchDate').value.trim());
         const statusQuery = document.getElementById('filterStatus').value;
 
-        // فیلتر کردن آرایه اصلی بر اساس مقادیر ورودی
         const filteredData = allInvoicesData.filter(inv => {
-            // ترکیب نام مشتری و نام ثبت‌کننده برای جستجوی جامع‌تر
+            // بررسی نام مشتری / ثبت‌کننده
             const combinedTitleStr = normalizeText(inv.title) + " " + normalizeText(inv.creator_name);
             const matchTitle = combinedTitleStr.includes(titleQuery);
             
-            const matchDate = (inv.shamsi_date || '').includes(dateQuery);
+            // یکسان‌سازی تاریخ دیتابیس با استاندارد YY/MM/DD برای جستجوی دقیق
+            const dbDateNormalized = normalizeDateString(inv.shamsi_date);
+            const matchDate = dbDateNormalized.includes(dateQuery);
             
             let matchStatus = true;
             if (statusQuery === 'paid') matchStatus = (inv.is_paid === 1 || inv.is_paid === true);
