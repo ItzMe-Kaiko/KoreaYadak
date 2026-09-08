@@ -483,6 +483,28 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
   .search-section select, .in-stock-btn { width: 100%; justify-content: center; }
   .grid { grid-template-columns: 1fr; }
 }
+
+/* استایل اختصاصی دکمه Gemini */
+.gemini-nav-item .gemini-star {
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.gemini-nav-item:hover .gemini-star {
+  fill: url(#gemini-gradient) !important;
+  animation: geminiPulse 0.8s infinite alternate ease-in-out;
+  filter: drop-shadow(0 0 6px rgba(155, 81, 224, 0.6));
+}
+
+@keyframes geminiPulse {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    transform: scale(1.22) rotate(15deg);
+  }
+}
+
 </style>
 </head>
 <body>
@@ -533,15 +555,21 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
       گزارش
     </a>
 
-    <!-- دکمه جدید جمینای -->
-    <a class="nav-item" href="gemini.html" style="color: #a5b4fc; background: rgba(99, 102, 241, 0.08);">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16 18l2.5-5.5L24 10l-5.5-2.5L16 2l-2.5 5.5L8 10l5.5 2.5z" />
-        <path d="M8 22l1.5-3.5L13 17l-3.5-1.5L8 12l-1.5 3.5L3 17l3.5 1.5z" />
+<!-- دکمه هوشمند جمینای -->
+    <a class="nav-item gemini-nav-item" href="gemini.html">
+      <svg class="icon" viewBox="0 0 24 24" style="fill: currentColor; stroke: none;">
+        <defs>
+          <linearGradient id="gemini-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4285F4" />
+            <stop offset="35%" stop-color="#9B51E0" />
+            <stop offset="70%" stop-color="#E91E63" />
+            <stop offset="100%" stop-color="#FBBC05" />
+          </linearGradient>
+        </defs>
+        <path class="gemini-star" d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z"/>
       </svg>
       Ai Helping
     </a>
-    <!-- پایان دکمه جمینای -->
 
     <button class="nav-item" onclick="openAccountModal()">
       <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
