@@ -944,7 +944,7 @@ function renderInvoices() {
             <tr class="hover:bg-slate-800/40 transition">
                 <td class="p-3.5 font-bold text-indigo-400">#${index + 1}</td>
                 <td class="p-3.5 font-bold">${inv.title || 'بدون عنوان'}</td>
-                <td class="p-3.5 text-gray-300 font-mono">${inv.shamsi_date}</td>
+                <td class="p-3.5 text-gray-300">${inv.shamsi_date}</td>
                 <td class="p-3.5 hidden md:table-cell text-gray-400">${inv.creator_name || '-'}</td>
                 <td class="p-3.5 whitespace-nowrap">
                     ${inv.is_paid 
