@@ -245,22 +245,48 @@
 
         <!-- محتوای اصلی -->
         <main class="main-content">
-            <!-- نوار ابزار بالا -->
-            <div class="glass-card p-4 mb-6 flex flex-wrap justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> ایجاد فاکتور جدید
-                    </button>
-                </div>
+            <!-- نوار ابزار بالا و فیلترها -->
+<div class="glass-card p-4 mb-6 flex flex-col gap-5">
+    <!-- بخش دکمه‌ها و تغییر تم -->
+    <div class="flex flex-wrap justify-between items-center gap-4">
+        <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> ایجاد فاکتور جدید
+        </button>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-400">حالت تاریک</span>
+            <label class="switch">
+                <input type="checkbox" id="darkToggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
 
-                <div class="flex items-center gap-3">
-                    <span class="text-xs text-gray-400">حالت تاریک</span>
-                    <label class="switch">
-                        <input type="checkbox" id="darkToggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
+    <!-- بخش فیلترها (کادرهای جستجو) -->
+    <div class="border-t border-gray-700/50 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- کادر قرمز: جستجوی مشتری/عنوان -->
+        <div class="relative">
+            <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+            <input type="text" id="searchTitle" oninput="renderInvoices()" placeholder="جستجوی عنوان / مشتری..." class="w-full form-input-custom pr-9">
+        </div>
+        
+        <!-- کادر زرد: جستجوی تاریخ -->
+        <div class="relative">
+            <i class="fa-solid fa-calendar-days absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+            <input type="text" id="searchDate" oninput="renderInvoices()" placeholder="تاریخ (YY/MM/DD)" dir="ltr" class="w-full form-input-custom pr-9 text-right font-mono placeholder:font-sans">
+        </div>
+
+        <!-- کادر سبز: وضعیت فاکتور -->
+        <div class="relative">
+            <i class="fa-solid fa-filter absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+            <select id="filterStatus" onchange="renderInvoices()" class="w-full form-input-custom pr-9 appearance-none cursor-pointer">
+                <option value="all">همه فاکتورها (تسویه/پرداخت نشده)</option>
+                <option value="paid">پرداخت شده</option>
+                <option value="unpaid">تسویه نشده</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+        </div>
+    </div>
+</div>
 
             <!-- جدول فاکتورها -->
             <div class="glass-card overflow-hidden">
