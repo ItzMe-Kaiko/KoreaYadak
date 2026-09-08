@@ -272,7 +272,7 @@
         <!-- کادر زرد: جستجوی تاریخ -->
         <div class="relative">
             <i class="fa-solid fa-calendar-days absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-            <input type="text" id="searchDate" oninput="renderInvoices()" placeholder="تاریخ (YY/MM/DD)" dir="ltr" class="w-full form-input-custom pr-9 text-right font-mono placeholder:font-sans">
+            <input type="text" id="searchDate" oninput="formatSearchDate(event); renderInvoices()" maxlength="8" placeholder="تاریخ (YY/MM/DD)" dir="ltr" class="w-full form-input-custom pr-9 text-right font-mono placeholder:font-sans">
         </div>
 
         <!-- کادر سبز: وضعیت فاکتور -->
@@ -843,19 +843,55 @@
             }
         }
 
-/* تابع اصلاح‌شده برای فیلتر کردن و نمایش فاکتورها */
+/* =========================================
+   توابع کمکی جستجو و فرمت‌دهی
+   ========================================= */
+
+/* تابع اصلاح حروف فارسی (ی/ي و ک/ك) و جلوگیری از خطای Null برای جستجوی دقیق‌تر */
+function normalizeText(text) {
+    if (!text) return '';
+    return String(text).replace(/ي/g, 'ی').replace(/ك/g, 'ک').toLowerCase().trim();
+}
+
+/* تابع فرمت‌دهی خودکار تاریخ با الگوی YY/MM/DD */
+function formatSearchDate(e) {
+    // جلوگیری از تداخل هنگام پاک کردن با دکمه Backspace
+    if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') return;
+    
+    const input = e.target;
+    // حذف تمام کاراکترهای غیر عددی
+    let val = input.value.replace(/\D/g, '');
+    
+    // محدود کردن به ۶ رقم خالص
+    if (val.length > 6) val = val.substring(0, 6);
+    
+    let formatted = '';
+    if (val.length > 0) formatted += val.substring(0, 2);
+    if (val.length > 2) formatted += '/' + val.substring(2, 4);
+    if (val.length > 4) formatted += '/' + val.substring(4, 6);
+    
+    input.value = formatted;
+}
+
+
+/* =========================================
+   تابع اصلاح شده رندر و فیلتر فاکتورها
+   ========================================= */
 function renderInvoices() {
     try {
         const listEl = document.getElementById('invoicesList');
         
-        // گرفتن مقادیر تایپ شده تو کادرهای جستجو
-        const titleQuery = document.getElementById('searchTitle').value.toLowerCase().trim();
+        // دریافت مقادیر با اعمال فیلتر اصلاح حروف فارسی
+        const titleQuery = normalizeText(document.getElementById('searchTitle').value);
         const dateQuery = document.getElementById('searchDate').value.trim();
         const statusQuery = document.getElementById('filterStatus').value;
 
         // فیلتر کردن آرایه اصلی بر اساس مقادیر ورودی
         const filteredData = allInvoicesData.filter(inv => {
-            const matchTitle = (inv.title || '').toLowerCase().includes(titleQuery);
+            // ترکیب نام مشتری و نام ثبت‌کننده برای جستجوی جامع‌تر
+            const combinedTitleStr = normalizeText(inv.title) + " " + normalizeText(inv.creator_name);
+            const matchTitle = combinedTitleStr.includes(titleQuery);
+            
             const matchDate = (inv.shamsi_date || '').includes(dateQuery);
             
             let matchStatus = true;
@@ -896,7 +932,6 @@ function renderInvoices() {
         console.error("خطا در رندر فاکتورها:", e);
     }
 }
-
         // بستن پیشنهادات با کلیک خارج از کادر
         document.addEventListener('click', (e) => {
             if(!e.target.closest('.relative')) {
