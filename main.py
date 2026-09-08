@@ -2,9 +2,12 @@ import hashlib
 import hmac
 import re
 import secrets
+import io
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone
 from typing import Optional
+from fastapi.responses import Response
+from weasyprint import HTML
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -1078,3 +1081,349 @@ def delete_part(
             cursor.execute("DELETE FROM parts WHERE id = %s", (part_id,))
 
     return {"message": "قطعه با موفقیت حذف شد."}
+
+# ------------------------------------------------------------------------------
+# Helpers: Report Data Fetcher
+# ------------------------------------------------------------------------------
+
+def fetch_report_dataset(report_type: str, from_date: str = "", to_date: str = "", keyword: str = ""):
+    """تابع کمکی برای استخراج داده‌های گزارش براساس فیلترها از دیتابیس"""
+    keyword_clean = f"%{keyword.strip()}%" if keyword.strip() else None
+
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            # ۱. قطعات ناموجود در انبار
+            if report_type == "out_of_stock":
+                query = """
+                    SELECT id, name, part_number, compatible_cars, stock, price
+                    FROM parts
+                    WHERE stock <= 0
+                """
+                params = []
+                if keyword_clean:
+                    query += " AND (name ILIKE %s OR part_number ILIKE %s OR compatible_cars ILIKE %s)"
+                    params.extend([keyword_clean, keyword_clean, keyword_clean])
+                query += " ORDER BY id DESC"
+                cursor.execute(query, params)
+                return cursor.fetchall()
+
+            # ۲. فاکتورهای فروش تسویه نشده
+            elif report_type == "unpaid_sell":
+                query = """
+                    SELECT s.id, s.title, s.shamsi_date AS date, s.is_paid,
+                           COALESCE(SUM(i.total_price), 0) AS total_price
+                    FROM sell_invoices s
+                    LEFT JOIN sell_invoice_items i ON s.id = i.invoice_id
+                    WHERE s.is_paid = 0
+                """
+                params = []
+                if from_date.strip():
+                    query += " AND s.shamsi_date >= %s"
+                    params.append(from_date.strip())
+                if to_date.strip():
+                    query += " AND s.shamsi_date <= %s"
+                    params.append(to_date.strip())
+                if keyword_clean:
+                    query += " AND (s.title ILIKE %s OR s.creator_name ILIKE %s OR i.part_name ILIKE %s)"
+                    params.extend([keyword_clean, keyword_clean, keyword_clean])
+                query += " GROUP BY s.id ORDER BY s.id DESC"
+                cursor.execute(query, params)
+                return cursor.fetchall()
+
+            # ۳. فاکتورهای خرید تسویه نشده
+            elif report_type == "unpaid_buy":
+                query = """
+                    SELECT b.id, b.title, b.shamsi_date AS date, b.is_paid,
+                           COALESCE(SUM(i.total_price), 0) AS total_price
+                    FROM buy_invoices b
+                    LEFT JOIN buy_invoice_items i ON b.id = i.invoice_id
+                    WHERE b.is_paid = 0
+                """
+                params = []
+                if from_date.strip():
+                    query += " AND b.shamsi_date >= %s"
+                    params.append(from_date.strip())
+                if to_date.strip():
+                    query += " AND b.shamsi_date <= %s"
+                    params.append(to_date.strip())
+                if keyword_clean:
+                    query += " AND (b.title ILIKE %s OR b.creator_name ILIKE %s OR i.part_name ILIKE %s)"
+                    params.extend([keyword_clean, keyword_clean, keyword_clean])
+                query += " GROUP BY b.id ORDER BY b.id DESC"
+                cursor.execute(query, params)
+                return cursor.fetchall()
+
+            # ۴. فاکتورهای تسویه شده (کل)
+            elif report_type == "paid_all":
+                query = """
+                    SELECT 'فروش' AS invoice_type, s.id, s.title, s.shamsi_date AS date, s.is_paid,
+                           COALESCE(SUM(i.total_price), 0) AS total_price
+                    FROM sell_invoices s
+                    LEFT JOIN sell_invoice_items i ON s.id = i.invoice_id
+                    WHERE s.is_paid = 1
+                """
+                params1 = []
+                if from_date.strip():
+                    query += " AND s.shamsi_date >= %s"
+                    params1.append(from_date.strip())
+                if to_date.strip():
+                    query += " AND s.shamsi_date <= %s"
+                    params1.append(to_date.strip())
+                if keyword_clean:
+                    query += " AND (s.title ILIKE %s OR s.creator_name ILIKE %s)"
+                    params1.extend([keyword_clean, keyword_clean])
+                query += " GROUP BY s.id"
+
+                query += """
+                    UNION ALL
+                    SELECT 'خرید' AS invoice_type, b.id, b.title, b.shamsi_date AS date, b.is_paid,
+                           COALESCE(SUM(i.total_price), 0) AS total_price
+                    FROM buy_invoices b
+                    LEFT JOIN buy_invoice_items i ON b.id = i.invoice_id
+                    WHERE b.is_paid = 1
+                """
+                params2 = []
+                if from_date.strip():
+                    query += " AND b.shamsi_date >= %s"
+                    params2.append(from_date.strip())
+                if to_date.strip():
+                    query += " AND b.shamsi_date <= %s"
+                    params2.append(to_date.strip())
+                if keyword_clean:
+                    query += " AND (b.title ILIKE %s OR b.creator_name ILIKE %s)"
+                    params2.extend([keyword_clean, keyword_clean])
+                query += " GROUP BY b.id ORDER BY date DESC, id DESC"
+
+                cursor.execute(query, params1 + params2)
+                return cursor.fetchall()
+
+    return []
+
+
+# ------------------------------------------------------------------------------
+# Routes: Reports API
+# ------------------------------------------------------------------------------
+
+@app.get("/api/reports/data")
+def get_report_data(
+    type: str = Query(default="out_of_stock"),
+    from_date: str = Query(default="", alias="from"),
+    to_date: str = Query(default="", alias="to"),
+    keyword: str = Query(default=""),
+    current_user: dict = Depends(get_current_user)
+):
+    """دریافت لیست داده‌های گزارش برای نمایش در جدول پیش‌نمایش فرانت‌اند"""
+    return fetch_report_dataset(type, from_date, to_date, keyword)
+
+
+@app.get("/api/reports/pdf")
+def generate_report_pdf(
+    type: str = Query(default="out_of_stock"),
+    from_date: str = Query(default="", alias="from"),
+    to_date: str = Query(default="", alias="to"),
+    keyword: str = Query(default=""),
+    current_user: dict = Depends(get_current_user)
+):
+    """تولید و استریم مستقیم فایل PDF گزارش با استفاده از WeasyPrint"""
+    data = fetch_report_dataset(type, from_date, to_date, keyword)
+
+    # عناوین فارسی انواع گزارش
+    report_titles = {
+        "out_of_stock": "گزارش قطعات ناموجود در انبار",
+        "unpaid_sell": "گزارش فاکتورهای فروش تسویه نشده",
+        "unpaid_buy": "گزارش فاکتورهای خرید تسویه نشده",
+        "paid_all": "گزارش فاکتورهای تسویه شده"
+    }
+
+    report_title = report_titles.get(type, "گزارش سیستم")
+
+    # ساخت سطر‌های جدول HTML
+    table_rows = ""
+    total_sum = 0
+
+    if type == "out_of_stock":
+        for idx, item in enumerate(data, 1):
+            table_rows += f"""
+            <tr>
+                <td>{idx}</td>
+                <td><b>{item.get('name', '')}</b></td>
+                <td>{item.get('part_number', '')} / {item.get('compatible_cars', '')}</td>
+                <td style="color: #dc2626; font-weight: bold;">{item.get('stock', 0)} عدد</td>
+                <td>{item.get('price', 0):,.0f} تومان</td>
+            </tr>
+            """
+    else:
+        for idx, item in enumerate(data, 1):
+            price = item.get('total_price', 0)
+            total_sum += price
+            status_text = "تسویه شده" if item.get('is_paid') else "تسویه نشده"
+            status_class = "badge-paid" if item.get('is_paid') else "badge-unpaid"
+            
+            table_rows += f"""
+            <tr>
+                <td>{idx}</td>
+                <td><b>{item.get('title', '')}</b></td>
+                <td>{item.get('date', '')}</td>
+                <td><span class="badge {status_class}">{status_text}</span></td>
+                <td><b>{price:,.0f} تومان</b></td>
+            </tr>
+            """
+
+    # هدر‌های جدول
+    if type == "out_of_stock":
+        table_headers = """
+            <th>ردیف</th>
+            <th>نام قطعه</th>
+            <th>پارت نامبر / خودرو</th>
+            <th>موجودی</th>
+            <th>آخرین قیمت</th>
+        """
+    else:
+        table_headers = """
+            <th>ردیف</th>
+            <th>عنوان / مشخصات</th>
+            <th>تاریخ</th>
+            <th>وضعیت</th>
+            <th>مبلغ کل</th>
+        """
+
+    # جمع کل برای گزارشات مالی
+    total_section = ""
+    if type != "out_of_stock":
+        total_section = f"""
+        <div class="total-box">
+            مجموع مبالغ این گزارش: {total_sum:,.0f} تومان
+        </div>
+        """
+
+    # ساخت سند HTML کامل با استایل‌های اختصاصی PDF و فونت فارسی Vazirmatn
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+            
+            @page {{
+                size: A4 portrait;
+                margin: 12mm;
+                @bottom-center {{
+                    content: "صفحه " counter(page) " از " counter(pages);
+                    font-size: 8pt;
+                    font-family: 'Vazirmatn', sans-serif;
+                    color: #64748b;
+                }}
+            }}
+            body {{
+                font-family: 'Vazirmatn', sans-serif;
+                direction: rtl;
+                color: #0f172a;
+                margin: 0;
+                padding: 0;
+                font-size: 10pt;
+            }}
+            .header {{
+                text-align: center;
+                border-bottom: 2px solid #4f46e5;
+                padding-bottom: 8px;
+                margin-bottom: 15px;
+            }}
+            .header h1 {{
+                margin: 0 0 4px 0;
+                font-size: 16pt;
+                color: #312e81;
+            }}
+            .header p {{
+                margin: 0;
+                font-size: 9pt;
+                color: #64748b;
+            }}
+            .meta-info {{
+                background: #f8fafc;
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 15px;
+                font-size: 8.5pt;
+                color: #334155;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+            }}
+            th {{
+                background-color: #4f46e5;
+                color: white;
+                font-weight: bold;
+                padding: 7px 8px;
+                text-align: right;
+                font-size: 9pt;
+            }}
+            td {{
+                padding: 7px 8px;
+                border-bottom: 1px solid #e2e8f0;
+                font-size: 8.5pt;
+            }}
+            tr:nth-child(even) {{
+                background-color: #f8fafc;
+            }}
+            .badge {{
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 7.5pt;
+                font-weight: bold;
+            }}
+            .badge-paid {{ background: #dcfce7; color: #15803d; }}
+            .badge-unpaid {{ background: #fef3c7; color: #b45309; }}
+            .total-box {{
+                margin-top: 15px;
+                text-align: left;
+                font-size: 11pt;
+                font-weight: bold;
+                color: #1e1b4b;
+                padding: 10px;
+                background: #e0e7ff;
+                border-radius: 6px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>کُره یدک | {report_title}</h1>
+            <p>سیستم مدیریت انبار و فاکتورها</p>
+        </div>
+
+        <div class="meta-info">
+            <span><b>تعداد موارد:</b> {len(data)} مورد</span> | 
+            <span><b>از تاریخ:</b> {from_date if from_date else 'ابتدا'}</span> | 
+            <span><b>تا تاریخ:</b> {to_date if to_date else 'اکنون'}</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    {table_headers}
+                </tr>
+            </thead>
+            <tbody>
+                {table_rows if table_rows else '<tr><td colspan="5" style="text-align:center;">موردی یافت نشد.</td></tr>'}
+            </tbody>
+        </table>
+
+        {total_section}
+    </body>
+    </html>
+    """
+
+    # رندر کدهای HTML به فایل PDF در حافظه RAM
+    pdf_bytes = HTML(string=html_content).write_pdf()
+
+    # ارسال فایل PDF به مرورگر کاربر
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=Report_{type}.pdf"
+        }
+    )
