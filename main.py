@@ -520,11 +520,25 @@ def update_sell_invoice(
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT id FROM sell_invoices WHERE id = %s", (invoice_id,))
-            if not cursor.fetchone():
+            # بررسی وضعیت فاکتور قبلی جهت بازگردانی موجودی
+            cursor.execute("SELECT id, deduct_inventory FROM sell_invoices WHERE id = %s", (invoice_id,))
+            old_invoice = cursor.fetchone()
+            if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
+            # بازگردانی موجودی کالاهای فاکتور قبلی به انبار در صورتی که قبلا کسر شده بودند
+            if old_invoice["deduct_inventory"]:
+                cursor.execute("SELECT part_id, quantity FROM sell_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
+                for old_item in cursor.fetchall():
+                    cursor.execute(
+                        "UPDATE parts SET stock = stock + %s WHERE id = %s",
+                        (old_item["quantity"], old_item["part_id"])
+                    )
+
+            # پاک کردن آیتم‌های قبلی فاکتور
             cursor.execute("DELETE FROM sell_invoice_items WHERE invoice_id = %s", (invoice_id,))
+            
+            # ثبت تغییرات در هدر فاکتور
             cursor.execute("""
                 UPDATE sell_invoices 
                 SET title = %s, shamsi_date = %s, is_paid = %s, deduct_inventory = %s,
@@ -536,6 +550,8 @@ def update_sell_invoice(
                 current_user["username"], utc_now(), invoice_id
             ))
 
+            now = utc_now()
+            # ثبت آیتم‌های جدید و اعمال منطق جدید کسر از انبار و بروزرسانی قیمت
             for item in data.items:
                 cursor.execute("""
                     INSERT INTO sell_invoice_items (
@@ -546,6 +562,19 @@ def update_sell_invoice(
                     invoice_id, item.part_id, item.part_name, item.part_number,
                     item.car, item.quantity, item.unit_price, item.total_price
                 ))
+
+                if data.deduct_inventory and item.part_id:
+                    cursor.execute(
+                        "UPDATE parts SET stock = stock - %s WHERE id = %s",
+                        (item.quantity, item.part_id)
+                    )
+
+                if data.update_price and item.part_id:
+                    cursor.execute("""
+                        UPDATE parts 
+                        SET price = %s, price_updated_at = %s, last_updated_by = %s 
+                        WHERE id = %s
+                    """, (item.unit_price, now, current_user["username"], item.part_id))
 
     return {"message": "فاکتور با موفقیت ویرایش شد"}
 
@@ -571,9 +600,20 @@ def delete_sell_invoice(
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT id FROM sell_invoices WHERE id = %s", (invoice_id,))
-            if not cursor.fetchone():
+            # دریافت اطلاعات فاکتور جهت چک کردن وضعیت انبار
+            cursor.execute("SELECT id, deduct_inventory FROM sell_invoices WHERE id = %s", (invoice_id,))
+            old_invoice = cursor.fetchone()
+            if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
+
+            # بازگردانی موجودی اقلام فروخته شده به انبار پیش از حذف نهایی سیستم
+            if old_invoice["deduct_inventory"]:
+                cursor.execute("SELECT part_id, quantity FROM sell_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
+                for old_item in cursor.fetchall():
+                    cursor.execute(
+                        "UPDATE parts SET stock = stock + %s WHERE id = %s",
+                        (old_item["quantity"], old_item["part_id"])
+                    )
 
             cursor.execute("DELETE FROM sell_invoice_items WHERE invoice_id = %s", (invoice_id,))
             cursor.execute("DELETE FROM sell_invoices WHERE id = %s", (invoice_id,))
