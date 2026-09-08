@@ -693,31 +693,177 @@ def create_buy_invoice(
             invoice_id = cursor.fetchone()["id"]
 
             for item in data.items:
+                part_id = item.part_id
+
+                # --- حل مشکل اضافه نشدن قطعه جدید ---
+                # اگر آیدی قطعه وجود نداشت اما پارت‌نامبر وارد شده بود، آن را در دیتابیس می‌سازیم
+                if not part_id and item.part_number:
+                    cursor.execute("SELECT id FROM parts WHERE part_number = %s", (item.part_number,))
+                    db_part = cursor.fetchone()
+                    if db_part:
+                        part_id = db_part["id"]
+                    else:
+                        cursor.execute("""
+                            INSERT INTO parts (part_number, name, compatible_cars, stock, last_updated_by)
+                            VALUES (%s, %s, %s, 0, %s)
+                            RETURNING id
+                        """, (item.part_number, item.part_name, item.car, current_user["username"]))
+                        part_id = cursor.fetchone()["id"]
+
+                # ثبت آیتم در فاکتور
                 cursor.execute("""
                     INSERT INTO buy_invoice_items (
                         invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    invoice_id, item.part_id, item.part_name, item.part_number,
+                    invoice_id, part_id, item.part_name, item.part_number,
                     item.car, item.quantity, item.unit_price, item.total_price
                 ))
 
-                # اینجا برعکس فروش، موجودی به انبار "اضافه" می‌شود
-                if data.add_inventory and item.part_id:
+                # افزودن موجودی به انبار
+                if data.add_inventory and part_id:
                     cursor.execute(
                         "UPDATE parts SET stock = stock + %s WHERE id = %s",
-                        (item.quantity, item.part_id)
+                        (item.quantity, part_id)
                     )
 
-                if data.update_price and item.part_id:
+                # بروزرسانی قیمت
+                if data.update_price and part_id:
                     cursor.execute("""
                         UPDATE parts 
                         SET price = %s, price_updated_at = %s, last_updated_by = %s 
                         WHERE id = %s
-                    """, (item.unit_price, now, current_user["username"], item.part_id))
+                    """, (item.unit_price, now, current_user["username"], part_id))
 
     return {"message": "فاکتور خرید با موفقیت ثبت شد", "id": invoice_id}
+
+@app.get("/api/invoices/buy/{invoice_id}")
+def get_buy_invoice(
+    invoice_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM buy_invoices WHERE id = %s", (invoice_id,))
+            invoice = cursor.fetchone()
+            if not invoice:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
+
+            cursor.execute("SELECT * FROM buy_invoice_items WHERE invoice_id = %s", (invoice_id,))
+            items = cursor.fetchall()
+
+    result = dict(invoice)
+    result["items"] = items
+    return result
+
+
+@app.put("/api/invoices/buy/{invoice_id}")
+def update_buy_invoice(
+    invoice_id: int,
+    data: BuyInvoiceCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, add_inventory FROM buy_invoices WHERE id = %s", (invoice_id,))
+            old_invoice = cursor.fetchone()
+            if not old_invoice:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
+
+            # بازگردانی (کاهش) موجودی قبلی از انبار قبل از ثبت تغییرات جدید
+            if old_invoice["add_inventory"]:
+                cursor.execute("SELECT part_id, quantity FROM buy_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
+                for old_item in cursor.fetchall():
+                    cursor.execute(
+                        "UPDATE parts SET stock = stock - %s WHERE id = %s",
+                        (old_item["quantity"], old_item["part_id"])
+                    )
+
+            # پاک کردن آیتم‌های قبلی
+            cursor.execute("DELETE FROM buy_invoice_items WHERE invoice_id = %s", (invoice_id,))
+            
+            cursor.execute("""
+                UPDATE buy_invoices 
+                SET title = %s, shamsi_date = %s, is_paid = %s, add_inventory = %s,
+                    update_price = %s, last_editor_name = %s, updated_at = %s
+                WHERE id = %s
+            """, (
+                data.title, data.shamsi_date, int(data.is_paid),
+                int(data.add_inventory), int(data.update_price),
+                current_user["username"], utc_now(), invoice_id
+            ))
+
+            now = utc_now()
+            # درج مجدد آیتم‌های جدید و بررسی اضافه شدن قطعات ناشناس
+            for item in data.items:
+                part_id = item.part_id
+                if not part_id and item.part_number:
+                    cursor.execute("SELECT id FROM parts WHERE part_number = %s", (item.part_number,))
+                    db_part = cursor.fetchone()
+                    if db_part:
+                        part_id = db_part["id"]
+                    else:
+                        cursor.execute("""
+                            INSERT INTO parts (part_number, name, compatible_cars, stock, last_updated_by)
+                            VALUES (%s, %s, %s, 0, %s)
+                            RETURNING id
+                        """, (item.part_number, item.part_name, item.car, current_user["username"]))
+                        part_id = cursor.fetchone()["id"]
+
+                cursor.execute("""
+                    INSERT INTO buy_invoice_items (
+                        invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    invoice_id, part_id, item.part_name, item.part_number,
+                    item.car, item.quantity, item.unit_price, item.total_price
+                ))
+
+                if data.add_inventory and part_id:
+                    cursor.execute(
+                        "UPDATE parts SET stock = stock + %s WHERE id = %s",
+                        (item.quantity, part_id)
+                    )
+
+                if data.update_price and part_id:
+                    cursor.execute("""
+                        UPDATE parts 
+                        SET price = %s, price_updated_at = %s, last_updated_by = %s 
+                        WHERE id = %s
+                    """, (item.unit_price, now, current_user["username"], part_id))
+
+    return {"message": "فاکتور خرید با موفقیت ویرایش شد"}
+
+
+@app.delete("/api/invoices/buy/{invoice_id}")
+def delete_buy_invoice(
+    invoice_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, add_inventory FROM buy_invoices WHERE id = %s", (invoice_id,))
+            old_invoice = cursor.fetchone()
+            if not old_invoice:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
+
+            # خارج کردن (کاهش) موجودی‌های اضافه شده از انبار به دلیل حذف فاکتور
+            if old_invoice["add_inventory"]:
+                cursor.execute("SELECT part_id, quantity FROM buy_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
+                for old_item in cursor.fetchall():
+                    cursor.execute(
+                        "UPDATE parts SET stock = stock - %s WHERE id = %s",
+                        (old_item["quantity"], old_item["part_id"])
+                    )
+
+            cursor.execute("DELETE FROM buy_invoice_items WHERE invoice_id = %s", (invoice_id,))
+            cursor.execute("DELETE FROM buy_invoices WHERE id = %s", (invoice_id,))
+
+    return {"message": "فاکتور خرید با موفقیت حذف شد."}
+
+
 
 
 # ------------------------------------------------------------------------------
