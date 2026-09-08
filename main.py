@@ -535,8 +535,9 @@ def create_sell_invoice(
                 ))
 
                 if data.deduct_inventory and item.part_id:
+                    # استفاده از GREATEST برای جلوگیری از منفی شدن موجودی
                     cursor.execute(
-                        "UPDATE parts SET stock = stock - %s WHERE id = %s",
+                        "UPDATE parts SET stock = GREATEST(0, stock - %s) WHERE id = %s",
                         (item.quantity, item.part_id)
                     )
 
@@ -564,7 +565,7 @@ def update_sell_invoice(
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # بازگردانی موجودی کالاهای فاکتور قبلی به انبار در صورتی که قبلا کسر شده بودند
+            # بازگردانی کامل موجودی کالاهای فاکتور قبلی به انبار در صورتی که قبلا کسر شده بودند
             if old_invoice["deduct_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM sell_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
@@ -602,8 +603,9 @@ def update_sell_invoice(
                 ))
 
                 if data.deduct_inventory and item.part_id:
+                    # استفاده از GREATEST برای جلوگیری از منفی شدن
                     cursor.execute(
-                        "UPDATE parts SET stock = stock - %s WHERE id = %s",
+                        "UPDATE parts SET stock = GREATEST(0, stock - %s) WHERE id = %s",
                         (item.quantity, item.part_id)
                     )
 
@@ -644,7 +646,7 @@ def delete_sell_invoice(
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # بازگردانی موجودی اقلام فروخته شده به انبار پیش از حذف نهایی سیستم
+            # بازگردانی دقیق موجودی اقلام فروخته شده به انبار پیش از حذف نهایی سیستم
             if old_invoice["deduct_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM sell_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
@@ -658,17 +660,16 @@ def delete_sell_invoice(
 
     return {"message": "فاکتور با موفقیت حذف شد."}
 
+# ------------------------------------------------------------------------------
+# Buy invoices
+# ------------------------------------------------------------------------------
+
 @app.get("/api/invoices/buy")
 def get_buy_invoices(current_user: dict = Depends(get_current_user)):
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM buy_invoices ORDER BY id DESC")
             return cursor.fetchall()
-
-
-# ------------------------------------------------------------------------------
-# Buy invoices
-# ------------------------------------------------------------------------------
 
 @app.post("/api/invoices/buy")
 def create_buy_invoice(
@@ -695,8 +696,7 @@ def create_buy_invoice(
             for item in data.items:
                 part_id = item.part_id
 
-                # --- حل مشکل اضافه نشدن قطعه جدید ---
-                # اگر آیدی قطعه وجود نداشت اما پارت‌نامبر وارد شده بود، آن را در دیتابیس می‌سازیم
+                # ساخت قطعه جدید اگر در دیتابیس وجود نداشت
                 if not part_id and item.part_number:
                     cursor.execute("SELECT id FROM parts WHERE part_number = %s", (item.part_number,))
                     db_part = cursor.fetchone()
@@ -710,7 +710,6 @@ def create_buy_invoice(
                         """, (item.part_number, item.part_name, item.car, current_user["username"]))
                         part_id = cursor.fetchone()["id"]
 
-                # ثبت آیتم در فاکتور
                 cursor.execute("""
                     INSERT INTO buy_invoice_items (
                         invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price
@@ -721,14 +720,12 @@ def create_buy_invoice(
                     item.car, item.quantity, item.unit_price, item.total_price
                 ))
 
-                # افزودن موجودی به انبار
                 if data.add_inventory and part_id:
                     cursor.execute(
                         "UPDATE parts SET stock = stock + %s WHERE id = %s",
                         (item.quantity, part_id)
                     )
 
-                # بروزرسانی قیمت
                 if data.update_price and part_id:
                     cursor.execute("""
                         UPDATE parts 
@@ -771,16 +768,15 @@ def update_buy_invoice(
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # بازگردانی (کاهش) موجودی قبلی از انبار قبل از ثبت تغییرات جدید
+            # بازگردانی موجودی قبلی فاکتور خرید. برای جلوگیری از منفی شدن از GREATEST استفاده شده است.
             if old_invoice["add_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM buy_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
                     cursor.execute(
-                        "UPDATE parts SET stock = stock - %s WHERE id = %s",
+                        "UPDATE parts SET stock = GREATEST(0, stock - %s) WHERE id = %s",
                         (old_item["quantity"], old_item["part_id"])
                     )
 
-            # پاک کردن آیتم‌های قبلی
             cursor.execute("DELETE FROM buy_invoice_items WHERE invoice_id = %s", (invoice_id,))
             
             cursor.execute("""
@@ -795,9 +791,10 @@ def update_buy_invoice(
             ))
 
             now = utc_now()
-            # درج مجدد آیتم‌های جدید و بررسی اضافه شدن قطعات ناشناس
             for item in data.items:
                 part_id = item.part_id
+                
+                # ثبت قطعه جدید اگر در ویرایش فاکتور اضافه شده باشد
                 if not part_id and item.part_number:
                     cursor.execute("SELECT id FROM parts WHERE part_number = %s", (item.part_number,))
                     db_part = cursor.fetchone()
@@ -849,12 +846,12 @@ def delete_buy_invoice(
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # خارج کردن (کاهش) موجودی‌های اضافه شده از انبار به دلیل حذف فاکتور
+            # کاهش منطقی موجودی‌های اضافه شده از انبار به دلیل حذف فاکتور خرید با اطمینان از عدم منفی شدن موجودی
             if old_invoice["add_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM buy_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
                     cursor.execute(
-                        "UPDATE parts SET stock = stock - %s WHERE id = %s",
+                        "UPDATE parts SET stock = GREATEST(0, stock - %s) WHERE id = %s",
                         (old_item["quantity"], old_item["part_id"])
                     )
 
@@ -862,8 +859,6 @@ def delete_buy_invoice(
             cursor.execute("DELETE FROM buy_invoices WHERE id = %s", (invoice_id,))
 
     return {"message": "فاکتور خرید با موفقیت حذف شد."}
-
-
 
 
 # ------------------------------------------------------------------------------
@@ -989,6 +984,9 @@ def update_part(
 ):
     part_number = data.part_number.strip()
 
+    # اینجا هم در فرم ویرایش قطعه، جلوی ارسال موجودی منفی رو می‌گیریم
+    safe_stock = max(0, data.stock)
+
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT price, price_updated_at FROM parts WHERE id = %s", (part_id,))
@@ -1016,7 +1014,7 @@ def update_part(
                 WHERE id = %s
             """, (
                 part_number, data.name.strip(), data.compatible_cars.strip(),
-                data.stock, 1 if data.is_genuine else 0, new_price,
+                safe_stock, 1 if data.is_genuine else 0, new_price,
                 price_updated_at, current_user["username"], part_id
             ))
 
@@ -1056,13 +1054,16 @@ def update_stock(
     data: StockUpdate,
     current_user: dict = Depends(get_current_user)
 ):
+    # جلوگیری از ارسال مستقیم عدد منفی در بروزرسانی سریع موجودی
+    safe_stock = max(0, data.stock)
+
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
                 UPDATE parts 
                 SET stock = %s, last_updated_by = %s 
                 WHERE id = %s
-            """, (data.stock, current_user["username"], part_id))
+            """, (safe_stock, current_user["username"], part_id))
 
     return {"message": "موجودی با موفقیت تغییر کرد."}
 
