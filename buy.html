@@ -245,15 +245,37 @@
 
         <!-- محتوای اصلی -->
         <main class="main-content">
-            <!-- نوار ابزار بالا -->
-            <div class="glass-card p-4 mb-6 flex flex-wrap justify-between items-center gap-4">
-                <div class="flex items-center gap-4">
-                    <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> ایجاد فاکتور خرید جدید
+<!-- نوار ابزار بالا -->
+            <div class="glass-card p-4 mb-6 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="flex items-center w-full lg:w-auto">
+                    <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center gap-2 whitespace-nowrap w-full lg:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> ایجاد فاکتور خرید
                     </button>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <!-- بخش جستجو و فیلتر -->
+                <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto flex-1 lg:justify-end">
+                    <div class="relative w-full md:w-auto md:flex-1 max-w-[250px]">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="searchTitle" oninput="renderInvoices()" placeholder="جستجوی نام یا ثبت‌کننده..." class="w-full form-input-custom pr-9">
+                    </div>
+                    
+                    <div class="relative w-full md:w-36">
+                        <i class="fa-solid fa-calendar-days absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="searchDate" oninput="formatSearchDate(event); renderInvoices()" maxlength="8" placeholder="تاریخ (YY/MM/DD)" dir="ltr" class="w-full form-input-custom pr-9 text-right font-mono placeholder:font-sans">
+                    </div>
+
+                    <div class="relative w-full md:w-40">
+                        <select id="filterStatus" onchange="renderInvoices()" class="w-full form-input-custom appearance-none pl-8">
+                            <option value="all">همه وضعیت‌ها</option>
+                            <option value="paid">پرداخت شده</option>
+                            <option value="unpaid">تسویه نشده</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 w-full lg:w-auto justify-end">
                     <span class="text-xs text-gray-400">حالت تاریک</span>
                     <label class="switch">
                         <input type="checkbox" id="darkToggle" checked>
@@ -792,20 +814,119 @@
             }
         }
 
-        /* لود لیست فاکتورها */
+/* =========================================
+           متغیرهای سراسری و توابع کمکی جستجو
+           ========================================= */
+        let allInvoicesData = []; // ذخیره اطلاعات فاکتورها برای جستجو
+
+        function toEnglishDigits(str) {
+            if (!str) return '';
+            const persianDigits = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+            const arabicDigits  = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+            let result = String(str);
+            for (let i = 0; i < 10; i++) {
+                result = result.replace(persianDigits[i], i).replace(arabicDigits[i], i);
+            }
+            return result;
+        }
+
+        function normalizeDateString(dateStr) {
+            if (!dateStr) return '';
+            let enDate = toEnglishDigits(dateStr);
+            let parts = enDate.split('/');
+            
+            if (parts.length === 3) {
+                let y = parts[0];
+                let m = parts[1];
+                let d = parts[2];
+                
+                y = y.length >= 2 ? y.slice(-2) : y.padStart(2, '0');
+                m = m.padStart(2, '0');
+                d = d.padStart(2, '0');
+                
+                return `${y}/${m}/${d}`;
+            }
+            return enDate;
+        }
+
+        function normalizeText(text) {
+            if (!text) return '';
+            return String(text).replace(/ي/g, 'ی').replace(/ك/g, 'ک').toLowerCase().trim();
+        }
+
+        function formatSearchDate(e) {
+            if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') return;
+            const input = e.target;
+            let val = toEnglishDigits(input.value).replace(/\D/g, '');
+            if (val.length > 6) val = val.substring(0, 6);
+            let formatted = '';
+            if (val.length > 0) formatted += val.substring(0, 2);
+            if (val.length > 2) formatted += '/' + val.substring(2, 4);
+            if (val.length > 4) formatted += '/' + val.substring(4, 6);
+            input.value = formatted;
+        }
+
+        /* =========================================
+           لود لیست فاکتورها از سرور
+           ========================================= */
         async function loadInvoices() {
-            const listEl = document.getElementById('invoicesList');
             try {
                 const res = await fetch('/api/invoices/buy', { headers: API_HEADERS() });
                 if(!res.ok) return;
                 const invoices = await res.json();
                 
                 if(!invoices || invoices.length === 0) {
-                    listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">هیچ فاکتوری ثبت نشده است.</td></tr>`;
+                    allInvoicesData = [];
+                } else {
+                    allInvoicesData = invoices;
+                }
+                
+                // فراخوانی تابع رندر برای نمایش اولیه و اعمال فیلترهای احتمالی
+                renderInvoices();
+            } catch (e) {
+                console.error("خطا در دریافت فاکتورها: ", e);
+            }
+        }
+
+        /* =========================================
+           رندر و فیلتر کردن فاکتورهای خرید در جدول
+           ========================================= */
+        function renderInvoices() {
+            try {
+                const listEl = document.getElementById('invoicesList');
+                
+                // دریافت مقادیر فیلترها (اگر المان‌ها وجود داشته باشند)
+                const titleEl = document.getElementById('searchTitle');
+                const dateEl = document.getElementById('searchDate');
+                const statusEl = document.getElementById('filterStatus');
+
+                const titleQuery = titleEl ? normalizeText(titleEl.value) : '';
+                const dateQuery = dateEl ? toEnglishDigits(dateEl.value.trim()) : '';
+                const statusQuery = statusEl ? statusEl.value : 'all';
+
+                const filteredData = allInvoicesData.filter(inv => {
+                    // ترکیب نام برای جستجوی بهتر
+                    const combinedTitleStr = normalizeText(inv.title) + " " + normalizeText(inv.creator_name);
+                    const matchTitle = combinedTitleStr.includes(titleQuery);
+                    
+                    // استانداردسازی تاریخ دیتابیس برای جستجو
+                    const dbDateNormalized = normalizeDateString(inv.shamsi_date);
+                    const matchDate = dbDateNormalized.includes(dateQuery);
+                    
+                    let matchStatus = true;
+                    if (statusQuery === 'paid') matchStatus = (inv.is_paid === 1 || inv.is_paid === true);
+                    if (statusQuery === 'unpaid') matchStatus = (inv.is_paid === 0 || inv.is_paid === false);
+
+                    return matchTitle && matchDate && matchStatus;
+                });
+
+                if(!filteredData || filteredData.length === 0) {
+                    listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">فاکتوری یافت نشد.</td></tr>`;
                     return;
                 }
 
-                listEl.innerHTML = invoices.map(inv => `
+                // تولید HTML برای ردیف‌های فیلتر شده
+                listEl.innerHTML = filteredData.map(inv => `
                     <tr class="hover:bg-slate-800/40 transition">
                         <td class="p-3.5 font-bold text-indigo-400">#${inv.id}</td>
                         <td class="p-3.5 font-bold">${inv.title || 'بدون عنوان'}</td>
@@ -827,7 +948,7 @@
                     </tr>
                 `).join('');
             } catch (e) {
-                console.error(e);
+                console.error("خطا در رندر فاکتورها:", e);
             }
         }
 
