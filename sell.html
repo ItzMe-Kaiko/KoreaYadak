@@ -843,60 +843,59 @@
             }
         }
 
-        /* تابع جدید برای فیلتر کردن و نمایش فاکتورها */
-        function renderInvoices() {
-            const listEl = document.getElementById('invoicesList');
+/* تابع اصلاح‌شده برای فیلتر کردن و نمایش فاکتورها */
+function renderInvoices() {
+    try {
+        const listEl = document.getElementById('invoicesList');
+        
+        // گرفتن مقادیر تایپ شده تو کادرهای جستجو
+        const titleQuery = document.getElementById('searchTitle').value.toLowerCase().trim();
+        const dateQuery = document.getElementById('searchDate').value.trim();
+        const statusQuery = document.getElementById('filterStatus').value;
+
+        // فیلتر کردن آرایه اصلی بر اساس مقادیر ورودی
+        const filteredData = allInvoicesData.filter(inv => {
+            const matchTitle = (inv.title || '').toLowerCase().includes(titleQuery);
+            const matchDate = (inv.shamsi_date || '').includes(dateQuery);
             
-            // گرفتن مقادیر تایپ شده تو کادرهای جستجو
-            const titleQuery = document.getElementById('searchTitle').value.toLowerCase().trim();
-            const dateQuery = document.getElementById('searchDate').value.trim();
-            const statusQuery = document.getElementById('filterStatus').value;
+            let matchStatus = true;
+            if (statusQuery === 'paid') matchStatus = (inv.is_paid === 1 || inv.is_paid === true);
+            if (statusQuery === 'unpaid') matchStatus = (inv.is_paid === 0 || inv.is_paid === false);
 
-            // فیلتر کردن آرایه اصلی بر اساس مقادیر ورودی
-            const filteredData = allInvoicesData.filter(inv => {
-                const matchTitle = (inv.title || '').toLowerCase().includes(titleQuery);
-                const matchDate = (inv.shamsi_date || '').includes(dateQuery);
-                
-                let matchStatus = true;
-                if (statusQuery === 'paid') matchStatus = (inv.is_paid === 1 || inv.is_paid === true);
-                if (statusQuery === 'unpaid') matchStatus = (inv.is_paid === 0 || inv.is_paid === false);
+            return matchTitle && matchDate && matchStatus;
+        });
 
-                return matchTitle && matchDate && matchStatus;
-            });
-
-            if(!filteredData || filteredData.length === 0) {
-                listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">فاکتوری با این مشخصات یافت نشد.</td></tr>`;
-                return;
-            }
-
-            // تولید HTML ردیف‌ها
-            listEl.innerHTML = filteredData.map((inv, index) => `
-                <tr class="hover:bg-slate-800/40 transition">
-                    <!-- به جای inv.id از index + 1 استفاده می‌کنیم تا همیشه از 1 به ترتیب شماره‌گذاری بشه -->
-                    <td class="p-3.5 font-bold text-indigo-400">#${index + 1}</td>
-                    
-                    <td class="p-3.5 font-bold">${inv.title || 'بدون عنوان'}</td>
-                    <td class="p-3.5 text-gray-300 font-mono">${inv.shamsi_date}</td>
-                    <td class="p-3.5 hidden md:table-cell text-gray-400">${inv.creator_name || '-'}</td>
-                    <td class="p-3.5 whitespace-nowrap">
-                        ${inv.is_paid 
-                            ? '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs">پرداخت شده</span>' 
-                            : '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-xs">تسویه نشده</span>'}
-                    </td>
-                    <td class="p-3.5 text-center flex justify-center gap-2 min-w-[120px]">
-                        <button onclick="viewInvoice(${inv.id})" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-lg transition" title="مشاهده/ویرایش">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteInvoice(${inv.id})" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg transition" title="حذف فاکتور">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch (e) {
-                console.error(e);
-            }
+        if(!filteredData || filteredData.length === 0) {
+            listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">فاکتوری با این مشخصات یافت نشد.</td></tr>`;
+            return;
         }
+
+        // تولید HTML ردیف‌ها
+        listEl.innerHTML = filteredData.map((inv, index) => `
+            <tr class="hover:bg-slate-800/40 transition">
+                <td class="p-3.5 font-bold text-indigo-400">#${index + 1}</td>
+                <td class="p-3.5 font-bold">${inv.title || 'بدون عنوان'}</td>
+                <td class="p-3.5 text-gray-300 font-mono">${inv.shamsi_date}</td>
+                <td class="p-3.5 hidden md:table-cell text-gray-400">${inv.creator_name || '-'}</td>
+                <td class="p-3.5 whitespace-nowrap">
+                    ${inv.is_paid 
+                        ? '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs">پرداخت شده</span>' 
+                        : '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-xs">تسویه نشده</span>'}
+                </td>
+                <td class="p-3.5 text-center flex justify-center gap-2 min-w-[120px]">
+                    <button onclick="viewInvoice(${inv.id})" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-lg transition" title="مشاهده/ویرایش">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button onclick="deleteInvoice(${inv.id})" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg transition" title="حذف فاکتور">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        console.error("خطا در رندر فاکتورها:", e);
+    }
+}
 
         // بستن پیشنهادات با کلیک خارج از کادر
         document.addEventListener('click', (e) => {
