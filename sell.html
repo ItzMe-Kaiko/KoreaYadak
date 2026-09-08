@@ -246,48 +246,21 @@
         <!-- محتوای اصلی -->
         <main class="main-content">
             <!-- نوار ابزار بالا -->
-            <!-- نوار ابزار بالا و فیلترها -->
-            <div class="glass-card p-4 mb-6 flex flex-col gap-5">
-                <!-- بخش دکمه‌ها و تغییر تم -->
-                <div class="flex flex-wrap justify-between items-center gap-4">
+            <div class="glass-card p-4 mb-6 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
                     <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
                         <i class="fa-solid fa-plus"></i> ایجاد فاکتور جدید
                     </button>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-gray-400">حالت تاریک</span>
-                        <label class="switch">
-                            <input type="checkbox" id="darkToggle" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
                 </div>
 
-            <!-- بخش فیلترها (کادرهای جستجو) -->
-            <div class="border-t border-gray-700/50 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- کادر قرمز: جستجوی مشتری/عنوان -->
-                <div class="relative">
-                    <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                    <input type="text" id="searchTitle" oninput="renderInvoices()" placeholder="جستجوی عنوان / مشتری..." class="w-full form-input-custom pr-9">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400">حالت تاریک</span>
+                    <label class="switch">
+                        <input type="checkbox" id="darkToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
-        
-            <!-- کادر زرد: جستجوی تاریخ -->
-            <div class="relative">
-                <i class="fa-solid fa-calendar-days absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                <input type="text" id="searchDate" oninput="renderInvoices()" placeholder="تاریخ (YY/MM/DD)" dir="ltr" class="w-full form-input-custom pr-9 text-right font-mono placeholder:font-sans">
-            </div>
-
-            <!-- کادر سبز: وضعیت فاکتور -->
-            <div class="relative">
-                <i class="fa-solid fa-filter absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                <select id="filterStatus" onchange="renderInvoices()" class="w-full form-input-custom pr-9 appearance-none cursor-pointer">
-                    <option value="all">همه فاکتورها (تسویه/پرداخت نشده)</option>
-                    <option value="paid">پرداخت شده</option>
-                    <option value="unpaid">تسویه نشده</option>
-                </select>
-                <i class="fa-solid fa-chevron-down absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
-            </div>
-        </div>
-    </div>
 
             <!-- جدول فاکتورها -->
             <div class="glass-card overflow-hidden">
@@ -822,79 +795,41 @@
             }
         }
 
-/* متغیر سراسری برای نگهداری دیتای فاکتورها */
-        let allInvoicesData = [];
-
-        /* لود اولیه لیست فاکتورها از سرور */
+        /* لود لیست فاکتورها */
         async function loadInvoices() {
             const listEl = document.getElementById('invoicesList');
-            listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">در حال دریافت اطلاعات...</td></tr>`;
             try {
                 const res = await fetch('/api/invoices/sell', { headers: API_HEADERS() });
                 if(!res.ok) return;
+                const invoices = await res.json();
                 
-                // دیتای دریافتی رو تو متغیر سراسری ذخیره می‌کنیم
-                allInvoicesData = await res.json();
-                
-                // تابع رندر رو صدا می‌زنیم تا فیلترها رو اعمال کنه و نشون بده
-                renderInvoices();
+                if(!invoices || invoices.length === 0) {
+                    listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">هیچ فاکتوری ثبت نشده است.</td></tr>`;
+                    return;
+                }
+
+                listEl.innerHTML = invoices.map(inv => `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="p-3.5 font-bold text-indigo-400">#${inv.id}</td>
+                        <td class="p-3.5 font-bold">${inv.title || 'بدون عنوان'}</td>
+                        <td class="p-3.5 text-gray-300">${inv.shamsi_date}</td>
+                        <td class="p-3.5 hidden md:table-cell text-gray-400">${inv.creator_name || '-'}</td>
+                        <td class="p-3.5 whitespace-nowrap">
+                            ${inv.is_paid 
+                                ? '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs">پرداخت شده</span>' 
+                                : '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-xs">تسویه نشده</span>'}
+                        </td>
+                        <td class="p-3.5 text-center flex justify-center gap-2 min-w-[120px]">
+                            <button onclick="viewInvoice(${inv.id})" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-lg transition" title="مشاهده/ویرایش">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteInvoice(${inv.id})" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg transition" title="حذف فاکتور">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
             } catch (e) {
-                console.error(e);
-                listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-red-400">خطا در دریافت اطلاعات</td></tr>`;
-            }
-        }
-
-        /* تابع جدید برای فیلتر کردن و نمایش فاکتورها */
-        function renderInvoices() {
-            const listEl = document.getElementById('invoicesList');
-            
-            // گرفتن مقادیر تایپ شده تو کادرهای جستجو
-            const titleQuery = document.getElementById('searchTitle').value.toLowerCase().trim();
-            const dateQuery = document.getElementById('searchDate').value.trim();
-            const statusQuery = document.getElementById('filterStatus').value;
-
-            // فیلتر کردن آرایه اصلی بر اساس مقادیر ورودی
-            const filteredData = allInvoicesData.filter(inv => {
-                const matchTitle = (inv.title || '').toLowerCase().includes(titleQuery);
-                const matchDate = (inv.shamsi_date || '').includes(dateQuery);
-                
-                let matchStatus = true;
-                if (statusQuery === 'paid') matchStatus = (inv.is_paid === 1 || inv.is_paid === true);
-                if (statusQuery === 'unpaid') matchStatus = (inv.is_paid === 0 || inv.is_paid === false);
-
-                return matchTitle && matchDate && matchStatus;
-            });
-
-            if(!filteredData || filteredData.length === 0) {
-                listEl.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">فاکتوری با این مشخصات یافت نشد.</td></tr>`;
-                return;
-            }
-
-            // تولید HTML ردیف‌ها
-            listEl.innerHTML = filteredData.map((inv, index) => `
-                <tr class="hover:bg-slate-800/40 transition">
-                    <!-- به جای inv.id از index + 1 استفاده می‌کنیم تا همیشه از 1 به ترتیب شماره‌گذاری بشه -->
-                    <td class="p-3.5 font-bold text-indigo-400">#${index + 1}</td>
-                    
-                    <td class="p-3.5 font-bold">${inv.title || 'بدون عنوان'}</td>
-                    <td class="p-3.5 text-gray-300 font-mono">${inv.shamsi_date}</td>
-                    <td class="p-3.5 hidden md:table-cell text-gray-400">${inv.creator_name || '-'}</td>
-                    <td class="p-3.5 whitespace-nowrap">
-                        ${inv.is_paid 
-                            ? '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs">پرداخت شده</span>' 
-                            : '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg text-xs">تسویه نشده</span>'}
-                    </td>
-                    <td class="p-3.5 text-center flex justify-center gap-2 min-w-[120px]">
-                        <button onclick="viewInvoice(${inv.id})" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-lg transition" title="مشاهده/ویرایش">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="deleteInvoice(${inv.id})" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg transition" title="حذف فاکتور">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch (e) {
                 console.error(e);
             }
         }
