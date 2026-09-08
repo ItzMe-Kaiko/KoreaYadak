@@ -538,7 +538,6 @@ def create_sell_invoice(
                 ))
 
                 if data.deduct_inventory and item.part_id:
-                    # استفاده از GREATEST برای جلوگیری از منفی شدن موجودی
                     cursor.execute(
                         "UPDATE parts SET stock = GREATEST(0, stock - %s) WHERE id = %s",
                         (item.quantity, item.part_id)
@@ -562,13 +561,11 @@ def update_sell_invoice(
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
-            # بررسی وضعیت فاکتور قبلی جهت بازگردانی موجودی
             cursor.execute("SELECT id, deduct_inventory FROM sell_invoices WHERE id = %s", (invoice_id,))
             old_invoice = cursor.fetchone()
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # بازگردانی کامل موجودی کالاهای فاکتور قبلی به انبار در صورتی که قبلا کسر شده بودند
             if old_invoice["deduct_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM sell_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
@@ -577,10 +574,8 @@ def update_sell_invoice(
                         (old_item["quantity"], old_item["part_id"])
                     )
 
-            # پاک کردن آیتم‌های قبلی فاکتور
             cursor.execute("DELETE FROM sell_invoice_items WHERE invoice_id = %s", (invoice_id,))
             
-            # ثبت تغییرات در هدر فاکتور
             cursor.execute("""
                 UPDATE sell_invoices 
                 SET title = %s, shamsi_date = %s, is_paid = %s, deduct_inventory = %s,
@@ -593,7 +588,6 @@ def update_sell_invoice(
             ))
 
             now = utc_now()
-            # ثبت آیتم‌های جدید و اعمال منطق جدید کسر از انبار و بروزرسانی قیمت
             for item in data.items:
                 cursor.execute("""
                     INSERT INTO sell_invoice_items (
@@ -606,7 +600,6 @@ def update_sell_invoice(
                 ))
 
                 if data.deduct_inventory and item.part_id:
-                    # استفاده از GREATEST برای جلوگیری از منفی شدن
                     cursor.execute(
                         "UPDATE parts SET stock = GREATEST(0, stock - %s) WHERE id = %s",
                         (item.quantity, item.part_id)
@@ -643,13 +636,11 @@ def delete_sell_invoice(
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
-            # دریافت اطلاعات فاکتور جهت چک کردن وضعیت انبار
             cursor.execute("SELECT id, deduct_inventory FROM sell_invoices WHERE id = %s", (invoice_id,))
             old_invoice = cursor.fetchone()
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # بازگردانی دقیق موجودی اقلام فروخته شده به انبار پیش از حذف نهایی سیستم
             if old_invoice["deduct_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM sell_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
@@ -699,7 +690,6 @@ def create_buy_invoice(
             for item in data.items:
                 part_id = item.part_id
 
-                # ساخت قطعه جدید اگر در دیتابیس وجود نداشت
                 if not part_id and item.part_number:
                     cursor.execute("SELECT id FROM parts WHERE part_number = %s", (item.part_number,))
                     db_part = cursor.fetchone()
@@ -771,7 +761,6 @@ def update_buy_invoice(
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # بازگردانی موجودی قبلی فاکتور خرید. برای جلوگیری از منفی شدن از GREATEST استفاده شده است.
             if old_invoice["add_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM buy_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
@@ -797,7 +786,6 @@ def update_buy_invoice(
             for item in data.items:
                 part_id = item.part_id
                 
-                # ثبت قطعه جدید اگر در ویرایش فاکتور اضافه شده باشد
                 if not part_id and item.part_number:
                     cursor.execute("SELECT id FROM parts WHERE part_number = %s", (item.part_number,))
                     db_part = cursor.fetchone()
@@ -849,7 +837,6 @@ def delete_buy_invoice(
             if not old_invoice:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
 
-            # کاهش منطقی موجودی‌های اضافه شده از انبار به دلیل حذف فاکتور خرید با اطمینان از عدم منفی شدن موجودی
             if old_invoice["add_inventory"]:
                 cursor.execute("SELECT part_id, quantity FROM buy_invoice_items WHERE invoice_id = %s AND part_id IS NOT NULL", (invoice_id,))
                 for old_item in cursor.fetchall():
@@ -986,8 +973,6 @@ def update_part(
     current_user: dict = Depends(get_current_user)
 ):
     part_number = data.part_number.strip()
-
-    # اینجا هم در فرم ویرایش قطعه، جلوی ارسال موجودی منفی رو می‌گیریم
     safe_stock = max(0, data.stock)
 
     with get_db() as conn:
@@ -1057,7 +1042,6 @@ def update_stock(
     data: StockUpdate,
     current_user: dict = Depends(get_current_user)
 ):
-    # جلوگیری از ارسال مستقیم عدد منفی در بروزرسانی سریع موجودی
     safe_stock = max(0, data.stock)
 
     with get_db() as conn:
@@ -1095,9 +1079,24 @@ def fetch_report_dataset(report_type: str, from_date: str = "", to_date: str = "
             # ۱. قطعات ناموجود در انبار
             if report_type == "out_of_stock":
                 query = """
-                    SELECT id, name, part_number, compatible_cars, stock, price
+                    SELECT id, name, part_number, compatible_cars, stock, price, is_genuine
                     FROM parts
                     WHERE stock <= 0
+                """
+                params = []
+                if keyword_clean:
+                    query += " AND (name ILIKE %s OR part_number ILIKE %s OR compatible_cars ILIKE %s)"
+                    params.extend([keyword_clean, keyword_clean, keyword_clean])
+                query += " ORDER BY id DESC"
+                cursor.execute(query, params)
+                return cursor.fetchall()
+
+            # ۱.۲. قطعات موجود در انبار
+            elif report_type == "in_stock":
+                query = """
+                    SELECT id, name, part_number, compatible_cars, stock, price, is_genuine
+                    FROM parts
+                    WHERE stock > 0
                 """
                 params = []
                 if keyword_clean:
@@ -1110,7 +1109,7 @@ def fetch_report_dataset(report_type: str, from_date: str = "", to_date: str = "
             # ۲. فاکتورهای فروش تسویه نشده
             elif report_type == "unpaid_sell":
                 query = """
-                    SELECT s.id, s.title, s.shamsi_date AS date, s.is_paid,
+                    SELECT s.id, s.title, s.shamsi_date AS date, s.is_paid, 'sell' AS invoice_kind,
                            COALESCE(SUM(i.total_price), 0) AS total_price
                     FROM sell_invoices s
                     LEFT JOIN sell_invoice_items i ON s.id = i.invoice_id
@@ -1130,10 +1129,33 @@ def fetch_report_dataset(report_type: str, from_date: str = "", to_date: str = "
                 cursor.execute(query, params)
                 return cursor.fetchall()
 
+            # ۲.۲. فاکتورهای فروش تسویه شده
+            elif report_type == "paid_sell":
+                query = """
+                    SELECT s.id, s.title, s.shamsi_date AS date, s.is_paid, 'sell' AS invoice_kind,
+                           COALESCE(SUM(i.total_price), 0) AS total_price
+                    FROM sell_invoices s
+                    LEFT JOIN sell_invoice_items i ON s.id = i.invoice_id
+                    WHERE s.is_paid = 1
+                """
+                params = []
+                if from_date.strip():
+                    query += " AND s.shamsi_date >= %s"
+                    params.append(from_date.strip())
+                if to_date.strip():
+                    query += " AND s.shamsi_date <= %s"
+                    params.append(to_date.strip())
+                if keyword_clean:
+                    query += " AND (s.title ILIKE %s OR s.creator_name ILIKE %s OR i.part_name ILIKE %s)"
+                    params.extend([keyword_clean, keyword_clean, keyword_clean])
+                query += " GROUP BY s.id ORDER BY s.id DESC"
+                cursor.execute(query, params)
+                return cursor.fetchall()
+
             # ۳. فاکتورهای خرید تسویه نشده
             elif report_type == "unpaid_buy":
                 query = """
-                    SELECT b.id, b.title, b.shamsi_date AS date, b.is_paid,
+                    SELECT b.id, b.title, b.shamsi_date AS date, b.is_paid, 'buy' AS invoice_kind,
                            COALESCE(SUM(i.total_price), 0) AS total_price
                     FROM buy_invoices b
                     LEFT JOIN buy_invoice_items i ON b.id = i.invoice_id
@@ -1153,10 +1175,33 @@ def fetch_report_dataset(report_type: str, from_date: str = "", to_date: str = "
                 cursor.execute(query, params)
                 return cursor.fetchall()
 
+            # ۳.۲. فاکتورهای خرید تسویه شده
+            elif report_type == "paid_buy":
+                query = """
+                    SELECT b.id, b.title, b.shamsi_date AS date, b.is_paid, 'buy' AS invoice_kind,
+                           COALESCE(SUM(i.total_price), 0) AS total_price
+                    FROM buy_invoices b
+                    LEFT JOIN buy_invoice_items i ON b.id = i.invoice_id
+                    WHERE b.is_paid = 1
+                """
+                params = []
+                if from_date.strip():
+                    query += " AND b.shamsi_date >= %s"
+                    params.append(from_date.strip())
+                if to_date.strip():
+                    query += " AND b.shamsi_date <= %s"
+                    params.append(to_date.strip())
+                if keyword_clean:
+                    query += " AND (b.title ILIKE %s OR b.creator_name ILIKE %s OR i.part_name ILIKE %s)"
+                    params.extend([keyword_clean, keyword_clean, keyword_clean])
+                query += " GROUP BY b.id ORDER BY b.id DESC"
+                cursor.execute(query, params)
+                return cursor.fetchall()
+
             # ۴. فاکتورهای تسویه شده (کل)
             elif report_type == "paid_all":
                 query = """
-                    SELECT 'فروش' AS invoice_type, s.id, s.title, s.shamsi_date AS date, s.is_paid,
+                    SELECT 'فروش' AS invoice_type, 'sell' AS invoice_kind, s.id, s.title, s.shamsi_date AS date, s.is_paid,
                            COALESCE(SUM(i.total_price), 0) AS total_price
                     FROM sell_invoices s
                     LEFT JOIN sell_invoice_items i ON s.id = i.invoice_id
@@ -1176,7 +1221,7 @@ def fetch_report_dataset(report_type: str, from_date: str = "", to_date: str = "
 
                 query += """
                     UNION ALL
-                    SELECT 'خرید' AS invoice_type, b.id, b.title, b.shamsi_date AS date, b.is_paid,
+                    SELECT 'خرید' AS invoice_type, 'buy' AS invoice_kind, b.id, b.title, b.shamsi_date AS date, b.is_paid,
                            COALESCE(SUM(i.total_price), 0) AS total_price
                     FROM buy_invoices b
                     LEFT JOIN buy_invoice_items i ON b.id = i.invoice_id
@@ -1198,6 +1243,228 @@ def fetch_report_dataset(report_type: str, from_date: str = "", to_date: str = "
                 return cursor.fetchall()
 
     return []
+
+
+def generate_single_invoice_pdf_bytes(invoice_type: str, invoice_id: int) -> bytes:
+    """تولید بایت‌های فایل PDF رسمی یک فاکتور مجزا (فروش یا خرید)"""
+    table_name = "sell_invoices" if invoice_type == "sell" else "buy_invoices"
+    items_table = "sell_invoice_items" if invoice_type == "sell" else "buy_invoice_items"
+    type_title = "فاکتور فروش" if invoice_type == "sell" else "فاکتور خرید"
+
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(f"SELECT * FROM {table_name} WHERE id = %s", (invoice_id,))
+            invoice = cursor.fetchone()
+            if not invoice:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="فاکتور یافت نشد")
+
+            cursor.execute(f"""
+                SELECT i.*, COALESCE(p.is_genuine, 0) AS is_genuine 
+                FROM {items_table} i 
+                LEFT JOIN parts p ON i.part_id = p.id 
+                WHERE i.invoice_id = %s
+            """, (invoice_id,))
+            items = cursor.fetchall()
+
+    total_sum = sum(item.get('total_price', 0) for item in items)
+    status_text = "تسویه شده" if invoice.get('is_paid') else "تسویه نشده"
+    status_class = "badge-paid" if invoice.get('is_paid') else "badge-unpaid"
+
+    item_rows = ""
+    for idx, item in enumerate(items, 1):
+        is_gen = item.get('is_genuine', 0)
+        gen_badge = '<span class="badge badge-genuine">اصلی (GENUINE)</span>' if is_gen else '<span class="badge badge-normal">متفرقه</span>'
+        
+        item_rows += f"""
+        <tr>
+            <td style="text-align: center;">{idx}</td>
+            <td><b>{item.get('part_name', '')}</b> {gen_badge}</td>
+            <td><code dir="ltr">{item.get('part_number', '')}</code></td>
+            <td>{item.get('car', '')}</td>
+            <td style="text-align: center;">{item.get('quantity', 0)}</td>
+            <td style="text-align: left;">{item.get('unit_price', 0):,.0f} تومان</td>
+            <td style="text-align: left;"><b>{item.get('total_price', 0):,.0f} تومان</b></td>
+        </tr>
+        """
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+            
+            @page {{
+                size: A4 portrait;
+                margin: 12mm;
+                @bottom-center {{
+                    content: "صفحه " counter(page) " از " counter(pages);
+                    font-size: 8pt;
+                    font-family: 'Vazirmatn', sans-serif;
+                    color: #64748b;
+                }}
+            }}
+            body {{
+                font-family: 'Vazirmatn', sans-serif;
+                direction: rtl;
+                color: #0f172a;
+                margin: 0;
+                padding: 0;
+                font-size: 9.5pt;
+            }}
+            .header {{
+                border-bottom: 2px solid #4f46e5;
+                padding-bottom: 12px;
+                margin-bottom: 15px;
+            }}
+            .header h1 {{
+                margin: 0 0 4px 0;
+                font-size: 18pt;
+                color: #312e81;
+            }}
+            .header p {{
+                margin: 0;
+                font-size: 9pt;
+                color: #64748b;
+            }}
+            .invoice-details {{
+                width: 100%;
+                margin-bottom: 15px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 10px 14px;
+                box-sizing: border-box;
+            }}
+            .details-grid {{
+                display: table;
+                width: 100%;
+            }}
+            .details-row {{
+                display: table-row;
+            }}
+            .details-cell {{
+                display: table-cell;
+                padding: 4px 8px;
+                font-size: 9pt;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }}
+            th {{
+                background-color: #4f46e5;
+                color: white;
+                font-weight: bold;
+                padding: 8px;
+                text-align: right;
+                font-size: 9.5pt;
+            }}
+            td {{
+                padding: 8px;
+                border-bottom: 1px solid #e2e8f0;
+                font-size: 9pt;
+            }}
+            tr:nth-child(even) {{
+                background-color: #f8fafc;
+            }}
+            .badge {{
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 7.5pt;
+                font-weight: bold;
+                display: inline-block;
+            }}
+            .badge-paid {{ background: #dcfce7; color: #15803d; }}
+            .badge-unpaid {{ background: #fef3c7; color: #b45309; }}
+            .badge-genuine {{ background: #fef3c7; color: #b45309; border: 1px solid #f59e0b; }}
+            .badge-normal {{ background: #f1f5f9; color: #64748b; }}
+
+            .summary-box {{
+                margin-top: 20px;
+                width: 100%;
+                border-top: 2px solid #e2e8f0;
+                padding-top: 12px;
+            }}
+            .total-row {{
+                text-align: left;
+                font-size: 12pt;
+                font-weight: bold;
+                color: #1e1b4b;
+                padding: 10px;
+                background: #e0e7ff;
+                border-radius: 6px;
+            }}
+            .footer-notes {{
+                margin-top: 40px;
+                display: table;
+                width: 100%;
+                text-align: center;
+                font-size: 9.5pt;
+                color: #64748b;
+            }}
+            .signature-box {{
+                display: table-cell;
+                width: 50%;
+                padding-top: 30px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>کُره یدک | {type_title}</h1>
+            <p>سامانه تخصصی مدیریت قطعات خودروهای کره‌ای</p>
+        </div>
+
+        <div class="invoice-details">
+            <div class="details-grid">
+                <div class="details-row">
+                    <div class="details-cell"><b>شماره فاکتور:</b> #{invoice.get('id')}</div>
+                    <div class="details-cell"><b>عنوان / طرف حساب:</b> {invoice.get('title', '')}</div>
+                    <div class="details-cell"><b>تاریخ فاکتور:</b> {invoice.get('shamsi_date', '')}</div>
+                    <div class="details-cell"><b>وضعیت پرداخت:</b> <span class="badge {status_class}">{status_text}</span></div>
+                </div>
+                <div class="details-row">
+                    <div class="details-cell"><b>ثبت کننده:</b> {invoice.get('creator_name', 'سیستم')}</div>
+                    <div class="details-cell"><b>آخرین ویرایش:</b> {invoice.get('last_editor_name', '-')}</div>
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%; text-align: center;">#</th>
+                    <th style="width: 30%;">نام قطعه / اصالت</th>
+                    <th style="width: 20%;">پارت نامبر</th>
+                    <th style="width: 15%;">خودرو</th>
+                    <th style="width: 8%; text-align: center;">تعداد</th>
+                    <th style="width: 11%; text-align: left;">قیمت واحد</th>
+                    <th style="width: 11%; text-align: left;">قیمت کل</th>
+                </tr>
+            </thead>
+            <tbody>
+                {item_rows if item_rows else '<tr><td colspan="7" style="text-align:center;">هیچ اقلامی در این فاکتور ثبت نشده است.</td></tr>'}
+            </tbody>
+        </table>
+
+        <div class="summary-box">
+            <div class="total-row">
+                مبلغ کل فاکتور: {total_sum:,.0f} تومان
+            </div>
+        </div>
+
+        <div class="footer-notes">
+            <div class="signature-box">امضاء و مهر صادرکننده</div>
+            <div class="signature-box">امضاء و تایید تحویل‌گیرنده</div>
+        </div>
+    </body>
+    </html>
+    """
+
+    return HTML(string=html_content).write_pdf()
 
 
 # ------------------------------------------------------------------------------
@@ -1230,9 +1497,12 @@ def generate_report_pdf(
     # عناوین فارسی انواع گزارش
     report_titles = {
         "out_of_stock": "گزارش قطعات ناموجود در انبار",
+        "in_stock": "گزارش قطعات موجود در انبار",
         "unpaid_sell": "گزارش فاکتورهای فروش تسویه نشده",
+        "paid_sell": "گزارش فاکتورهای فروش تسویه شده",
         "unpaid_buy": "گزارش فاکتورهای خرید تسویه نشده",
-        "paid_all": "گزارش فاکتورهای تسویه شده"
+        "paid_buy": "گزارش فاکتورهای خرید تسویه شده",
+        "paid_all": "گزارش فاکتورهای تسویه شده (کل)"
     }
 
     report_title = report_titles.get(type, "گزارش سیستم")
@@ -1241,14 +1511,18 @@ def generate_report_pdf(
     table_rows = ""
     total_sum = 0
 
-    if type == "out_of_stock":
+    if type in ["out_of_stock", "in_stock"]:
         for idx, item in enumerate(data, 1):
+            is_gen = item.get('is_genuine', 0)
+            gen_badge = '<span class="badge badge-genuine">اصلی (GENUINE)</span>' if is_gen else '<span class="badge badge-normal">متفرقه</span>'
+            stock_color = '#dc2626' if item.get('stock', 0) <= 0 else '#16a34a'
+            
             table_rows += f"""
             <tr>
                 <td>{idx}</td>
-                <td><b>{item.get('name', '')}</b></td>
+                <td><b>{item.get('name', '')}</b> {gen_badge}</td>
                 <td>{item.get('part_number', '')} / {item.get('compatible_cars', '')}</td>
-                <td style="color: #dc2626; font-weight: bold;">{item.get('stock', 0)} عدد</td>
+                <td style="color: {stock_color}; font-weight: bold;">{item.get('stock', 0)} عدد</td>
                 <td>{item.get('price', 0):,.0f} تومان</td>
             </tr>
             """
@@ -1258,11 +1532,12 @@ def generate_report_pdf(
             total_sum += price
             status_text = "تسویه شده" if item.get('is_paid') else "تسویه نشده"
             status_class = "badge-paid" if item.get('is_paid') else "badge-unpaid"
+            inv_type_text = f" ({item.get('invoice_type')})" if item.get('invoice_type') else ""
             
             table_rows += f"""
             <tr>
                 <td>{idx}</td>
-                <td><b>{item.get('title', '')}</b></td>
+                <td><b>{item.get('title', '')}</b>{inv_type_text}</td>
                 <td>{item.get('date', '')}</td>
                 <td><span class="badge {status_class}">{status_text}</span></td>
                 <td><b>{price:,.0f} تومان</b></td>
@@ -1270,10 +1545,10 @@ def generate_report_pdf(
             """
 
     # هدر‌های جدول
-    if type == "out_of_stock":
+    if type in ["out_of_stock", "in_stock"]:
         table_headers = """
             <th>ردیف</th>
-            <th>نام قطعه</th>
+            <th>نام قطعه / اصالت</th>
             <th>پارت نامبر / خودرو</th>
             <th>موجودی</th>
             <th>آخرین قیمت</th>
@@ -1289,14 +1564,13 @@ def generate_report_pdf(
 
     # جمع کل برای گزارشات مالی
     total_section = ""
-    if type != "out_of_stock":
+    if type not in ["out_of_stock", "in_stock"]:
         total_section = f"""
         <div class="total-box">
             مجموع مبالغ این گزارش: {total_sum:,.0f} تومان
         </div>
         """
 
-    # ساخت سند HTML کامل با استایل‌های اختصاصی PDF و فونت فارسی Vazirmatn
     html_content = f"""
     <!DOCTYPE html>
     <html lang="fa" dir="rtl">
@@ -1373,9 +1647,12 @@ def generate_report_pdf(
                 border-radius: 4px;
                 font-size: 7.5pt;
                 font-weight: bold;
+                display: inline-block;
             }}
             .badge-paid {{ background: #dcfce7; color: #15803d; }}
             .badge-unpaid {{ background: #fef3c7; color: #b45309; }}
+            .badge-genuine {{ background: #fef3c7; color: #b45309; border: 1px solid #f59e0b; }}
+            .badge-normal {{ background: #f1f5f9; color: #64748b; }}
             .total-box {{
                 margin-top: 15px;
                 text-align: left;
@@ -1416,14 +1693,48 @@ def generate_report_pdf(
     </html>
     """
 
-    # رندر کدهای HTML به فایل PDF در حافظه RAM
     pdf_bytes = HTML(string=html_content).write_pdf()
 
-    # ارسال فایل PDF به مرورگر کاربر
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={
             "Content-Disposition": f"attachment; filename=Report_{type}.pdf"
+        }
+    )
+
+
+# ------------------------------------------------------------------------------
+# Routes: Single Invoice PDF Exports
+# ------------------------------------------------------------------------------
+
+@app.get("/api/invoices/sell/{invoice_id}/pdf")
+def generate_sell_invoice_pdf(
+    invoice_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """تولید فایل PDF تک‌فاکتور فروش با تمام جزئیات و نشان اصلی بودن قطعات"""
+    pdf_bytes = generate_single_invoice_pdf_bytes("sell", invoice_id)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=Invoice_Sell_{invoice_id}.pdf"
+        }
+    )
+
+
+@app.get("/api/invoices/buy/{invoice_id}/pdf")
+def generate_buy_invoice_pdf(
+    invoice_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """تولید فایل PDF تک‌فاکتور خرید با تمام جزئیات و نشان اصلی بودن قطعات"""
+    pdf_bytes = generate_single_invoice_pdf_bytes("buy", invoice_id)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=Invoice_Buy_{invoice_id}.pdf"
         }
     )
