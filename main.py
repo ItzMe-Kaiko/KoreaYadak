@@ -104,6 +104,37 @@ def init_db_schema():
                 );
             """)
 
+            # Buy Invoices
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS buy_invoices (
+                    id SERIAL PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    shamsi_date TEXT NOT NULL,
+                    is_paid INTEGER NOT NULL DEFAULT 0,
+                    add_inventory INTEGER NOT NULL DEFAULT 1,
+                    update_price INTEGER NOT NULL DEFAULT 0,
+                    creator_name TEXT,
+                    last_editor_name TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+            """)
+
+            # Buy Invoice Items
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS buy_invoice_items (
+                    id SERIAL PRIMARY KEY,
+                    invoice_id INTEGER NOT NULL REFERENCES buy_invoices(id) ON DELETE CASCADE,
+                    part_id INTEGER,
+                    part_name TEXT NOT NULL,
+                    part_number TEXT NOT NULL,
+                    car TEXT NOT NULL,
+                    quantity INTEGER NOT NULL,
+                    unit_price REAL NOT NULL,
+                    total_price REAL NOT NULL
+                );
+            """)
+            
             # High-Performance Query Indexes
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_parts_part_num ON parts(part_number);")
@@ -260,6 +291,13 @@ class SellInvoiceItemBase(BaseModel):
     unit_price: float
     total_price: float
 
+class BuyInvoiceCreate(BaseModel):
+    title: str
+    shamsi_date: str
+    is_paid: bool
+    add_inventory: bool
+    update_price: bool = False
+    items: list[SellInvoiceItemBase]
 
 class SellInvoiceCreate(BaseModel):
     title: str
@@ -619,6 +657,67 @@ def delete_sell_invoice(
             cursor.execute("DELETE FROM sell_invoices WHERE id = %s", (invoice_id,))
 
     return {"message": "فاکتور با موفقیت حذف شد."}
+
+@app.get("/api/invoices/buy")
+def get_buy_invoices(current_user: dict = Depends(get_current_user)):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM buy_invoices ORDER BY id DESC")
+            return cursor.fetchall()
+
+
+# ------------------------------------------------------------------------------
+ Buy invoices
+ ------------------------------------------------------------------------------
+
+@app.post("/api/invoices/buy")
+def create_buy_invoice(
+    data: BuyInvoiceCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    now = utc_now()
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO buy_invoices (
+                    title, shamsi_date, is_paid, add_inventory, update_price,
+                    creator_name, last_editor_name, created_at, updated_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                data.title, data.shamsi_date, int(data.is_paid),
+                int(data.add_inventory), int(data.update_price),
+                current_user["username"], current_user["username"], now, now
+            ))
+            invoice_id = cursor.fetchone()["id"]
+
+            for item in data.items:
+                cursor.execute("""
+                    INSERT INTO buy_invoice_items (
+                        invoice_id, part_id, part_name, part_number, car, quantity, unit_price, total_price
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    invoice_id, item.part_id, item.part_name, item.part_number,
+                    item.car, item.quantity, item.unit_price, item.total_price
+                ))
+
+                # اینجا برعکس فروش، موجودی به انبار "اضافه" می‌شود
+                if data.add_inventory and item.part_id:
+                    cursor.execute(
+                        "UPDATE parts SET stock = stock + %s WHERE id = %s",
+                        (item.quantity, item.part_id)
+                    )
+
+                if data.update_price and item.part_id:
+                    cursor.execute("""
+                        UPDATE parts 
+                        SET price = %s, price_updated_at = %s, last_updated_by = %s 
+                        WHERE id = %s
+                    """, (item.unit_price, now, current_user["username"], item.part_id))
+
+    return {"message": "فاکتور خرید با موفقیت ثبت شد", "id": invoice_id}
 
 
 # ------------------------------------------------------------------------------
