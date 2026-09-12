@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>کره یدک | فروشگاه تخصصی لوازم یدکی</title>
+    <!-- فونت وزیرمتن و JetBrains برای پارت نامبرها -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <!-- آیکون ها -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- کتابخانه انیمیشن اسکرول -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #000000; 
+            --bg-card: #0a0f18;
+            --primary: #00e5ff;
+            --primary-glow: rgba(0, 229, 255, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #1e293b;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.85) 100%);
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* --- Navbar --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.5rem 5%; background: transparent; position: fixed;
+            width: 100%; top: 0; left: 0; z-index: 1000;
+            border-bottom: 1px solid transparent; transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        header.scrolled {
+            top: 20px; width: 90%; left: 5%; padding: 1rem 4%; border-radius: 20px;
+            background: rgba(10, 15, 24, 0.6); backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 229, 255, 0.15);
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; color: var(--text-main); transition: transform 0.3s; }
+        .logo:hover { transform: scale(1.05); }
+        .logo span { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
+
+        nav ul { display: flex; gap: 2rem; list-style: none; }
+        nav a { color: var(--text-muted); text-decoration: none; transition: all 0.3s ease; font-size: 0.95rem; position: relative; }
+        nav a::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: var(--primary); transition: 0.3s; box-shadow: 0 0 10px var(--primary); }
+        nav a:hover, nav a.active { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
+        nav a:hover::after, nav a.active::after { width: 100%; }
+
+        .btn-login {
+            background: rgba(0, 229, 255, 0.05); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 0.6rem 1.2rem; border-radius: 12px;
+            cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center;
+            gap: 0.5rem; overflow: hidden; position: relative;
+        }
+        .btn-login:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 20px var(--primary-glow); transform: translateY(-2px); }
+
+        /* --- Hero Section --- */
+        .hero {
+            display: flex; align-items: center; justify-content: space-between;
+            min-height: 85vh; padding: 0 8%; padding-top: 100px; position: relative; z-index: 1;
+        }
+        .hero-text { flex: 1; }
+        .hero-text h2 { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .hero-text h1 { font-size: 4rem; color: var(--primary); text-shadow: 0 0 25px var(--primary-glow); margin-bottom: 1rem; animation: pulse-glow 3s infinite alternate; }
+        @keyframes pulse-glow { 0% { text-shadow: 0 0 15px rgba(0, 229, 255, 0.3); } 100% { text-shadow: 0 0 35px rgba(0, 229, 255, 0.6); } }
+        .hero-text p { color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem; max-width: 500px; font-size: 1.1rem; }
+        
+        .status-box {
+            background: rgba(10, 15, 24, 0.6); border: 1px solid var(--border-color); padding: 1rem 1.5rem;
+            border-radius: 12px; display: inline-flex; align-items: center; gap: 1rem; backdrop-filter: blur(10px); transition: 0.3s;
+        }
+        .status-box:hover { border-color: var(--primary); box-shadow: 0 0 15px rgba(0,229,255,0.1); transform: scale(1.02); }
+        .status-box .dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; box-shadow: 0 0 10px #22c55e; } 50% { opacity: 0.4; box-shadow: 0 0 2px #22c55e; } }
+
+        .hero-image { flex: 1; display: flex; justify-content: center; animation: float 5s ease-in-out infinite; }
+        .brands-cluster { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: center; max-width: 450px; }
+
+        .brand-logo { width: 110px; height: 110px; cursor: pointer; perspective: 1000px; transition: all 0.4s ease; }
+        .brand-logo:not(.expanded):hover { transform: translateY(-10px) scale(1.05); }
+        .brand-logo:not(.expanded):hover .brand-logo-front { border-color: var(--primary); box-shadow: 0 15px 35px rgba(0, 229, 255, 0.25); background: rgba(20, 25, 40, 0.9); }
+        .brand-logo-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); transform-style: preserve-3d; }
+        .brand-logo.expanded .brand-logo-inner { transform: rotateY(180deg); }
+        .brand-logo-front, .brand-logo-back {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 20px;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; justify-content: center; align-items: center;
+            background: rgba(15, 20, 30, 0.7); border: 1px solid rgba(0, 229, 255, 0.15); backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+        .brand-logo img { width: 65%; height: auto; filter: brightness(0) invert(1) drop-shadow(0 0 5px rgba(255, 255, 255, 0.3)); }
+        .brand-logo.text-brand .brand-logo-front { font-size: 1.6rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); }
+        .brand-logo-back {
+            transform: rotateY(180deg); background: rgba(10, 15, 24, 0.85); border-color: var(--primary);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.2); flex-direction: column; padding: 30px; text-align: center; overflow: hidden;
+        }
+        .brand-info-content { opacity: 0; transform: translateY(30px); transition: all 0.5s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; width: 100%; height: 100%; }
+        .brand-logo.expanded .brand-info-content { opacity: 1; transform: translateY(0); transition-delay: 0.3s; }
+        .brand-info-content h3 { color: var(--primary); font-size: 2.2rem; text-shadow: 0 0 15px var(--primary-glow); margin-bottom: 5px; }
+        .brand-info-content p { color: var(--text-main); font-size: 1.05rem; line-height: 1.9; }
+        .btn-close-card {
+            margin-top: auto; padding: 10px 30px; background: rgba(0, 229, 255, 0.1); border: 1px solid var(--primary);
+            color: var(--primary); border-radius: 12px; cursor: pointer; transition: all 0.3s; font-weight: bold;
+        }
+        .btn-close-card:hover { background: var(--primary); color: var(--bg-dark); box-shadow: 0 0 15px var(--primary-glow); transform: scale(1.05); }
+        
+        #brand-glass-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px); z-index: 10000; opacity: 0; visibility: hidden; transition: all 0.6s ease;
+        }
+        #brand-glass-overlay.active { opacity: 1; visibility: visible; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+
+        /* --- API Store & Search Section (ترکیب فایل اول در استایل فایل دوم) --- */
+        .store-section { position: relative; z-index: 2; padding: 2rem 8%; }
+        
+        .search-container {
+            background: rgba(10, 15, 24, 0.6); border: 1px solid var(--border-color);
+            padding: 20px; border-radius: 16px; backdrop-filter: blur(10px);
+            display: flex; gap: 15px; flex-wrap: wrap; align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
+        }
+
+        .search-wrapper { position: relative; flex: 2; display: flex; align-items: center; min-width: 250px; }
+        .search-wrapper i { position: absolute; right: 16px; color: var(--text-muted); }
+        .search-container input, .search-container select {
+            background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 12px 45px 12px 15px; border-radius: 12px;
+            font-size: 0.95rem; outline: none; transition: all 0.3s ease; width: 100%;
+        }
+        .search-container select { flex: 1; padding: 12px 15px; cursor: pointer; min-width: 150px; }
+        .search-container input:focus, .search-container select:focus {
+            border-color: var(--primary); box-shadow: 0 0 15px rgba(0, 229, 255, 0.15); background: rgba(10, 15, 24, 0.8);
+        }
+
+        .in-stock-btn {
+            background: rgba(10, 15, 24, 0.6); border: 1px solid var(--border-color);
+            color: var(--text-muted); padding: 12px 20px; border-radius: 12px;
+            font-size: 0.95rem; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
+        }
+        .in-stock-btn:hover { border-color: var(--success); color: var(--text-main); background: rgba(16, 185, 129, 0.1); }
+        .in-stock-btn.active { background: rgba(16, 185, 129, 0.15); border-color: var(--success); color: var(--success); font-weight: bold; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+
+        .results-info { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); padding: 0 10px; margin-bottom: 20px; }
+
+        /* API Cards Styling */
+        .parts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        
+        .part-card {
+            background: rgba(10, 15, 24, 0.5); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px;
+            backdrop-filter: blur(5px); transition: all 0.3s ease; position: relative; overflow: hidden;
+            animation: cardReveal 0.5s ease forwards; opacity: 0; transform: translateY(15px);
+        }
+        @keyframes cardReveal { to { opacity: 1; transform: translateY(0); } }
+        
+        .part-card:hover { transform: translateY(-5px); border-color: rgba(0, 229, 255, 0.5); box-shadow: 0 15px 30px rgba(0, 229, 255, 0.1); background: rgba(10, 15, 24, 0.8); }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-weight: bold; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--success); box-shadow: 0 0 10px var(--success); }
+        .status-dot.off { background-color: var(--text-muted); box-shadow: none; opacity: 0.5; }
+        .stock-tag { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; color: var(--text-muted); }
+        
+        .part-number-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .part-number { color: var(--primary); background: rgba(0, 229, 255, 0.1); padding: 5px 12px; border-radius: 8px; direction: ltr; border: 1px solid rgba(0, 229, 255, 0.2); font-weight: bold; font-size: 0.95rem; }
+        
+        .badge-genuine { background: linear-gradient(135deg, #d97706, #fbbf24); color: #1c1002; font-weight: 800; font-size: 0.7rem; padding: 4px 10px; border-radius: 8px; text-transform: uppercase; box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+        
+        .cars-row-container { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .cars-list { font-size: 0.85rem; color: var(--text-muted); }
+        .car-chip { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); padding: 3px 8px; border-radius: 6px; margin: 2px; display: inline-block; color: var(--text-main); font-size: 0.8rem; }
+        
+        .accordion-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .accordion-btn:hover, .accordion-btn.active { border-color: var(--primary); color: var(--primary); background: rgba(0, 229, 255, 0.1); }
+        .accordion-btn.active i { transform: rotate(180deg); }
+        .accordion-btn i { transition: 0.3s; }
+        
+        .details-wrapper { display: grid; grid-template-rows: 0fr; transition: 0.3s ease; }
+        .details-wrapper.open { grid-template-rows: 1fr; }
+        .details-inner { overflow: hidden; opacity: 0; transition: 0.3s ease; background: rgba(0,0,0,0.3); border-radius: 10px; }
+        .details-wrapper.open .details-inner { opacity: 1; padding: 15px; margin-top: 10px; border: 1px solid var(--border-color); }
+        .details-item { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+        .details-item:last-child { margin-bottom: 0; }
+        .details-item span.val { color: var(--primary); font-weight: bold; }
+        
+        mark { background: rgba(0, 229, 255, 0.2); color: var(--primary); padding: 0 4px; border-radius: 4px; }
+        
+        .loader-spinner { width: 35px; height: 35px; border: 3px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- Sections Shared --- */
+        section { padding: 5rem 8%; position: relative; z-index: 1; }
+        .section-title { text-align: center; font-size: 2.2rem; margin-bottom: 3rem; }
+        .section-title span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+
+        /* --- Infinite Scroll Animation --- */
+        .infinite-scroll-section { padding: 3rem 0; background: linear-gradient(180deg, transparent, rgba(10, 15, 24, 0.5), transparent); overflow: hidden; display: flex; flex-direction: column; gap: 1.5rem; }
+        .scroller { max-width: 100%; overflow: hidden; padding: 20px 0; -webkit-mask: linear-gradient(90deg, transparent, white 10%, white 90%, transparent); mask: linear-gradient(90deg, transparent, white 10%, white 90%, transparent); }
+        .scroller-inner { display: flex; flex-wrap: nowrap; gap: 1.5rem; width: max-content; animation: scroll 30s forwards linear infinite; }
+        .scroller[data-direction="right"] .scroller-inner { animation-direction: reverse; }
+        .tag-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1rem 2rem; border-radius: 12px; color: var(--text-muted); font-size: 1.1rem; display: flex; align-items: center; gap: 0.8rem; transition: all 0.3s; backdrop-filter: blur(5px); }
+        .tag-card:hover { background: rgba(0, 229, 255, 0.1); border-color: var(--primary); color: var(--primary); transform: translateY(8px) scale(1.02); box-shadow: 0 5px 15px rgba(0, 229, 255, 0.1); }
+        @keyframes scroll { to { transform: translateX(calc(50% + 0.75rem)); } }
+
+        /* --- Categories --- */
+        .categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+        .cat-card { background: rgba(10, 15, 24, 0.5); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: relative; overflow: hidden; transition: 0.4s; }
+        .cat-card:hover { border-color: rgba(0, 229, 255, 0.6); transform: translateY(-8px); box-shadow: 0 10px 25px rgba(0, 229, 255, 0.1); }
+        .cat-header { display: flex; justify-content: space-between; align-items: center; }
+        .cat-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; transition: 0.3s; }
+        .cat-footer { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.85rem; margin-top: auto; }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .hero { flex-direction: column; text-align: center; gap: 3rem; }
+            .hero-text p { margin: 0 auto 2rem auto; }
+            .categories-grid { grid-template-columns: repeat(2, 1fr); }
+            nav ul { display: none; }
+        }
+        @media (max-width: 768px) {
+            .categories-grid { grid-template-columns: 1fr; }
+            .search-container { flex-direction: column; }
+            .search-container input, .search-container select, .in-stock-btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- هدر سایت -->
+    <header id="navbar">
+        <div class="logo">KOREA<span>YADAK</span></div>
+        <nav>
+            <ul>
+                <li><a href="#" class="active">خانه</a></li>
+                <li><a href="#store">فروشگاه</a></li>
+                <li><a href="#">دسته بندی</a></li>
+                <li><a href="/admin">ورود به پنل</a></li>
+            </ul>
+        </nav>
+        <button class="btn-login"><i class="fas fa-user-plus"></i> ورود یا ثبت نام</button>
+    </header>
+
+    <!-- بخش اصلی (Hero) -->
+    <section class="hero">
+        <div class="hero-text" data-aos="fade-left" data-aos-duration="1000">
+            <h2>کره یدک برترین تامین‌کننده قطعات خودرو</h2>
+            <h1>کـره یـدک</h1>
+            <h3 style="margin-bottom: 15px; color: #fff;">متفاوت ترین فروشگاه ایران!</h3>
+            <p>تجربه‌ای فراتر از خرید معمولی! با سیستم جستجوی پیشرفته و هوش مصنوعی، قطعه مناسب خودروی خود را به راحتی پیدا کنید.</p>
+            <div class="status-box" data-aos="zoom-in" data-aos-delay="400">
+                <div class="dot"></div>
+                <span>۱۴۵۰ قطعه موجود | سیستم آنلاین استعلام</span>
+            </div>
+        </div>
+        
+        <div class="hero-image brands-cluster" data-aos="zoom-in" data-aos-duration="1200">
+            <!-- لوگو هیوندای -->
+            <div class="brand-logo" onclick="openBrandCard(this)">
+                <div class="brand-logo-inner">
+                    <div class="brand-logo-front">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Hyundai_Motor_Company_logo.svg" alt="Hyundai">
+                    </div>
+                    <div class="brand-logo-back">
+                        <div class="brand-info-content">
+                            <h3>هیوندای</h3>
+                            <p>تمامی قطعات اصلی هیوندای با ضمانت اصالت کالا.</p>
+                            <button class="btn-close-card" onclick="event.stopPropagation(); closeBrandCard()">بستن</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- لوگو کیا -->
+            <div class="brand-logo" onclick="openBrandCard(this)">
+                <div class="brand-logo-inner">
+                    <div class="brand-logo-front">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/47/KIA_logo2.svg" alt="KIA">
+                    </div>
+                    <div class="brand-logo-back">
+                        <div class="brand-info-content">
+                            <h3>کیا موتورز</h3>
+                            <p>تامین‌کننده تخصصی قطعات خودروهای کیا با ارسال فوری.</p>
+                            <button class="btn-close-card" onclick="event.stopPropagation(); closeBrandCard()">بستن</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- لوگوهای دیگر -->
+            <div class="brand-logo text-brand" onclick="openBrandCard(this)">
+                <div class="brand-logo-inner">
+                    <div class="brand-logo-front">KMC</div>
+                    <div class="brand-logo-back">
+                        <div class="brand-info-content">
+                            <h3>KMC</h3>
+                            <button class="btn-close-card" onclick="event.stopPropagation(); closeBrandCard()">بستن</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- بخش جستجو و فروشگاه متصل به API (کدهای Index 3) -->
+    <section id="store" class="store-section" data-aos="fade-up">
+        <h2 class="section-title">فروشگاه <span>آنلاین</span> قطعات</h2>
+        
+        <div class="search-container">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input id="search" autocomplete="off" placeholder="نام قطعه، پارت نامبر یا خودرو را سرچ کن..." dir="auto">
+            </div>
+            <select id="car">
+                <option value="">همه خودروها</option>
+            </select>
+            <button id="inStockBtn" class="in-stock-btn" onclick="toggleInStockFilter()">
+                <i class="fas fa-box-open"></i> فقط موجود
+            </button>
+        </div>
+
+        <div class="results-info">
+            <span id="count">0 مورد یافت شد</span>
+            <span class="font-mono">Microcat Standard Catalog API</span>
+        </div>
+
+        <!-- گرید محصولات که از API پر می‌شود -->
+        <div id="results" class="parts-grid"></div>
+    </section>
+
+    <!-- سکشن انیمیشن اسکرول بی نهایت -->
+    <section class="infinite-scroll-section" data-aos="fade-up">
+        <div class="scroller" data-direction="left">
+            <div class="scroller-inner">
+                <div class="tag-card"><i class="fas fa-hashtag"></i> سوناتا NF</div>
+                <div class="tag-card"><i class="fas fa-hashtag"></i> پولی دینام</div>
+                <div class="tag-card"><i class="fas fa-hashtag"></i> هیوندای</div>
+                <div class="tag-card"><i class="fas fa-hashtag"></i> کیا موتورز</div>
+                <div class="tag-card"><i class="fas fa-hashtag"></i> سانتافه</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- بخش دسته بندی ها -->
+    <section>
+        <h2 class="section-title" data-aos="fade-up">دسته‌بندی‌های <span>کره یدک</span></h2>
+        <div class="categories-grid">
+            <div class="cat-card" data-aos="zoom-in-up" data-aos-delay="50">
+                <div class="cat-header">
+                    <h3>قطعات موتوری</h3>
+                    <div class="cat-icon" style="background: rgba(255, 99, 71, 0.1); color: #ff6347;"><i class="fas fa-cogs"></i></div>
+                </div>
+                <div class="cat-footer"><span>برندهای اصلی</span></div>
+            </div>
+            <div class="cat-card" data-aos="zoom-in-up" data-aos-delay="150">
+                <div class="cat-header">
+                    <h3>جلوبندی</h3>
+                    <div class="cat-icon" style="background: rgba(0, 229, 255, 0.1); color: #00e5ff;"><i class="fas fa-car-side"></i></div>
+                </div>
+                <div class="cat-footer"><span>کیا و هیوندای</span></div>
+            </div>
+            <div class="cat-card" data-aos="zoom-in-up" data-aos-delay="250">
+                <div class="cat-header">
+                    <h3>لوازم برقی</h3>
+                    <div class="cat-icon" style="background: rgba(40, 167, 69, 0.1); color: #28a745;"><i class="fas fa-bolt"></i></div>
+                </div>
+                <div class="cat-footer"><span>سنسورها و ایسیو</span></div>
+            </div>
+            <div class="cat-card" data-aos="zoom-in-up" data-aos-delay="350">
+                <div class="cat-header">
+                    <h3>قطعات بدنه</h3>
+                    <div class="cat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;"><i class="fas fa-car-crash"></i></div>
+                </div>
+                <div class="cat-footer"><span>اورجینال</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- اسکریپت ها -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // -----------------------------------------
+        // بخش اول: اسکریپت های انیمیشن و UI
+        // -----------------------------------------
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+        });
+
+        AOS.init({ once: false, mirror: true, offset: 80, duration: 800, easing: 'ease-in-out' });
+        
+        // Infinite Scroll Duplication
+        const scrollers = document.querySelectorAll(".scroller");
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            scrollers.forEach((scroller) => {
+                scroller.setAttribute("data-animated", true);
+                const scrollerInner = scroller.querySelector(".scroller-inner");
+                const scrollerContent = Array.from(scrollerInner.children);
+                scrollerContent.forEach((item) => {
+                    const duplicatedItem = item.cloneNode(true);
+                    duplicatedItem.setAttribute("aria-hidden", true);
+                    scrollerInner.appendChild(duplicatedItem);
+                });
+            });
+        }
+    
+        // انیمیشن کارت برندها (Hero)
+        let activeBrandCard = null;
+        let cardPlaceholder = null;
+        let originalParent = null;
+
+        function openBrandCard(card) {
+            if (activeBrandCard) return;
+            activeBrandCard = card;
+            originalParent = card.parentNode;
+
+            let overlay = document.getElementById('brand-glass-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'brand-glass-overlay';
+                overlay.onclick = closeBrandCard; 
+                document.body.appendChild(overlay);
+            }
+            void overlay.offsetWidth;
+            overlay.classList.add('active');
+
+            const rect = card.getBoundingClientRect();
+            cardPlaceholder = document.createElement('div');
+            cardPlaceholder.style.width = rect.width + 'px';
+            cardPlaceholder.style.height = rect.height + 'px';
+            cardPlaceholder.style.margin = window.getComputedStyle(card).margin;
+            originalParent.insertBefore(cardPlaceholder, card);
+
+            document.body.appendChild(card);
+            card.style.position = 'fixed';
+            card.style.top = rect.top + 'px';
+            card.style.left = rect.left + 'px';
+            card.style.margin = '0';
+            card.style.zIndex = '10005'; 
+            card.style.transition = 'all 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+            void card.offsetWidth; 
+
+            const finalWidth = 320, finalHeight = 480;
+            card.style.top = ((window.innerHeight - finalHeight) / 2) + 'px';
+            card.style.left = ((window.innerWidth - finalWidth) / 2) + 'px';
+            card.style.width = finalWidth + 'px';
+            card.style.height = finalHeight + 'px';
+            
+            card.classList.add('expanded');
+        }
+
+        function closeBrandCard() {
+            if (!activeBrandCard) return;
+            const overlay = document.getElementById('brand-glass-overlay');
+            if (overlay) overlay.classList.remove('active');
+
+            const rect = cardPlaceholder.getBoundingClientRect();
+            activeBrandCard.style.top = rect.top + 'px';
+            activeBrandCard.style.left = rect.left + 'px';
+            activeBrandCard.style.width = rect.width + 'px';
+            activeBrandCard.style.height = rect.height + 'px';
+            activeBrandCard.classList.remove('expanded');
+
+            setTimeout(() => {
+                if (activeBrandCard) {
+                    activeBrandCard.style.position = ''; activeBrandCard.style.top = '';
+                    activeBrandCard.style.left = ''; activeBrandCard.style.width = '';
+                    activeBrandCard.style.height = ''; activeBrandCard.style.margin = '';
+                    activeBrandCard.style.zIndex = ''; activeBrandCard.style.transition = ''; 
+                    if (originalParent && cardPlaceholder) originalParent.insertBefore(activeBrandCard, cardPlaceholder);
+                }
+                if (cardPlaceholder) cardPlaceholder.remove();
+                activeBrandCard = null; originalParent = null;
+            }, 600); 
+        }
+
+        // -----------------------------------------
+        // بخش دوم: منطق API قطعات و جستجو (کاملاً هماهنگ با بک‌اند پایتون شما)
+        // -----------------------------------------
+        const API_BASE = "";
+        const searchInput = document.getElementById("search");
+        const carSelect = document.getElementById("car");
+        const resultsContainer = document.getElementById("results");
+        const countSpan = document.getElementById("count");
+        let onlyInStock = false;
+
+        async function api(path) {
+            const response = await fetch(API_BASE + path);
+            let data = {};
+            try { data = await response.json(); } catch (_) {}
+            if (!response.ok) throw new Error(data.detail || "خطایی رخ داد.");
+            return data;
+        }
+
+        function toggleInStockFilter() {
+            onlyInStock = !onlyInStock;
+            document.getElementById("inStockBtn").classList.toggle("active", onlyInStock);
+            loadParts();
+        }
+
+        async function loadCars() {
+            try {
+                const cars = await api("/api/cars");
+                carSelect.innerHTML = '<option value="">همه خودروها</option>';
+                cars.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c; opt.textContent = c;
+                    carSelect.appendChild(opt);
+                });
+            } catch(_) {}
+        }
+
+        async function loadParts() {
+            const params = new URLSearchParams();
+            if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
+            if (carSelect.value.trim()) params.set("car", carSelect.value.trim());
+            if (onlyInStock) params.set("in_stock", "true");
+
+            resultsContainer.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:60px 20px;">
+                <div class="loader-spinner"></div>
+                <div style="color:var(--text-muted);">در حال بارگذاری اطلاعات قطعات...</div>
+                </div>`;
+
+            try {
+                let parts = await api("/api/parts?" + params.toString());
+                if (onlyInStock) {
+                    parts = parts.filter(p => p.stock && p.stock >= 1);
+                }
+
+                countSpan.textContent = parts.length + " مورد یافت شد";
+
+                if (!parts.length) {
+                    resultsContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--text-muted)">قطعه‌ای با این مشخصات یافت نشد.</div>';
+                    return;
+                }
+
+                const q = searchInput.value.trim();
+
+                resultsContainer.innerHTML = parts.map((p, index) => {
+                    const isAvailable = (p.stock && p.stock >= 1);
+                    const formattedPrice = p.price ? Number(p.price).toLocaleString('fa-IR') + ' تومان' : 'ثبت نشده';
+                    const animDelay = (index % 12) * 0.05; 
+                    
+                    return `
+                    <div class="part-card" style="animation-delay: ${animDelay}s">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="status-dot ${isAvailable ? '' : 'off'}"></span>
+                                ${highlight(p.name, q)}
+                            </div>
+                            <div class="stock-tag">موجودی: <b class="font-mono">${p.stock ?? 0}</b></div>
+                        </div>
+
+                        <div class="part-number-row">
+                            ${p.is_genuine ? '<span class="badge-genuine">Genuine</span>' : ''}
+                            <span class="part-number">${highlight(p.part_number, q)}</span>
+                        </div>
+
+                        <div class="cars-row-container">
+                            <div class="cars-list">
+                                <b>خودروها:</b> ${p.compatible_cars ? p.compatible_cars.split(/[،,]/).map(c => `<span class="car-chip">${highlight(c.trim(), q)}</span>`).join('') : 'نامشخص'}
+                            </div>
+                            <button class="accordion-btn" onclick="toggleAccordion(${p.id}, this)">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+
+                        <div id="wrapper-${p.id}" class="details-wrapper">
+                            <div class="details-inner">
+                                <div class="details-item">
+                                    <span>قیمت قطعه:</span>
+                                    <span class="val">${formattedPrice}</span>
+                                </div>
+                                <div class="details-item">
+                                    <span>آخرین تغییر قیمت:</span>
+                                    <span class="val" style="color:var(--text-main)">${formatDate(p.price_updated_at)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join("");
+            } catch (e) {
+                resultsContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--danger); padding:40px;">خطا در ارتباط با سرور: ${e.message}</div>`;
+            }
+        }
+
+        function toggleAccordion(id, btn) {
+            const wrapper = document.getElementById(`wrapper-${id}`);
+            if (!wrapper) return;
+            wrapper.classList.toggle("open");
+            btn.classList.toggle("active");
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'ثبت نشده';
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr;
+                return d.toLocaleDateString('fa-IR');
+            } catch (_) { return dateStr; }
+        }
+
+        function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+        function highlight(text, q) {
+            if (!text || !q) return text || "";
+            const words = q.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
+            if (!words.length) return text;
+            const reg = new RegExp("(" + words.join("|") + ")", "gi");
+            return text.replace(reg, "<mark>$1</mark>");
+        }
+
+        // رویدادهای تایپ در سرچ و لود اولیه
+        let searchTimer;
+        searchInput.addEventListener("input", () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(loadParts, 300);
+        });
+        carSelect.addEventListener("change", loadParts);
+
+        // اجرای اولیه توابع بک‌اند
+        loadCars();
+        loadParts();
+    </script>
+</body>
+</html>
