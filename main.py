@@ -4,7 +4,7 @@ import re
 import secrets
 import io
 from contextlib import asynccontextmanager, contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi.responses import Response
 from weasyprint import HTML
@@ -39,17 +39,32 @@ def init_db_schema():
     """Initializes tables and high-performance search indexes."""
     with get_db() as conn:
         with conn.cursor() as cursor:
-            # Users Table
+            # Users Table (kept backward-compatible with existing installations)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
                     username TEXT NOT NULL UNIQUE,
                     password_hash TEXT NOT NULL,
-                    must_change_password INTEGER NOT NULL DEFAULT 1,
+                    first_name TEXT,
+                    last_name TEXT,
+                    email TEXT,
+                    phone TEXT,
+                    email_verified INTEGER NOT NULL DEFAULT 0,
+                    must_change_password INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
             """)
+
+            # Safe migration for databases created by older versions.
+            for statement in (
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified INTEGER NOT NULL DEFAULT 0",
+            ):
+                cursor.execute(statement)
 
             # Sessions Table
             cursor.execute("""
@@ -57,9 +72,14 @@ def init_db_schema():
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                     token_hash TEXT NOT NULL UNIQUE,
-                    created_at TEXT NOT NULL
+                    created_at TEXT NOT NULL,
+                    expires_at TEXT
                 );
             """)
+            cursor.execute("ALTER TABLE sessions ADD COLUMN IF NOT EXISTS expires_at TEXT")
+
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_email ON users(email) WHERE email IS NOT NULL AND email <> '';")
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_phone ON users(phone) WHERE phone IS NOT NULL AND phone <> '';")
 
             # Parts Table
             cursor.execute("""
@@ -229,11 +249,13 @@ def get_current_user(
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT u.id, u.username, u.must_change_password, u.password_hash
+                SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone,
+                       u.email_verified, u.must_change_password, u.password_hash
                 FROM sessions s
                 JOIN users u ON u.id = s.user_id
                 WHERE s.token_hash = %s
-            """, (token_hash,))
+                  AND (s.expires_at IS NULL OR s.expires_at > %s)
+            """, (token_hash, utc_now()))
             user = cursor.fetchone()
 
     if not user:
@@ -250,8 +272,76 @@ def get_current_user(
 # ------------------------------------------------------------------------------
 
 class LoginRequest(BaseModel):
-    username: str
+    # New frontend contract
+    identifier: Optional[str] = None
     password: str
+    remember_me: bool = False
+
+    # Legacy frontend/backward compatibility
+    username: Optional[str] = None
+
+    def normalized_identifier(self) -> str:
+        value = (self.identifier or self.username or "").strip()
+        if not value:
+            raise ValueError("نام کاربری یا ایمیل الزامی است.")
+        return value
+
+
+class RegisterRequest(BaseModel):
+    first_name: str
+    last_name: str
+    username: str
+    email: str
+    phone: str
+    password: str
+    password_repeat: Optional[str] = None
+    email_verified: bool = False
+    terms_accepted: bool = True
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def validate_person_name(cls, v: str) -> str:
+        v = v.strip()
+        if not v or len(v) > 80:
+            raise ValueError("نام و نام خانوادگی معتبر نیست.")
+        return v
+
+    @field_validator("username")
+    @classmethod
+    def validate_register_username(cls, v: str) -> str:
+        v = v.strip()
+        if not USERNAME_RE.fullmatch(v):
+            raise ValueError("نام کاربری باید 3 تا 32 کاراکتر باشد و با حرف انگلیسی شروع شود.")
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", v):
+            raise ValueError("ایمیل معتبر نیست.")
+        if len(v) > 254:
+            raise ValueError("ایمیل معتبر نیست.")
+        return v
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        v = re.sub(r"[\s-]+", "", v)
+        if not re.fullmatch(r"09\d{9}", v):
+            raise ValueError("شماره موبایل باید به شکل 0912xxxxxxx باشد.")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_register_password(cls, v: str) -> str:
+        if not (8 <= len(v) <= 32):
+            raise ValueError("رمز عبور باید بین 8 تا 32 کاراکتر باشد.")
+        if not re.fullmatch(r"[A-Za-z0-9]+", v):
+            raise ValueError("رمز عبور فقط می‌تواند شامل حروف انگلیسی و اعداد باشد.")
+        if not PASSWORD_LETTER_RE.search(v) or not PASSWORD_DIGIT_RE.search(v):
+            raise ValueError("رمز عبور باید حداقل یک حرف انگلیسی و یک عدد داشته باشد.")
+        return v
 
 
 class ChangeCredentialsRequest(BaseModel):
@@ -370,38 +460,144 @@ async def serve_login():
 # Routes: Authentication
 # ------------------------------------------------------------------------------
 
-@app.post("/api/auth/login")
-def login(data: LoginRequest):
-    username = data.username.strip()
+@app.post("/api/auth/email/check")
+def check_email(data: dict):
+    """Validates the registration email and checks whether it is already used.
+
+    This endpoint intentionally does not claim ownership of the mailbox because no
+    SMTP/provider configuration exists in the supplied project. It provides the
+    server-side validation needed by the redesigned form; real OTP/email delivery
+    can later be attached without changing the registration contract.
+    """
+    email = str(data.get("email") or "").strip().lower()
+    if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+        raise HTTPException(status_code=422, detail="ایمیل معتبر نیست.")
 
     with get_db() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT id, username, password_hash, must_change_password
+            cursor.execute("SELECT 1 FROM users WHERE LOWER(email) = %s", (email,))
+            if cursor.fetchone() is not None:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="این ایمیل قبلاً ثبت شده است.")
+
+    return {"valid": True, "available": True, "email": email}
+
+
+@app.post("/api/auth/register")
+def register(data: RegisterRequest):
+    if not data.terms_accepted:
+        raise HTTPException(status_code=400, detail="پذیرش قوانین الزامی است.")
+    if data.password_repeat is not None and data.password != data.password_repeat:
+        raise HTTPException(status_code=400, detail="تکرار رمز عبور یکسان نیست.")
+    if not data.email_verified:
+        raise HTTPException(
+            status_code=400,
+            detail="ابتدا ایمیل را از طریق مرحله تأیید فرم تأیید کنید."
+        )
+
+    now = utc_now()
+    password_hash = hash_password(data.password)
+
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT username, email, phone FROM users
+                WHERE username = %s OR LOWER(email) = %s OR phone = %s
+                """,
+                (data.username, data.email, data.phone),
+            )
+            duplicate = cursor.fetchone()
+            if duplicate:
+                if duplicate.get("username") == data.username:
+                    detail = "این نام کاربری قبلاً استفاده شده است."
+                elif duplicate.get("email") == data.email:
+                    detail = "این ایمیل قبلاً ثبت شده است."
+                else:
+                    detail = "این شماره موبایل قبلاً ثبت شده است."
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+            cursor.execute(
+                """
+                INSERT INTO users (
+                    username, password_hash, first_name, last_name, email, phone,
+                    email_verified, must_change_password, created_at, updated_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, username
+                """,
+                (
+                    data.username, password_hash, data.first_name, data.last_name,
+                    data.email, data.phone, 1, 0, now, now
+                ),
+            )
+            user = cursor.fetchone()
+
+    return {
+        "message": "حساب با موفقیت ساخته شد.",
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "first_name": data.first_name,
+            "last_name": data.last_name,
+            "email": data.email,
+            "phone": data.phone,
+        },
+    }
+
+
+@app.post("/api/auth/login")
+def login(data: LoginRequest):
+    identifier = (data.identifier or data.username or "").strip()
+    if not identifier:
+        raise HTTPException(status_code=422, detail="نام کاربری یا ایمیل الزامی است.")
+
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, username, first_name, last_name, email, phone,
+                       email_verified, password_hash, must_change_password
                 FROM users
-                WHERE username = %s
-            """, (username,))
+                WHERE username = %s OR LOWER(email) = LOWER(%s)
+                ORDER BY CASE WHEN username = %s THEN 0 ELSE 1 END
+                LIMIT 1
+                """,
+                (identifier, identifier, identifier),
+            )
             user = cursor.fetchone()
 
             if user is None or not verify_password(data.password, user["password_hash"]):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="نام کاربری یا رمز عبور اشتباه است."
+                    detail="نام کاربری/ایمیل یا رمز عبور اشتباه است."
                 )
 
             raw_token = secrets.token_urlsafe(32)
             token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+            if data.remember_me:
+                expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+            else:
+                expires_at = (datetime.now(timezone.utc) + timedelta(hours=12)).isoformat()
 
-            cursor.execute("""
-                INSERT INTO sessions (user_id, token_hash, created_at)
-                VALUES (%s, %s, %s)
-            """, (user["id"], token_hash, utc_now()))
+            cursor.execute(
+                """
+                INSERT INTO sessions (user_id, token_hash, created_at, expires_at)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (user["id"], token_hash, utc_now(), expires_at),
+            )
 
     return {
         "token": raw_token,
+        "remember_me": data.remember_me,
         "user": {
             "id": user["id"],
             "username": user["username"],
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name"),
+            "email": user.get("email"),
+            "phone": user.get("phone"),
+            "email_verified": bool(user.get("email_verified")),
             "must_change_password": bool(user["must_change_password"]),
         }
     }
@@ -412,6 +608,11 @@ def me(current_user: dict = Depends(get_current_user)):
     return {
         "id": current_user["id"],
         "username": current_user["username"],
+        "first_name": current_user.get("first_name"),
+        "last_name": current_user.get("last_name"),
+        "email": current_user.get("email"),
+        "phone": current_user.get("phone"),
+        "email_verified": bool(current_user.get("email_verified")),
         "must_change_password": bool(current_user["must_change_password"]),
     }
 
