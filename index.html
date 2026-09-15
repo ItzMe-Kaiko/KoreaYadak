@@ -14,7 +14,7 @@
     
     <style>
         :root {
-            --bg-dark: #000000; 
+            --bg-dark: #05070b; 
             --bg-card: #0a0f18;
             --primary: #00e5ff;
             --primary-glow: rgba(0, 229, 255, 0.4);
@@ -33,30 +33,108 @@
         }
 
         body {
-            background-color: var(--bg-dark);
+            background:
+                radial-gradient(circle at 50% -5%, rgba(0,229,255,.10), transparent 34%),
+                radial-gradient(circle at 12% 25%, rgba(30,64,175,.10), transparent 26%),
+                radial-gradient(circle at 88% 72%, rgba(6,182,212,.07), transparent 24%),
+                var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-            background-size: 40px 40px;
-            background-position: center center;
             position: relative;
+            isolation: isolate;
         }
 
+        /* Modern technical grid + moving light */
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.85) 100%);
+            inset: 0;
             pointer-events: none;
-            z-index: 9999;
+            z-index: -2;
+            opacity: .42;
+            background-image:
+                linear-gradient(rgba(148,163,184,.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148,163,184,.055) 1px, transparent 1px);
+            background-size: 72px 72px;
+            mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,.72) 58%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,.72) 58%, transparent 100%);
+            animation: gridDrift 24s linear infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 38vw;
+            height: 38vw;
+            min-width: 320px;
+            min-height: 320px;
+            left: 50%;
+            top: -18vw;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            background: radial-gradient(circle, rgba(0,229,255,.12) 0%, rgba(0,229,255,.045) 28%, transparent 70%);
+            filter: blur(18px);
+            animation: ambientGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes gridDrift {
+            from { background-position: 0 0, 0 0; }
+            to   { background-position: 72px 72px, 72px 72px; }
+        }
+
+        @keyframes ambientGlow {
+            0%, 100% { transform: translateX(-50%) scale(.96); opacity: .7; }
+            50% { transform: translateX(-50%) scale(1.06); opacity: 1; }
+        }
+
+        /* Soft edge vignette — much lighter than before */
+        .page-vignette {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            background: radial-gradient(circle at center, transparent 58%, rgba(0,0,0,.28) 100%);
         }
 
         .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        .ambient-orbs {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,229,255,.065), transparent 68%);
+            filter: blur(10px);
+            animation: orbFloat 14s ease-in-out infinite;
+        }
+
+        .ambient-orb:nth-child(1) { left: -90px; top: 28%; animation-delay: -4s; }
+        .ambient-orb:nth-child(2) { right: -110px; top: 62%; animation-delay: -9s; width: 340px; height: 340px; }
+        .ambient-orb:nth-child(3) { left: 38%; top: 38%; animation-delay: -2s; width: 220px; height: 220px; opacity: .55; }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate3d(0,0,0) scale(1); }
+            50% { transform: translate3d(24px,-34px,0) scale(1.08); }
+        }
+
+        .reveal-soft {
+            animation: revealSoft .85s cubic-bezier(.22,1,.36,1) both;
+        }
+
+        @keyframes revealSoft {
+            from { opacity: 0; transform: translateY(22px) scale(.985); filter: blur(5px); }
+            to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
 
         /* --- Navbar --- */
         header {
@@ -183,12 +261,26 @@
         .parts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         
         .part-card {
-            background: rgba(10, 15, 24, 0.5); border: 1px solid var(--border-color);
-            border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px;
-            backdrop-filter: blur(5px); transition: all 0.3s ease; position: relative; overflow: hidden;
-            animation: cardReveal 0.5s ease forwards; opacity: 0; transform: translateY(15px);
+            background: linear-gradient(180deg, rgba(13, 19, 31, 0.72), rgba(8, 12, 20, 0.68));
+            border: 1px solid rgba(148, 163, 184, 0.10);
+            border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 15px;
+            backdrop-filter: blur(10px); transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+            position: relative; overflow: hidden;
+            animation: cardReveal .62s cubic-bezier(.22,1,.36,1) forwards;
+            opacity: 0; transform: translateY(18px) scale(.985);
         }
-        @keyframes cardReveal { to { opacity: 1; transform: translateY(0); } }
+        .part-card::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,229,255,.7), transparent);
+            opacity: .55;
+        }
+        }
+        @keyframes cardReveal {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         
         .part-card:hover { transform: translateY(-5px); border-color: rgba(0, 229, 255, 0.5); box-shadow: 0 15px 30px rgba(0, 229, 255, 0.1); background: rgba(10, 15, 24, 0.8); }
         
@@ -225,6 +317,104 @@
         .loader-spinner { width: 35px; height: 35px; border: 3px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        .parts-footer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 28px;
+            min-height: 54px;
+        }
+        .load-more-btn {
+            border: 1px solid rgba(0, 229, 255, 0.28);
+            background: linear-gradient(180deg, rgba(0, 229, 255, 0.10), rgba(0, 229, 255, 0.05));
+            color: var(--text-main);
+            padding: 11px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+        }
+        .load-more-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            background: rgba(0, 229, 255, 0.12);
+            box-shadow: 0 10px 24px rgba(0, 229, 255, 0.12);
+        }
+        .pagination-meta {
+            color: var(--text-muted);
+            font-size: .82rem;
+        }
+
+        /* --- Login modal --- */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 11000;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: rgba(1, 4, 8, .58);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .24s ease, visibility .24s ease;
+        }
+        .login-overlay.active { opacity: 1; visibility: visible; }
+        .login-modal {
+            width: min(420px, 100%);
+            background: linear-gradient(180deg, rgba(16, 24, 38, .96), rgba(8, 13, 22, .96));
+            border: 1px solid rgba(0, 229, 255, .16);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 30px 80px rgba(0,0,0,.48), 0 0 28px rgba(0,229,255,.08);
+            transform: translateY(14px) scale(.98);
+            transition: transform .26s ease;
+        }
+        .login-overlay.active .login-modal { transform: translateY(0) scale(1); }
+        .login-head { display:flex; align-items:center; justify-content:space-between; gap: 12px; margin-bottom: 20px; }
+        .login-head h3 { font-size: 1.15rem; }
+        .login-close { background: transparent; border: 0; color: var(--text-muted); cursor:pointer; font-size:1.1rem; }
+        .login-field { margin-bottom: 13px; }
+        .login-field label { display:block; color:var(--text-muted); font-size:.85rem; margin-bottom:7px; }
+        .login-field input {
+            width:100%;
+            background:rgba(255,255,255,.035);
+            border:1px solid var(--border-color);
+            color:var(--text-main);
+            padding:12px 13px;
+            border-radius:12px;
+            outline:none;
+            transition:.2s ease;
+        }
+        .login-field input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,229,255,.08); }
+        .login-submit {
+            width:100%;
+            margin-top:6px;
+            border:1px solid rgba(0,229,255,.28);
+            background:linear-gradient(180deg, rgba(0,229,255,.16), rgba(0,229,255,.08));
+            color:var(--text-main);
+            padding:12px;
+            border-radius:12px;
+            cursor:pointer;
+            font-weight:800;
+        }
+        .login-note { margin-top:10px; font-size:.78rem; color:var(--text-muted); line-height:1.7; }
+        .login-error { color:#f87171; font-size:.8rem; min-height:20px; margin-top:8px; }
+
+        @media (max-width: 768px) {
+            .parts-footer { margin-bottom: 10px; }
+            .part-card { backdrop-filter: blur(6px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+            }
+        }
+
         /* --- Sections Shared --- */
         section { padding: 5rem 8%; position: relative; z-index: 1; }
         .section-title { text-align: center; font-size: 2.2rem; margin-bottom: 3rem; }
@@ -233,11 +423,21 @@
         /* --- Infinite Scroll Animation --- */
         .infinite-scroll-section { padding: 3rem 0; background: linear-gradient(180deg, transparent, rgba(10, 15, 24, 0.5), transparent); overflow: hidden; display: flex; flex-direction: column; gap: 1.5rem; }
         .scroller { max-width: 100%; overflow: hidden; padding: 20px 0; -webkit-mask: linear-gradient(90deg, transparent, white 10%, white 90%, transparent); mask: linear-gradient(90deg, transparent, white 10%, white 90%, transparent); }
-        .scroller-inner { display: flex; flex-wrap: nowrap; gap: 1.5rem; width: max-content; animation: scroll 30s forwards linear infinite; }
+        .scroller-inner {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 1.5rem;
+            width: max-content;
+            animation: scroll 34s linear infinite;
+            will-change: transform;
+        }
         .scroller[data-direction="right"] .scroller-inner { animation-direction: reverse; }
         .tag-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1rem 2rem; border-radius: 12px; color: var(--text-muted); font-size: 1.1rem; display: flex; align-items: center; gap: 0.8rem; transition: all 0.3s; backdrop-filter: blur(5px); }
         .tag-card:hover { background: rgba(0, 229, 255, 0.1); border-color: var(--primary); color: var(--primary); transform: translateY(8px) scale(1.02); box-shadow: 0 5px 15px rgba(0, 229, 255, 0.1); }
-        @keyframes scroll { to { transform: translateX(calc(50% + 0.75rem)); } }
+        @keyframes scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(calc(50% + 0.75rem)); }
+        }
 
         /* --- Categories --- */
         .categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
@@ -262,6 +462,12 @@
     </style>
 </head>
 <body>
+    <div class="page-vignette" aria-hidden="true"></div>
+    <div class="ambient-orbs" aria-hidden="true">
+        <span class="ambient-orb"></span>
+        <span class="ambient-orb"></span>
+        <span class="ambient-orb"></span>
+    </div>
 
     <!-- هدر سایت -->
     <header id="navbar">
@@ -274,11 +480,13 @@
                 <li><a href="/admin">ورود به پنل</a></li>
             </ul>
         </nav>
-        <button class="btn-login"><i class="fas fa-user-plus"></i> ورود یا ثبت نام</button>
+        <button class="btn-login" id="loginBtn" type="button">
+                <i class="fas fa-right-to-bracket"></i> ورود
+            </button>
     </header>
 
     <!-- بخش اصلی (Hero) -->
-    <section class="hero">
+    <section class="hero reveal-soft">
         <div class="hero-text" data-aos="fade-left" data-aos-duration="1000">
             <h2>کره یدک برترین تامین‌کننده قطعات خودرو</h2>
             <h1>کـره یـدک</h1>
@@ -337,7 +545,7 @@
     </section>
 
     <!-- بخش جستجو و فروشگاه متصل به API (کدهای Index 3) -->
-    <section id="store" class="store-section" data-aos="fade-up">
+    <section id="store" class="store-section reveal-soft" data-aos="fade-up">
         <h2 class="section-title">فروشگاه <span>آنلاین</span> قطعات</h2>
         
         <div class="search-container">
@@ -360,6 +568,7 @@
 
         <!-- گرید محصولات که از API پر می‌شود -->
         <div id="results" class="parts-grid"></div>
+        <div id="partsFooter" class="parts-footer"></div>
     </section>
 
     <!-- سکشن انیمیشن اسکرول بی نهایت -->
@@ -409,6 +618,34 @@
             </div>
         </div>
     </section>
+
+
+    <div id="loginOverlay" class="login-overlay" aria-hidden="true">
+        <div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+            <div class="login-head">
+                <h3 id="loginTitle">ورود به پنل کره یدک</h3>
+                <button class="login-close" type="button" id="loginClose" aria-label="بستن">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <form id="loginForm">
+                <div class="login-field">
+                    <label for="loginUsername">نام کاربری</label>
+                    <input id="loginUsername" name="username" autocomplete="username" required maxlength="64">
+                </div>
+                <div class="login-field">
+                    <label for="loginPassword">رمز عبور</label>
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="128">
+                </div>
+                <button class="login-submit" type="submit">ورود به پنل</button>
+                <div id="loginError" class="login-error"></div>
+                <div class="login-note">
+                    این فرم ابتدا از مسیر <span class="font-mono">/api/login</span> استفاده می‌کند؛
+                    اگر بک‌اند شما مسیر متفاوتی دارد، همان مسیر باید در کد جاگذاری شود.
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- اسکریپت ها -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -545,6 +782,85 @@
             } catch(_) {}
         }
 
+        const PAGE_SIZE = 40;
+        let allParts = [];
+        let visiblePartCount = PAGE_SIZE;
+
+        function updatePartsFooter() {
+            const footer = document.getElementById("partsFooter");
+            if (!footer) return;
+            const shown = Math.min(visiblePartCount, allParts.length);
+            if (allParts.length <= PAGE_SIZE) {
+                footer.innerHTML = allParts.length
+                    ? `<div class="pagination-meta">${shown} مورد نمایش داده شد</div>`
+                    : "";
+                return;
+            }
+
+            footer.innerHTML = `
+                ${shown < allParts.length ? `<button class="load-more-btn" type="button" onclick="showMoreParts()">
+                    <i class="fas fa-layer-group"></i> نمایش  ${Math.min(PAGE_SIZE, allParts.length - shown)} مورد بیشتر
+                </button>` : ""}
+                <div class="pagination-meta">${shown.toLocaleString('fa-IR')} از ${allParts.length.toLocaleString('fa-IR')} مورد نمایش داده شده</div>
+            `;
+        }
+
+        function showMoreParts() {
+            visiblePartCount = Math.min(visiblePartCount + PAGE_SIZE, allParts.length);
+            renderParts();
+        }
+
+        function renderParts() {
+            const q = searchInput.value.trim();
+            const visibleParts = allParts.slice(0, visiblePartCount);
+
+            resultsContainer.innerHTML = visibleParts.map((p, index) => {
+                const isAvailable = (p.stock && p.stock >= 1);
+                const formattedPrice = p.price ? Number(p.price).toLocaleString('fa-IR') + ' تومان' : 'ثبت نشده';
+                const animDelay = (index % 10) * 0.035;
+
+                return `
+                <div class="part-card" style="animation-delay: ${animDelay}s">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="status-dot ${isAvailable ? '' : 'off'}"></span>
+                            ${highlight(p.name, q)}
+                        </div>
+                        <div class="stock-tag">موجودی: <b class="font-mono">${p.stock ?? 0}</b></div>
+                    </div>
+
+                    <div class="part-number-row">
+                        ${p.is_genuine ? '<span class="badge-genuine">Genuine</span>' : ''}
+                        <span class="part-number">${highlight(p.part_number, q)}</span>
+                    </div>
+
+                    <div class="cars-row-container">
+                        <div class="cars-list">
+                            <b>خودروها:</b> ${p.compatible_cars ? p.compatible_cars.split(/[،,]/).map(c => `<span class="car-chip">${highlight(c.trim(), q)}</span>`).join('') : 'نامشخص'}
+                        </div>
+                        <button class="accordion-btn" type="button" onclick="toggleAccordion(${p.id}, this)">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+
+                    <div id="wrapper-${p.id}" class="details-wrapper">
+                        <div class="details-inner">
+                            <div class="details-item">
+                                <span>قیمت قطعه:</span>
+                                <span class="val">${formattedPrice}</span>
+                            </div>
+                            <div class="details-item">
+                                <span>آخرین تغییر قیمت:</span>
+                                <span class="val" style="color:var(--text-main)">${formatDate(p.price_updated_at)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join("");
+
+            updatePartsFooter();
+        }
+
         async function loadParts() {
             const params = new URLSearchParams();
             if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
@@ -553,9 +869,10 @@
 
             resultsContainer.innerHTML = `
                 <div style="grid-column:1/-1; text-align:center; padding:60px 20px;">
-                <div class="loader-spinner"></div>
-                <div style="color:var(--text-muted);">در حال بارگذاری اطلاعات قطعات...</div>
+                    <div class="loader-spinner"></div>
+                    <div style="color:var(--text-muted);">در حال بارگذاری اطلاعات قطعات...</div>
                 </div>`;
+            document.getElementById("partsFooter").innerHTML = "";
 
             try {
                 let parts = await api("/api/parts?" + params.toString());
@@ -563,59 +880,20 @@
                     parts = parts.filter(p => p.stock && p.stock >= 1);
                 }
 
-                countSpan.textContent = parts.length + " مورد یافت شد";
+                allParts = Array.isArray(parts) ? parts : [];
+                visiblePartCount = PAGE_SIZE;
+                countSpan.textContent = allParts.length.toLocaleString('fa-IR') + " مورد یافت شد";
 
-                if (!parts.length) {
+                if (!allParts.length) {
                     resultsContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--text-muted)">قطعه‌ای با این مشخصات یافت نشد.</div>';
+                    document.getElementById("partsFooter").innerHTML = "";
                     return;
                 }
 
-                const q = searchInput.value.trim();
-
-                resultsContainer.innerHTML = parts.map((p, index) => {
-                    const isAvailable = (p.stock && p.stock >= 1);
-                    const formattedPrice = p.price ? Number(p.price).toLocaleString('fa-IR') + ' تومان' : 'ثبت نشده';
-                    const animDelay = (index % 12) * 0.05; 
-                    
-                    return `
-                    <div class="part-card" style="animation-delay: ${animDelay}s">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <span class="status-dot ${isAvailable ? '' : 'off'}"></span>
-                                ${highlight(p.name, q)}
-                            </div>
-                            <div class="stock-tag">موجودی: <b class="font-mono">${p.stock ?? 0}</b></div>
-                        </div>
-
-                        <div class="part-number-row">
-                            ${p.is_genuine ? '<span class="badge-genuine">Genuine</span>' : ''}
-                            <span class="part-number">${highlight(p.part_number, q)}</span>
-                        </div>
-
-                        <div class="cars-row-container">
-                            <div class="cars-list">
-                                <b>خودروها:</b> ${p.compatible_cars ? p.compatible_cars.split(/[،,]/).map(c => `<span class="car-chip">${highlight(c.trim(), q)}</span>`).join('') : 'نامشخص'}
-                            </div>
-                            <button class="accordion-btn" onclick="toggleAccordion(${p.id}, this)">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                        </div>
-
-                        <div id="wrapper-${p.id}" class="details-wrapper">
-                            <div class="details-inner">
-                                <div class="details-item">
-                                    <span>قیمت قطعه:</span>
-                                    <span class="val">${formattedPrice}</span>
-                                </div>
-                                <div class="details-item">
-                                    <span>آخرین تغییر قیمت:</span>
-                                    <span class="val" style="color:var(--text-main)">${formatDate(p.price_updated_at)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-                }).join("");
+                renderParts();
             } catch (e) {
+                allParts = [];
+                document.getElementById("partsFooter").innerHTML = "";
                 resultsContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--danger); padding:40px;">خطا در ارتباط با سرور: ${e.message}</div>`;
             }
         }
@@ -644,6 +922,62 @@
             const reg = new RegExp("(" + words.join("|") + ")", "gi");
             return text.replace(reg, "<mark>$1</mark>");
         }
+
+
+        // -----------------------------------------
+        // ورود به پنل
+        // -----------------------------------------
+        const loginBtn = document.getElementById("loginBtn");
+        const loginOverlay = document.getElementById("loginOverlay");
+        const loginClose = document.getElementById("loginClose");
+        const loginForm = document.getElementById("loginForm");
+        const loginError = document.getElementById("loginError");
+
+        function openLogin() {
+            loginError.textContent = "";
+            loginOverlay.classList.add("active");
+            loginOverlay.setAttribute("aria-hidden", "false");
+            setTimeout(() => document.getElementById("loginUsername")?.focus(), 60);
+        }
+
+        function closeLogin() {
+            loginOverlay.classList.remove("active");
+            loginOverlay.setAttribute("aria-hidden", "true");
+        }
+
+        loginBtn?.addEventListener("click", openLogin);
+        loginClose?.addEventListener("click", closeLogin);
+        loginOverlay?.addEventListener("click", (e) => {
+            if (e.target === loginOverlay) closeLogin();
+        });
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && loginOverlay.classList.contains("active")) closeLogin();
+        });
+
+        loginForm?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            loginError.textContent = "";
+            const username = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value;
+
+            try {
+                const response = await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.detail || "نام کاربری یا رمز عبور نادرست است.");
+                }
+
+                closeLogin();
+                window.location.href = data.redirect || "/admin";
+            } catch (err) {
+                loginError.textContent = err.message || "ورود انجام نشد.";
+            }
+        });
 
         // رویدادهای تایپ در سرچ و لود اولیه
         let searchTimer;
