@@ -50,6 +50,7 @@ def init_db_schema():
                     email TEXT,
                     phone TEXT,
                     email_verified INTEGER NOT NULL DEFAULT 0,
+                    role TEXT NOT NULL DEFAULT 'customer',
                     must_change_password INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
@@ -63,8 +64,20 @@ def init_db_schema():
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified INTEGER NOT NULL DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'customer'",
             ):
                 cursor.execute(statement)
+
+            # The original three admin accounts are kept as administrators.
+            # Everyone else remains a normal customer. Matching is case-insensitive
+            # and scoped to usernames so registration cannot accidentally gain admin access.
+            cursor.execute("""
+                UPDATE users
+                SET role = CASE
+                    WHEN LOWER(username) IN ('erfan', 'alireza', 'behnam') THEN 'admin'
+                    ELSE COALESCE(NULLIF(role, ''), 'customer')
+                END
+            """)
 
             # Sessions Table
             cursor.execute("""
@@ -250,7 +263,7 @@ def get_current_user(
         with conn.cursor() as cursor:
             cursor.execute("""
                 SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone,
-                       u.email_verified, u.must_change_password, u.password_hash
+                       u.email_verified, u.role, u.must_change_password, u.password_hash
                 FROM sessions s
                 JOIN users u ON u.id = s.user_id
                 WHERE s.token_hash = %s
@@ -265,6 +278,16 @@ def get_current_user(
         )
 
     return user
+
+
+def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
+    """Allows only administrator accounts to access management features."""
+    if (current_user.get("role") or "customer") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="این حساب دسترسی به پنل مدیریت ندارد."
+        )
+    return current_user
 
 
 # ------------------------------------------------------------------------------
@@ -436,20 +459,24 @@ async def serve_guest():
     return FileResponse("index.html")
 
 @app.get("/admin")
-async def serve_admin():
+async def serve_admin(current_user: dict = Depends(get_admin_user)):
     return FileResponse("admin.html")
 
 @app.get("/admin/buy")
-async def serve_buy():
+async def serve_buy(current_user: dict = Depends(get_admin_user)):
     return FileResponse("buy.html")
 
 @app.get("/admin/sell")
-async def serve_sell():
+async def serve_sell(current_user: dict = Depends(get_admin_user)):
     return FileResponse("sell.html")
 
 @app.get("/admin/report")
-async def serve_report():
+async def serve_report(current_user: dict = Depends(get_admin_user)):
     return FileResponse("report.html")
+
+@app.get("/order")
+async def serve_order(current_user: dict = Depends(get_current_user)):
+    return FileResponse("order.html")
 
 @app.get("/login")
 async def serve_login():
@@ -480,6 +507,30 @@ def check_email(data: dict):
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="این ایمیل قبلاً ثبت شده است.")
 
     return {"valid": True, "available": True, "email": email}
+
+
+@app.get("/api/auth/check-username")
+def check_username(username: str = Query(default="")):
+    username = username.strip()
+    if not USERNAME_RE.fullmatch(username):
+        raise HTTPException(status_code=422, detail="نام کاربری معتبر نیست.")
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM users WHERE LOWER(username) = LOWER(%s)", (username,))
+            exists = cursor.fetchone() is not None
+    return {"available": not exists}
+
+
+@app.get("/api/auth/check-phone")
+def check_phone(phone: str = Query(default="")):
+    phone = re.sub(r"[\s-]+", "", phone)
+    if not re.fullmatch(r"09\d{9}", phone):
+        raise HTTPException(status_code=422, detail="شماره موبایل معتبر نیست.")
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM users WHERE phone = %s", (phone,))
+            exists = cursor.fetchone() is not None
+    return {"available": not exists}
 
 
 @app.post("/api/auth/register")
@@ -520,14 +571,14 @@ def register(data: RegisterRequest):
                 """
                 INSERT INTO users (
                     username, password_hash, first_name, last_name, email, phone,
-                    email_verified, must_change_password, created_at, updated_at
+                    email_verified, role, must_change_password, created_at, updated_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id, username
                 """,
                 (
                     data.username, password_hash, data.first_name, data.last_name,
-                    data.email, data.phone, 1, 0, now, now
+                    data.email, data.phone, 1, "customer", 0, now, now
                 ),
             )
             user = cursor.fetchone()
@@ -541,6 +592,7 @@ def register(data: RegisterRequest):
             "last_name": data.last_name,
             "email": data.email,
             "phone": data.phone,
+            "role": "customer",
         },
     }
 
@@ -598,6 +650,7 @@ def login(data: LoginRequest):
             "email": user.get("email"),
             "phone": user.get("phone"),
             "email_verified": bool(user.get("email_verified")),
+            "role": user.get("role") or "customer",
             "must_change_password": bool(user["must_change_password"]),
         }
     }
@@ -613,6 +666,7 @@ def me(current_user: dict = Depends(get_current_user)):
         "email": current_user.get("email"),
         "phone": current_user.get("phone"),
         "email_verified": bool(current_user.get("email_verified")),
+        "role": current_user.get("role") or "customer",
         "must_change_password": bool(current_user["must_change_password"]),
     }
 
@@ -678,7 +732,7 @@ def logout(credentials: Optional[HTTPAuthorizationCredentials] = Depends(securit
 # ------------------------------------------------------------------------------
 
 @app.get("/api/invoices/sell")
-def get_sell_invoices(current_user: dict = Depends(get_current_user)):
+def get_sell_invoices(current_user: dict = Depends(get_admin_user)):
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM sell_invoices ORDER BY id DESC")
@@ -688,7 +742,7 @@ def get_sell_invoices(current_user: dict = Depends(get_current_user)):
 @app.get("/api/invoices/sell/{invoice_id}")
 def get_sell_invoice(
     invoice_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -708,7 +762,7 @@ def get_sell_invoice(
 @app.post("/api/invoices/sell")
 def create_sell_invoice(
     data: SellInvoiceCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     now = utc_now()
     with get_db() as conn:
@@ -758,7 +812,7 @@ def create_sell_invoice(
 def update_sell_invoice(
     invoice_id: int,
     data: SellInvoiceCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -820,7 +874,7 @@ def update_sell_invoice(
 def update_invoice_status(
     invoice_id: int,
     status_data: dict,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     is_paid = 1 if status_data.get("is_paid") else 0
     with get_db() as conn:
@@ -833,7 +887,7 @@ def update_invoice_status(
 @app.delete("/api/invoices/sell/{invoice_id}")
 def delete_sell_invoice(
     invoice_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -860,7 +914,7 @@ def delete_sell_invoice(
 # ------------------------------------------------------------------------------
 
 @app.get("/api/invoices/buy")
-def get_buy_invoices(current_user: dict = Depends(get_current_user)):
+def get_buy_invoices(current_user: dict = Depends(get_admin_user)):
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM buy_invoices ORDER BY id DESC")
@@ -869,7 +923,7 @@ def get_buy_invoices(current_user: dict = Depends(get_current_user)):
 @app.post("/api/invoices/buy")
 def create_buy_invoice(
     data: BuyInvoiceCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     now = utc_now()
     with get_db() as conn:
@@ -932,7 +986,7 @@ def create_buy_invoice(
 @app.get("/api/invoices/buy/{invoice_id}")
 def get_buy_invoice(
     invoice_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -953,7 +1007,7 @@ def get_buy_invoice(
 def update_buy_invoice(
     invoice_id: int,
     data: BuyInvoiceCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -1029,7 +1083,7 @@ def update_buy_invoice(
 @app.delete("/api/invoices/buy/{invoice_id}")
 def delete_buy_invoice(
     invoice_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -1138,7 +1192,7 @@ def get_cars():
 @app.post("/api/parts")
 def add_part(
     data: PartCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     part_number = data.part_number.strip()
 
@@ -1171,7 +1225,7 @@ def add_part(
 def update_part(
     part_id: int,
     data: PartUpdate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     part_number = data.part_number.strip()
     safe_stock = max(0, data.stock)
@@ -1214,7 +1268,7 @@ def update_part(
 def update_price(
     part_id: int,
     data: PriceUpdate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -1241,7 +1295,7 @@ def update_price(
 def update_stock(
     part_id: int,
     data: StockUpdate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     safe_stock = max(0, data.stock)
 
@@ -1259,7 +1313,7 @@ def update_stock(
 @app.delete("/api/parts/{part_id}")
 def delete_part(
     part_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -1678,7 +1732,7 @@ def get_report_data(
     from_date: str = Query(default="", alias="from"),
     to_date: str = Query(default="", alias="to"),
     keyword: str = Query(default=""),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """دریافت لیست داده‌های گزارش برای نمایش در جدول پیش‌نمایش فرانت‌اند"""
     return fetch_report_dataset(type, from_date, to_date, keyword)
@@ -1690,7 +1744,7 @@ def generate_report_pdf(
     from_date: str = Query(default="", alias="from"),
     to_date: str = Query(default="", alias="to"),
     keyword: str = Query(default=""),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """تولید و استریم مستقیم فایل PDF گزارش با استفاده از WeasyPrint"""
     data = fetch_report_dataset(type, from_date, to_date, keyword)
@@ -1912,7 +1966,7 @@ def generate_report_pdf(
 @app.get("/api/invoices/sell/{invoice_id}/pdf")
 def generate_sell_invoice_pdf(
     invoice_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """تولید فایل PDF تک‌فاکتور فروش با تمام جزئیات و نشان اصلی بودن قطعات"""
     pdf_bytes = generate_single_invoice_pdf_bytes("sell", invoice_id)
@@ -1928,7 +1982,7 @@ def generate_sell_invoice_pdf(
 @app.get("/api/invoices/buy/{invoice_id}/pdf")
 def generate_buy_invoice_pdf(
     invoice_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_admin_user)
 ):
     """تولید فایل PDF تک‌فاکتور خرید با تمام جزئیات و نشان اصلی بودن قطعات"""
     pdf_bytes = generate_single_invoice_pdf_bytes("buy", invoice_id)
