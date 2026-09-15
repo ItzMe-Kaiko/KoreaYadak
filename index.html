@@ -129,6 +129,7 @@
 
         .reveal-soft {
             animation: revealSoft .85s cubic-bezier(.22,1,.36,1) both;
+            opacity: 1;
         }
 
         @keyframes revealSoft {
@@ -258,7 +259,13 @@
         .results-info { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); padding: 0 10px; margin-bottom: 20px; }
 
         /* API Cards Styling */
-        .parts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .parts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            min-height: 20px;
+        }
+        .parts-grid > .part-card { visibility: visible; }
         
         .part-card {
             background: linear-gradient(180deg, rgba(13, 19, 31, 0.72), rgba(8, 12, 20, 0.68));
@@ -266,8 +273,10 @@
             border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 15px;
             backdrop-filter: blur(10px); transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
             position: relative; overflow: hidden;
-            animation: cardReveal .62s cubic-bezier(.22,1,.36,1) forwards;
-            opacity: 0; transform: translateY(18px) scale(.985);
+            animation: cardReveal .62s cubic-bezier(.22,1,.36,1) both;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            will-change: transform;
         }
         .part-card::before {
             content: '';
@@ -277,9 +286,9 @@
             background: linear-gradient(90deg, transparent, rgba(0,229,255,.7), transparent);
             opacity: .55;
         }
-        }
         @keyframes cardReveal {
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from { transform: translateY(18px) scale(.985); }
+            to   { transform: translateY(0) scale(1); }
         }
         
         .part-card:hover { transform: translateY(-5px); border-color: rgba(0, 229, 255, 0.5); box-shadow: 0 15px 30px rgba(0, 229, 255, 0.1); background: rgba(10, 15, 24, 0.8); }
