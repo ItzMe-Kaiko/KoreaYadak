@@ -40,6 +40,15 @@ filter:blur(14px);animation:glow 8s ease-in-out infinite}
 background:linear-gradient(145deg,rgba(13,19,31,.82),rgba(7,11,18,.9));box-shadow:0 35px 90px rgba(0,0,0,.38),0 0 50px rgba(0,229,255,.055);
 backdrop-filter:blur(18px);animation:enter .8s cubic-bezier(.22,1,.36,1) both}
 @keyframes enter{from{opacity:0;transform:translateY(22px) scale(.985);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes floatField{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes pulseBorder{0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,0)}50%{box-shadow:0 0 0 4px rgba(0,229,255,.045)}}
+@keyframes tabPop{from{transform:scale(.96);opacity:.65}to{transform:scale(1);opacity:1}}
+@keyframes successPop{0%{transform:scale(.96);opacity:0}70%{transform:scale(1.02);opacity:1}100%{transform:scale(1);opacity:1}}
+.field{animation:floatField 6s ease-in-out infinite}
+.field:nth-child(2n){animation-delay:.6s}.field:nth-child(3n){animation-delay:1.1s}
+.tab.active{animation:tabPop .24s ease-out}
+.submit:focus-visible{animation:pulseBorder 1.2s ease-in-out infinite}
+.ok{animation:successPop .35s ease-out both}
 .brand{padding:42px 38px;min-height:720px;display:flex;flex-direction:column;justify-content:space-between;border-left:1px solid rgba(148,163,184,.09);
 background:radial-gradient(circle at 50% 20%,rgba(0,229,255,.12),transparent 40%),linear-gradient(180deg,rgba(0,229,255,.035),transparent 60%)}
 .logo{font-size:1.65rem;font-weight:900;letter-spacing:1px} .logo span{color:var(--primary);text-shadow:0 0 18px var(--primary-glow)}
@@ -61,6 +70,7 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
 .verify{display:grid;grid-template-columns:1fr auto;gap:8px} .verify button{border:1px solid rgba(0,229,255,.22);color:var(--primary);background:rgba(0,229,255,.07);padding:0 14px;border-radius:12px;cursor:pointer;font-weight:800}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px} .check{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:.77rem}
 .check input{width:auto;accent-color:var(--primary);padding:0}
+.submit:disabled,.verify button:disabled{opacity:.6;cursor:not-allowed;transform:none!important}
 .submit{width:100%;border:1px solid rgba(0,229,255,.3);border-radius:14px;padding:13px;margin-top:8px;cursor:pointer;color:#031217;background:linear-gradient(135deg,#00e5ff,#5ee7f5);box-shadow:0 12px 28px rgba(0,229,255,.14);font-weight:900;font-size:.95rem}
 .message{min-height:22px;margin-top:10px;font-size:.78rem;line-height:1.7} .ok{color:#34d399} .bad{color:#f87171}
 .legal{margin-top:18px;color:#64748b;font-size:.7rem;line-height:1.8;text-align:center}
@@ -95,11 +105,11 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
   <form id="form" novalidate>
     <div id="register">
       <div class="grid">
-        <div class="field"><label class="title" for="first">نام</label><div class="wrap"><i class="fa-regular fa-id-card"></i><input id="first" placeholder="مثلاً عرفان" autocomplete="given-name"></div></div>
-        <div class="field"><label class="title" for="last">نام خانوادگی</label><div class="wrap"><i class="fa-regular fa-user"></i><input id="last" placeholder="مثلاً محمودآبادی" autocomplete="family-name"></div></div>
-        <div class="field full"><label class="title" for="username">نام کاربری</label><div class="wrap"><i class="fa-solid fa-at"></i><input id="username" placeholder="مثلاً itzkaiko" autocomplete="username" minlength="4" maxlength="32"></div><small>فقط حروف انگلیسی، عدد، نقطه و زیرخط.</small></div>
-        <div class="field full"><label class="title" for="email">ایمیل</label><div class="verify"><div class="wrap"><i class="fa-regular fa-envelope"></i><input id="email" type="email" placeholder="example@email.com" autocomplete="email"></div><button id="verifyBtn" type="button"><i class="fa-regular fa-circle-check"></i> تأیید</button></div><small>بعداً دکمه به ارسال کد و تأیید واقعی ایمیل وصل می‌شود.</small></div>
-        <div class="field full"><label class="title" for="phone">شماره موبایل</label><div class="wrap"><i class="fa-solid fa-mobile-screen-button"></i><input id="phone" inputmode="tel" placeholder="0912xxxxxxx" autocomplete="tel"></div></div>
+        <div class="field"><label class="title" for="first">نام</label><div class="wrap"><i class="fa-regular fa-id-card"></i><input id="first" placeholder="نام" autocomplete="given-name"></div></div>
+        <div class="field"><label class="title" for="last">نام خانوادگی</label><div class="wrap"><i class="fa-regular fa-user"></i><input id="last" placeholder="نام خانوادگی" autocomplete="family-name"></div></div>
+        <div class="field full"><label class="title" for="username">نام کاربری</label><div class="wrap"><i class="fa-solid fa-at"></i><input id="username" placeholder="نام کاربری" autocomplete="username" minlength="4" maxlength="32"></div><small>فقط حروف انگلیسی، عدد، نقطه و زیرخط.</small></div>
+        <div class="field full"><label class="title" for="email">ایمیل</label><div class="verify"><div class="wrap"><i class="fa-regular fa-envelope"></i><input id="email" type="email" placeholder="ایمیل شما" autocomplete="email"></div><button id="verifyBtn" type="button"><i class="fa-regular fa-circle-check"></i> تأیید</button></div><small>ایمیل قبل از ثبت‌نام از نظر فرمت و تکراری‌بودن بررسی می‌شود.</small></div>
+        <div class="field full"><label class="title" for="phone">شماره موبایل</label><div class="wrap"><i class="fa-solid fa-mobile-screen-button"></i><input id="phone" inputmode="tel" placeholder="شماره موبایل" autocomplete="tel"></div></div>
         <div class="field"><label class="title" for="pass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="pass" type="password" placeholder="حداقل ۸ کاراکتر" autocomplete="new-password"></div></div>
         <div class="field"><label class="title" for="pass2">تکرار رمز عبور</label><div class="wrap"><i class="fa-solid fa-shield-halved"></i><input id="pass2" type="password" placeholder="تکرار رمز" autocomplete="new-password"></div></div>
       </div>
@@ -107,14 +117,14 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
     </div>
 
     <div id="login" hidden>
-      <div class="field"><label class="title" for="identifier">نام کاربری یا ایمیل</label><div class="wrap"><i class="fa-regular fa-circle-user"></i><input id="identifier" placeholder="username یا email" autocomplete="username"></div></div>
+      <div class="field"><label class="title" for="identifier">نام کاربری یا ایمیل</label><div class="wrap"><i class="fa-regular fa-circle-user"></i><input id="identifier" placeholder="نام کاربری یا ایمیل" autocomplete="username"></div></div>
       <div class="field"><label class="title" for="loginPass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="loginPass" type="password" placeholder="رمز عبور" autocomplete="current-password"></div></div>
       <div class="row"><label class="check"><input id="remember" type="checkbox"> مرا به خاطر بسپار</label><a href="#" id="forgot" style="color:var(--primary);font-size:.76rem;text-decoration:none">فراموشی رمز؟</a></div>
     </div>
 
     <button id="submit" class="submit" type="submit"><i class="fa-solid fa-user-plus"></i> ساخت حساب</button>
     <div id="message" class="message"></div>
-    <div class="legal">این نسخه فقط رابط کاربری است؛ endpointهای احراز هویت بعداً به همین فرم متصل می‌شوند.</div>
+    <div class="legal">ورود و ثبت‌نام مستقیماً با سامانه حساب کاربری کره یدک انجام می‌شود.</div>
   </form>
 </section>
 </main></div>
@@ -146,6 +156,13 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
   function clearToken() {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
+  }
+
+  let usernameAvailable = null;
+  let phoneAvailable = null;
+
+  async function checkAvailability(endpoint, value) {
+    return api(`${endpoint}?${endpoint.includes("username") ? "username" : "phone"}=${encodeURIComponent(value)}`);
   }
 
   async function api(path, options = {}) {
@@ -218,6 +235,34 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
     verify.style.color = "";
   });
 
+  $("username").addEventListener("blur", async () => {
+    const u = $("username").value.trim();
+    usernameAvailable = null;
+    if (!/^[A-Za-z][A-Za-z0-9_.-]{2,31}$/.test(u)) return;
+    try {
+      const result = await checkAvailability("/api/auth/check-username", u);
+      usernameAvailable = result.available;
+      msg(result.available ? "نام کاربری قابل استفاده است." : "این نام کاربری قبلاً استفاده شده است.", result.available ? "ok" : "bad");
+    } catch (error) {
+      usernameAvailable = false;
+      msg(error.message, "bad");
+    }
+  });
+
+  $("phone").addEventListener("blur", async () => {
+    const ph = $("phone").value.replace(/\s|-/g, "");
+    phoneAvailable = null;
+    if (!/^09\d{9}$/.test(ph)) return;
+    try {
+      const result = await checkAvailability("/api/auth/check-phone", ph);
+      phoneAvailable = result.available;
+      if (!result.available) msg("این شماره موبایل قبلاً ثبت شده است.", "bad");
+    } catch (error) {
+      phoneAvailable = false;
+      msg(error.message, "bad");
+    }
+  });
+
   $("forgot").addEventListener("click", e => {
     e.preventDefault();
     msg("بازیابی رمز عبور هنوز endpoint مستقل ندارد.", "ok");
@@ -247,6 +292,8 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
         if (p !== p2) throw new Error("تکرار رمز عبور با رمز اصلی یکی نیست.");
         if (!$("terms").checked) throw new Error("باید قوانین را بپذیری.");
         if (!verified) throw new Error("قبل از ساخت حساب، ایمیل را از طریق دکمه تأیید بررسی کن.");
+        if (usernameAvailable === false) throw new Error("این نام کاربری قبلاً استفاده شده است.");
+        if (phoneAvailable === false) throw new Error("این شماره موبایل قبلاً ثبت شده است.");
 
         const result = await api("/api/auth/register", {
           method: "POST",
@@ -281,8 +328,9 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
       });
 
       saveToken(result.token);
-      msg("ورود موفق بود. در حال انتقال به پنل...", "ok");
-      window.location.href = "/admin";
+      const destination = result.user?.role === "admin" ? "/admin" : "/order";
+      msg("ورود موفق بود. در حال انتقال...", "ok");
+      window.location.href = destination;
     } catch (error) {
       msg(error.message || "خطایی رخ داد.", "bad");
     } finally {
@@ -295,8 +343,8 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
     const token = getToken();
     if (!token) return;
     try {
-      await api("/api/auth/me");
-      window.location.href = "/admin";
+      const current = await api("/api/auth/me");
+      window.location.href = current.role === "admin" ? "/admin" : "/order";
     } catch (_) {
       clearToken();
     }
