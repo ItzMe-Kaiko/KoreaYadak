@@ -505,6 +505,401 @@ mark { background: rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0 3px; bord
   }
 }
 
+
+
+/* =========================================================
+   KOREA YADAK — MODERN CYAN ADMIN REDESIGN
+   Visual-only override: existing JS/API markup is preserved.
+   ========================================================= */
+
+:root {
+  --bg-main: #05070b;
+  --bg-card: rgba(10, 15, 24, 0.68);
+  --bg-sidebar: rgba(7, 12, 20, 0.78);
+  --border-color: rgba(148, 163, 184, 0.11);
+  --primary: #00e5ff;
+  --primary-hover: #00b8cc;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --danger: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --glass-blur: blur(18px);
+  --shadow-premium: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
+html.light {
+  --bg-main: #071016;
+  --bg-card: rgba(14, 24, 34, 0.82);
+  --bg-sidebar: rgba(9, 18, 27, 0.90);
+  --border-color: rgba(148, 163, 184, 0.11);
+  --primary: #00e5ff;
+  --primary-hover: #00b8cc;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --shadow-premium: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
+/* Modern animated grid background */
+html, body {
+  background:
+    radial-gradient(circle at 50% -8%, rgba(0,229,255,.10), transparent 34%),
+    radial-gradient(circle at 9% 72%, rgba(30,64,175,.08), transparent 25%),
+    radial-gradient(circle at 92% 65%, rgba(6,182,212,.07), transparent 24%),
+    var(--bg-main) !important;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -3;
+  opacity: .42;
+  background-image:
+    linear-gradient(rgba(148,163,184,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148,163,184,.045) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,.78) 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,.78) 62%, transparent 100%);
+  animation: kyGridDrift 24s linear infinite;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  width: 520px;
+  height: 520px;
+  top: -260px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -2;
+  background: radial-gradient(circle, rgba(0,229,255,.12), rgba(0,229,255,.035) 34%, transparent 70%);
+  filter: blur(12px);
+  animation: kyGlow 8s ease-in-out infinite;
+}
+
+@keyframes kyGridDrift {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 72px 72px, 72px 72px; }
+}
+
+@keyframes kyGlow {
+  0%,100% { opacity: .65; transform: translateX(-50%) scale(.96); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+}
+
+/* Header becomes a clean hero glass panel */
+.hero {
+  height: 190px !important;
+  margin: 18px 18px 0;
+  border: 1px solid rgba(0,229,255,.12) !important;
+  border-radius: 24px !important;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(0,229,255,.10), transparent 48%),
+    linear-gradient(135deg, rgba(9,16,26,.90), rgba(5,10,17,.78)) !important;
+  box-shadow: var(--shadow-premium), 0 0 40px rgba(0,229,255,.04) !important;
+}
+
+#shader-canvas {
+  opacity: .28 !important;
+  filter: hue-rotate(120deg) saturate(.65) brightness(.65);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 10%, rgba(0,229,255,.055) 50%, transparent 90%);
+  pointer-events: none;
+}
+
+.hero-content {
+  padding: 18px 30px !important;
+  border-radius: 18px !important;
+  background: rgba(3,8,14,.46) !important;
+  border: 1px solid rgba(0,229,255,.11) !important;
+  box-shadow: 0 18px 45px rgba(0,0,0,.22);
+}
+
+.hero h1 {
+  background: linear-gradient(135deg, #ffffff 0%, #7defff 58%, #00e5ff 100%) !important;
+  text-shadow: 0 0 24px rgba(0,229,255,.18);
+}
+
+.hero p {
+  color: #8ea4b6 !important;
+}
+
+/* Main layout */
+.app-layout {
+  max-width: 1380px !important;
+  margin: 18px auto 26px !important;
+  gap: 18px !important;
+}
+
+.sidebar {
+  width: 248px !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(180deg, rgba(9,16,26,.88), rgba(5,10,17,.78)) !important;
+  border: 1px solid rgba(148,163,184,.11) !important;
+  box-shadow: var(--shadow-premium) !important;
+  position: sticky;
+  top: 14px;
+  max-height: calc(100vh - 28px);
+  overflow: auto;
+}
+
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0,229,255,.14);
+  border-radius: 999px;
+}
+
+.brand-badge {
+  border-bottom-color: rgba(148,163,184,.09) !important;
+}
+
+.brand-badge .logo-icon {
+  background: linear-gradient(135deg, #00e5ff, #0ea5e9) !important;
+  color: #031217 !important;
+  box-shadow: 0 8px 22px rgba(0,229,255,.18) !important;
+}
+
+.brand-badge .title {
+  color: #f8fafc;
+}
+
+.nav-item {
+  border-radius: 12px !important;
+  padding: 11px 13px !important;
+  color: #8ea0b2 !important;
+  transition: transform .22s ease, background .22s ease, border-color .22s ease, color .22s ease !important;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: rgba(0,229,255,.075) !important;
+  border-color: rgba(0,229,255,.18) !important;
+  color: var(--primary) !important;
+  transform: translateX(-3px);
+  box-shadow: 0 8px 22px rgba(0,229,255,.05);
+}
+
+.sticky-header-container {
+  top: 10px !important;
+  border-radius: 20px !important;
+  padding: 14px !important;
+  background: rgba(7,12,20,.78) !important;
+  border: 1px solid rgba(148,163,184,.11) !important;
+  box-shadow: var(--shadow-premium) !important;
+}
+
+.top-bar {
+  border-bottom-color: rgba(148,163,184,.09) !important;
+}
+
+.user-status {
+  color: #8ea0b2 !important;
+}
+
+.user-status strong {
+  color: #f8fafc !important;
+}
+
+/* Search controls */
+.search-section input,
+.search-section select,
+.form-input {
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid rgba(148,163,184,.12) !important;
+  color: var(--text-main) !important;
+  border-radius: 12px !important;
+}
+
+.search-section input:focus,
+.search-section select:focus,
+.form-input:focus {
+  border-color: rgba(0,229,255,.45) !important;
+  box-shadow: 0 0 0 3px rgba(0,229,255,.07) !important;
+  background: rgba(0,229,255,.025) !important;
+}
+
+.in-stock-btn {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(148,163,184,.12) !important;
+}
+
+.in-stock-btn:hover {
+  border-color: rgba(16,185,129,.5) !important;
+}
+
+.in-stock-btn.active {
+  background: rgba(16,185,129,.10) !important;
+}
+
+/* Product grid and cards */
+.grid {
+  gap: 18px !important;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(13,19,31,.78), rgba(8,12,20,.70)) !important;
+  border: 1px solid rgba(148,163,184,.10) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.17) !important;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,.65), transparent);
+  opacity: .55;
+}
+
+.card:hover {
+  transform: translateY(-5px) !important;
+  border-color: rgba(0,229,255,.28) !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,.24), 0 0 24px rgba(0,229,255,.055) !important;
+}
+
+.part-number {
+  color: var(--primary) !important;
+  background: rgba(0,229,255,.075) !important;
+  border-color: rgba(0,229,255,.18) !important;
+}
+
+.status-dot {
+  background-color: var(--success) !important;
+  box-shadow: 0 0 11px var(--success) !important;
+}
+
+.accordion-btn:hover,
+.accordion-btn.active {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  background: rgba(0,229,255,.07) !important;
+}
+
+.details-content-box {
+  background: rgba(2,7,13,.34) !important;
+  border-color: rgba(148,163,184,.10) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #00e5ff, #0ea5e9) !important;
+  color: #031217 !important;
+  box-shadow: 0 12px 28px rgba(0,229,255,.12) !important;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 16px 34px rgba(0,229,255,.18) !important;
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,.025) !important;
+  color: var(--text-main) !important;
+  border: 1px solid rgba(148,163,184,.12) !important;
+}
+
+/* Keep existing functional button colors, but harmonize them */
+.btn-stock {
+  background: rgba(14,165,233,.10) !important;
+  border-color: rgba(14,165,233,.28) !important;
+}
+.btn-price {
+  background: rgba(16,185,129,.10) !important;
+  border-color: rgba(16,185,129,.28) !important;
+}
+.btn-edit {
+  background: rgba(245,158,11,.10) !important;
+  border-color: rgba(245,158,11,.28) !important;
+}
+.btn-delete {
+  background: rgba(239,68,68,.10) !important;
+  border-color: rgba(239,68,68,.28) !important;
+}
+
+/* Modals: same glass style as the login panel */
+.modal {
+  background: rgba(1,4,8,.62) !important;
+  backdrop-filter: blur(11px) !important;
+}
+
+.modal-box {
+  background: linear-gradient(180deg, rgba(13,20,31,.97), rgba(7,12,20,.97)) !important;
+  border: 1px solid rgba(0,229,255,.13) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 0 30px rgba(0,229,255,.055) !important;
+}
+
+.modal-header-title {
+  color: #f8fafc !important;
+}
+
+.checkbox-wrap {
+  background: rgba(245,158,11,.055) !important;
+  border-color: rgba(245,158,11,.18) !important;
+}
+
+.checkbox-wrap span {
+  color: #fbbf24 !important;
+}
+
+/* Theme switch */
+.slider {
+  background-color: #172431 !important;
+  border: 1px solid rgba(148,163,184,.14);
+}
+input:checked + .slider {
+  background-color: rgba(0,229,255,.35) !important;
+}
+input:checked + .slider:before {
+  background-color: #bffaff !important;
+  box-shadow: 0 0 10px rgba(0,229,255,.45);
+}
+
+/* Gemini */
+.gemini-nav-item:hover .gemini-star {
+  filter: drop-shadow(0 0 8px rgba(0,229,255,.35)) !important;
+}
+
+/* Hide the old purple-ish WebGL look on very small/low capability displays */
+@media (max-width: 850px) {
+  .hero {
+    margin: 10px 10px 0;
+    height: 165px !important;
+  }
+  .sidebar {
+    position: relative;
+    top: auto;
+    max-height: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 </style>
 </head>
 <body>
