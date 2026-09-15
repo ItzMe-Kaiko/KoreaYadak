@@ -355,66 +355,134 @@
             font-size: .82rem;
         }
 
-        /* --- Login modal --- */
-        .login-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 11000;
-            display: grid;
-            place-items: center;
-            padding: 24px;
-            background: rgba(1, 4, 8, .58);
-            backdrop-filter: blur(10px);
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity .24s ease, visibility .24s ease;
-        }
-        .login-overlay.active { opacity: 1; visibility: visible; }
-        .login-modal {
-            width: min(420px, 100%);
-            background: linear-gradient(180deg, rgba(16, 24, 38, .96), rgba(8, 13, 22, .96));
-            border: 1px solid rgba(0, 229, 255, .16);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 30px 80px rgba(0,0,0,.48), 0 0 28px rgba(0,229,255,.08);
-            transform: translateY(14px) scale(.98);
-            transition: transform .26s ease;
-        }
-        .login-overlay.active .login-modal { transform: translateY(0) scale(1); }
-        .login-head { display:flex; align-items:center; justify-content:space-between; gap: 12px; margin-bottom: 20px; }
-        .login-head h3 { font-size: 1.15rem; }
-        .login-close { background: transparent; border: 0; color: var(--text-muted); cursor:pointer; font-size:1.1rem; }
-        .login-field { margin-bottom: 13px; }
-        .login-field label { display:block; color:var(--text-muted); font-size:.85rem; margin-bottom:7px; }
-        .login-field input {
-            width:100%;
-            background:rgba(255,255,255,.035);
-            border:1px solid var(--border-color);
-            color:var(--text-main);
-            padding:12px 13px;
-            border-radius:12px;
-            outline:none;
-            transition:.2s ease;
-        }
-        .login-field input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,229,255,.08); }
-        .login-submit {
-            width:100%;
-            margin-top:6px;
-            border:1px solid rgba(0,229,255,.28);
-            background:linear-gradient(180deg, rgba(0,229,255,.16), rgba(0,229,255,.08));
-            color:var(--text-main);
-            padding:12px;
-            border-radius:12px;
-            cursor:pointer;
-            font-weight:800;
-        }
-        .login-note { margin-top:10px; font-size:.78rem; color:var(--text-muted); line-height:1.7; }
-        .login-error { color:#f87171; font-size:.8rem; min-height:20px; margin-top:8px; }
 
         @media (max-width: 768px) {
             .parts-footer { margin-bottom: 10px; }
             .part-card { backdrop-filter: blur(6px); }
         }
+
+        /* Mobile / tablet header + hero + brand cards */
+        @media (max-width: 768px) {
+            header {
+                padding: 0.9rem 4%;
+                gap: 10px;
+            }
+            .logo {
+                font-size: 1.02rem;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            nav {
+                display: block;
+                min-width: 0;
+                flex: 1;
+                overflow: hidden;
+            }
+            nav ul {
+                display: flex;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                gap: 8px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                max-width: 100%;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                padding: 2px 0 5px;
+            }
+            nav ul::-webkit-scrollbar { display: none; }
+            nav a {
+                display: block;
+                white-space: nowrap;
+                font-size: .68rem;
+                padding: 5px 7px;
+                border-radius: 8px;
+                background: rgba(255,255,255,.025);
+                border: 1px solid rgba(148,163,184,.08);
+            }
+            nav a::after {
+                display: none;
+            }
+            .btn-login {
+                padding: 0.55rem 0.85rem;
+                border-radius: 10px;
+                font-size: .82rem;
+                flex-shrink: 0;
+            }
+
+            .hero {
+                min-height: auto;
+                padding: 120px 5% 45px;
+                gap: 28px;
+            }
+            .hero-text h1 {
+                font-size: 2.55rem;
+            }
+            .hero-text h2 {
+                font-size: 0.95rem;
+            }
+            .hero-text p {
+                font-size: .92rem;
+                line-height: 1.9;
+            }
+            .status-box {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+                font-size: .82rem;
+                padding: .85rem 1rem;
+            }
+
+            .hero-image.brands-cluster {
+                width: 100%;
+                max-width: 420px;
+                min-height: 0;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(120px, 1fr));
+                gap: 12px;
+                animation: none;
+            }
+            .brand-logo {
+                width: 100%;
+                height: 120px;
+            }
+            .brand-logo.text-brand .brand-logo-front {
+                font-size: 1.35rem;
+            }
+
+            .brand-logo.expanded {
+                width: min(86vw, 320px) !important;
+                height: min(72vh, 480px) !important;
+            }
+
+            .store-section {
+                padding-left: 5%;
+                padding-right: 5%;
+            }
+            .search-container {
+                padding: 14px;
+                gap: 10px;
+            }
+            .parts-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1100px) {
+            .hero {
+                padding-left: 5%;
+                padding-right: 5%;
+            }
+            .hero-image.brands-cluster {
+                max-width: 420px;
+            }
+            .brand-logo {
+                width: 95px;
+                height: 95px;
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: .01ms !important;
@@ -503,7 +571,7 @@
             <p>تجربه‌ای فراتر از خرید معمولی! با سیستم جستجوی پیشرفته و هوش مصنوعی، قطعه مناسب خودروی خود را به راحتی پیدا کنید.</p>
             <div class="status-box" data-aos="zoom-in" data-aos-delay="400">
                 <div class="dot"></div>
-                <span>۱۴۵۰ قطعه موجود | سیستم آنلاین استعلام</span>
+                <span><b id="heroPartsCount" class="font-mono">—</b> قطعه در بانک اطلاعاتی | سیستم آنلاین استعلام</span>
             </div>
         </div>
         
@@ -538,6 +606,23 @@
                     </div>
                 </div>
             </div>
+
+            <!-- لوگو تویوتا -->
+            <div class="brand-logo" onclick="openBrandCard(this)">
+                <div class="brand-logo-inner">
+                    <div class="brand-logo-front">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_carlogo.svg" alt="Toyota">
+                    </div>
+                    <div class="brand-logo-back">
+                        <div class="brand-info-content">
+                            <h3>تویوتا</h3>
+                            <p>تامین قطعات خودروهای تویوتا با استعلام سریع و دقیق.</p>
+                            <button class="btn-close-card" onclick="event.stopPropagation(); closeBrandCard()">بستن</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- لوگوهای دیگر -->
             <div class="brand-logo text-brand" onclick="openBrandCard(this)">
                 <div class="brand-logo-inner">
@@ -627,34 +712,6 @@
             </div>
         </div>
     </section>
-
-
-    <div id="loginOverlay" class="login-overlay" aria-hidden="true">
-        <div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
-            <div class="login-head">
-                <h3 id="loginTitle">ورود به پنل کره یدک</h3>
-                <button class="login-close" type="button" id="loginClose" aria-label="بستن">
-                    <i class="fas fa-xmark"></i>
-                </button>
-            </div>
-            <form id="loginForm">
-                <div class="login-field">
-                    <label for="loginUsername">نام کاربری</label>
-                    <input id="loginUsername" name="username" autocomplete="username" required maxlength="64">
-                </div>
-                <div class="login-field">
-                    <label for="loginPassword">رمز عبور</label>
-                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="128">
-                </div>
-                <button class="login-submit" type="submit">ورود به پنل</button>
-                <div id="loginError" class="login-error"></div>
-                <div class="login-note">
-                    این فرم ابتدا از مسیر <span class="font-mono">/api/login</span> استفاده می‌کند؛
-                    اگر بک‌اند شما مسیر متفاوتی دارد، همان مسیر باید در کد جاگذاری شود.
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- اسکریپت ها -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -934,59 +991,77 @@
 
 
         // -----------------------------------------
-        // ورود به پنل
+        // احراز هویت مشترک با /login و /admin
         // -----------------------------------------
         const loginBtn = document.getElementById("loginBtn");
-        const loginOverlay = document.getElementById("loginOverlay");
-        const loginClose = document.getElementById("loginClose");
-        const loginForm = document.getElementById("loginForm");
-        const loginError = document.getElementById("loginError");
+        const heroPartsCount = document.getElementById("heroPartsCount");
 
-        function openLogin() {
-            loginError.textContent = "";
-            loginOverlay.classList.add("active");
-            loginOverlay.setAttribute("aria-hidden", "false");
-            setTimeout(() => document.getElementById("loginUsername")?.focus(), 60);
+        function getStoredToken() {
+            return localStorage.getItem("koreyadak_token");
         }
 
-        function closeLogin() {
-            loginOverlay.classList.remove("active");
-            loginOverlay.setAttribute("aria-hidden", "true");
+        function isLoggedIn() {
+            return !!getStoredToken();
         }
 
-        loginBtn?.addEventListener("click", openLogin);
-        loginClose?.addEventListener("click", closeLogin);
-        loginOverlay?.addEventListener("click", (e) => {
-            if (e.target === loginOverlay) closeLogin();
-        });
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && loginOverlay.classList.contains("active")) closeLogin();
-        });
+        function syncLoginButton(username = null) {
+            if (!loginBtn) return;
 
-        loginForm?.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            loginError.textContent = "";
-            const username = document.getElementById("loginUsername").value.trim();
-            const password = document.getElementById("loginPassword").value;
+            if (username) {
+                loginBtn.innerHTML = `<i class="fas fa-user"></i> ${username}`;
+                loginBtn.title = "ورود به پنل مدیریت";
+            } else {
+                loginBtn.innerHTML = `<i class="fas fa-right-to-bracket"></i> ورود`;
+                loginBtn.title = "ورود";
+            }
+        }
+
+        async function syncAuthUI() {
+            const token = getStoredToken();
+            if (!token) {
+                syncLoginButton();
+                return;
+            }
 
             try {
-                const response = await fetch("/api/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password })
+                const res = await fetch("/api/auth/me", {
+                    headers: { "Authorization": "Bearer " + token }
                 });
 
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    throw new Error(data.detail || "نام کاربری یا رمز عبور نادرست است.");
-                }
+                if (!res.ok) throw new Error("Unauthorized");
 
-                closeLogin();
-                window.location.href = data.redirect || "/admin";
-            } catch (err) {
-                loginError.textContent = err.message || "ورود انجام نشد.";
+                const user = await res.json();
+                syncLoginButton(user?.username || "حساب کاربری");
+            } catch (_) {
+                localStorage.removeItem("koreyadak_token");
+                syncLoginButton();
+            }
+        }
+
+        loginBtn?.addEventListener("click", () => {
+            if (isLoggedIn()) {
+                window.location.href = "/admin";
+            } else {
+                window.location.href = "/login";
             }
         });
+
+        // -----------------------------------------
+        // شمارش واقعی قطعات از API / دیتابیس
+        // -----------------------------------------
+        async function updateHeroPartsCount() {
+            if (!heroPartsCount) return;
+
+            try {
+                // /api/parts خروجی فعلی پروژه را برمی‌گرداند؛
+                // تعداد قطعاتِ موجود در پاسخ، منبع شمارنده است.
+                const parts = await api("/api/parts");
+                const total = Array.isArray(parts) ? parts.length : 0;
+                heroPartsCount.textContent = total.toLocaleString("fa-IR");
+            } catch (_) {
+                heroPartsCount.textContent = "—";
+            }
+        }
 
         // رویدادهای تایپ در سرچ و لود اولیه
         let searchTimer;
@@ -999,6 +1074,8 @@
         // اجرای اولیه توابع بک‌اند
         loadCars();
         loadParts();
+        updateHeroPartsCount();
+        syncAuthUI();
     </script>
 </body>
 </html>
