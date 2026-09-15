@@ -123,7 +123,7 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
 (() => {
   let mode = "register";
   let verified = false;
-  const TOKEN_KEY = "kore_yadak_token";
+  const TOKEN_KEY = "koreyadak_token";
   const $ = id => document.getElementById(id);
   const title = $("title"), subtitle = $("subtitle"), register = $("register"), login = $("login"), submit = $("submit"), message = $("message"), verify = $("verifyBtn");
 
@@ -132,14 +132,15 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
     message.className = "message " + type;
   }
 
-  function saveToken(token, remember) {
-    localStorage.removeItem(TOKEN_KEY);
+  // admin.html expects the authentication token specifically in localStorage.
+  // Keep the same key/storage contract across the whole application.
+  function saveToken(token) {
+    localStorage.setItem(TOKEN_KEY, token);
     sessionStorage.removeItem(TOKEN_KEY);
-    (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
   }
 
   function getToken() {
-    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(TOKEN_KEY);
   }
 
   function clearToken() {
@@ -279,7 +280,7 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
         body: JSON.stringify({ identifier, password, remember_me: remember })
       });
 
-      saveToken(result.token, remember);
+      saveToken(result.token);
       msg("ورود موفق بود. در حال انتقال به پنل...", "ok");
       window.location.href = "/admin";
     } catch (error) {
