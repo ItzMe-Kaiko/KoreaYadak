@@ -2,397 +2,185 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>کُره یدک | ورود مدیر</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>کره یدک | حساب کاربری</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-@import url('https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css');
-
-:root {
-  --bg-main: #060913;
-  --bg-card: rgba(15, 23, 42, 0.75);
-  --border-color: rgba(99, 102, 241, 0.2);
-  --guest-blue: #0ea5e9;   /* رنگ تم مهمان/تاریک */
-  --admin-indigo: #6366f1; /* رنگ تم پنل ادمین */
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --danger: #ef4444;
-  --glass-blur: blur(20px);
-}
-
-* { box-sizing: border-box; }
-
-body {
-  font-family: 'Vazir', system-ui, -apple-system, sans-serif;
-  margin: 0;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  overflow: hidden;
-  position: relative;
-}
-
-/* کانوَس خطوط متحرک درخشان */
-#glowCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* هاله نورانی پشت کارت ورود */
-.ambient-glow {
-  position: absolute;
-  width: 380px;
-  height: 380px;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, rgba(99, 102, 241, 0.25) 50%, rgba(0,0,0,0) 70%);
-  filter: blur(50px);
-  z-index: 2;
-  animation: pulseGlow 6s ease-in-out infinite alternate;
-}
-
-.login-container {
-  position: relative;
-  z-index: 10;
-  width: min(420px, 90%);
-  background: var(--bg-card);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
-  padding: 40px 32px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6),
-              0 0 30px rgba(14, 165, 233, 0.1);
-  animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
-}
-
-.login-container:hover {
-  border-color: rgba(14, 165, 233, 0.4);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7),
-              0 0 40px rgba(99, 102, 241, 0.2);
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 8px;
-  font-size: 22px;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--guest-blue) 0%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.icon {
-  width: 26px;
-  height: 26px;
-  stroke: var(--guest-blue);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.5));
-}
-
-.subtitle {
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 28px;
-  line-height: 1.6;
-}
-
-.form-input {
-  width: 100%;
-  background: rgba(10, 15, 30, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
-  padding: 14px 16px;
-  border-radius: 14px;
-  font-size: 14px;
-  outline: none;
-  font-family: inherit;
-  transition: all 0.3s ease;
-  margin-bottom: 18px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
-}
-
-.form-input:focus {
-  border-color: var(--guest-blue);
-  background: rgba(15, 23, 42, 0.9);
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25), inset 0 2px 4px rgba(0,0,0,0.4);
-}
-
-.input-error {
-  border-color: var(--danger) !important;
-  background-color: rgba(239, 68, 68, 0.1) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
-}
-
-.password-wrap { position: relative; }
-.eye-btn {
-  position: absolute;
-  left: 14px;
-  top: 23px;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
-.eye-btn:hover { color: var(--guest-blue); }
-
-/* دکمه ترکیبی: گذر از آبی مهمان به بنفش ادمین */
-.btn-primary {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, var(--guest-blue) 0%, var(--admin-indigo) 100%);
-  color: white;
-  border: none;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.35);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
-  filter: brightness(1.1);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.err-msg {
-  color: var(--danger);
-  font-size: 13px;
-  min-height: 22px;
-  margin-bottom: 12px;
-  text-align: center;
-  font-weight: 500;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes pulseGlow {
-  0% { transform: scale(0.9); opacity: 0.5; }
-  100% { transform: scale(1.1); opacity: 0.8; }
-}
+:root{--bg-dark: #05070b; 
+            --bg-card: #0a0f18;
+            --primary: #00e5ff;
+            --primary-glow: rgba(0, 229, 255, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #1e293b;
+            --success: #10b981;
+            --danger: #ef4444;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',sans-serif}
+html,body{min-height:100%}
+body{min-height:100vh;overflow-x:hidden;color:var(--text-main);background:
+radial-gradient(circle at 50% -10%,rgba(0,229,255,.11),transparent 34%),
+radial-gradient(circle at 8% 80%,rgba(30,64,175,.10),transparent 26%),
+radial-gradient(circle at 92% 65%,rgba(6,182,212,.08),transparent 24%),var(--bg-dark);
+position:relative;isolation:isolate}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;background-image:
+linear-gradient(rgba(148,163,184,.045) 1px,transparent 1px),
+linear-gradient(90deg,rgba(148,163,184,.045) 1px,transparent 1px);
+background-size:72px 72px;mask-image:linear-gradient(to bottom,black 0%,rgba(0,0,0,.72) 62%,transparent 100%);
+-webkit-mask-image:linear-gradient(to bottom,black 0%,rgba(0,0,0,.72) 62%,transparent 100%);
+animation:gridDrift 24s linear infinite}
+body:after{content:"";position:fixed;width:560px;height:560px;top:-260px;left:50%;transform:translateX(-50%);
+border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,rgba(0,229,255,.12),rgba(0,229,255,.035) 32%,transparent 70%);
+filter:blur(14px);animation:glow 8s ease-in-out infinite}
+@keyframes gridDrift{from{background-position:0 0,0 0}to{background-position:72px 72px,72px 72px}}
+@keyframes glow{0%,100%{opacity:.65;transform:translateX(-50%) scale(.96)}50%{opacity:1;transform:translateX(-50%) scale(1.06)}}
+.page{width:min(1080px,calc(100% - 32px));min-height:100vh;margin:auto;display:grid;place-items:center;padding:32px 0}
+.shell{width:100%;display:grid;grid-template-columns:.92fr 1.08fr;border:1px solid rgba(148,163,184,.11);border-radius:28px;overflow:hidden;
+background:linear-gradient(145deg,rgba(13,19,31,.82),rgba(7,11,18,.9));box-shadow:0 35px 90px rgba(0,0,0,.38),0 0 50px rgba(0,229,255,.055);
+backdrop-filter:blur(18px);animation:enter .8s cubic-bezier(.22,1,.36,1) both}
+@keyframes enter{from{opacity:0;transform:translateY(22px) scale(.985);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
+.brand{padding:42px 38px;min-height:720px;display:flex;flex-direction:column;justify-content:space-between;border-left:1px solid rgba(148,163,184,.09);
+background:radial-gradient(circle at 50% 20%,rgba(0,229,255,.12),transparent 40%),linear-gradient(180deg,rgba(0,229,255,.035),transparent 60%)}
+.logo{font-size:1.65rem;font-weight:900;letter-spacing:1px} .logo span{color:var(--primary);text-shadow:0 0 18px var(--primary-glow)}
+.copy{max-width:340px;align-self:center;margin-top:50px} .eyebrow{color:var(--primary);font-size:.8rem;font-weight:800;letter-spacing:1.5px;margin-bottom:14px}
+.copy h1{font-size:clamp(2rem,4vw,3.3rem);line-height:1.15;margin-bottom:16px} .copy h1 span{color:var(--primary);text-shadow:0 0 24px rgba(0,229,255,.25)}
+.copy p{color:var(--text-muted);line-height:2;font-size:.98rem}
+.points{display:grid;gap:10px} .point{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:.88rem} .point i{color:var(--primary);width:18px}
+.form{padding:38px;background:rgba(4,8,14,.22)} .head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:25px}
+.head h2{font-size:1.55rem;margin-bottom:6px} .head p{color:var(--text-muted);font-size:.84rem;line-height:1.8}
+.tabs{display:flex;background:rgba(255,255,255,.025);border:1px solid rgba(148,163,184,.10);border-radius:12px;padding:4px;gap:4px}
+.tab{border:0;color:var(--text-muted);background:transparent;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;white-space:nowrap}
+.tab.active{color:var(--text-main);background:rgba(0,229,255,.10);box-shadow:inset 0 0 0 1px rgba(0,229,255,.14)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px} .field{margin-bottom:14px} .full{grid-column:1/-1}
+label.title{display:block;margin-bottom:7px;color:#cbd5e1;font-size:.84rem;font-weight:700}
+.wrap{position:relative} .wrap>i{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none}
+input{width:100%;padding:12px 42px 12px 13px;border-radius:12px;border:1px solid var(--border-color);background:rgba(255,255,255,.03);
+color:var(--text-main);outline:none;transition:.22s ease} input:focus{border-color:rgba(0,229,255,.55);background:rgba(0,229,255,.035);box-shadow:0 0 0 3px rgba(0,229,255,.07)}
+input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.72rem;color:#64748b}
+.verify{display:grid;grid-template-columns:1fr auto;gap:8px} .verify button{border:1px solid rgba(0,229,255,.22);color:var(--primary);background:rgba(0,229,255,.07);padding:0 14px;border-radius:12px;cursor:pointer;font-weight:800}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px} .check{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:.77rem}
+.check input{width:auto;accent-color:var(--primary);padding:0}
+.submit{width:100%;border:1px solid rgba(0,229,255,.3);border-radius:14px;padding:13px;margin-top:8px;cursor:pointer;color:#031217;background:linear-gradient(135deg,#00e5ff,#5ee7f5);box-shadow:0 12px 28px rgba(0,229,255,.14);font-weight:900;font-size:.95rem}
+.message{min-height:22px;margin-top:10px;font-size:.78rem;line-height:1.7} .ok{color:#34d399} .bad{color:#f87171}
+.legal{margin-top:18px;color:#64748b;font-size:.7rem;line-height:1.8;text-align:center}
+[hidden]{display:none!important}
+@media(max-width:860px){.shell{grid-template-columns:1fr;max-width:620px}.brand{min-height:auto;padding:28px;border-left:0;border-bottom:1px solid rgba(148,163,184,.09)}.copy{margin-top:34px}.points{margin-top:30px}}
+@media(max-width:560px){.page{width:min(100% - 18px,620px);padding:10px 0}.form,.brand{padding:22px 18px}.head{flex-direction:column}.grid{grid-template-columns:1fr}.full{grid-column:auto}.tabs{width:100%}.tab{flex:1}.verify{grid-template-columns:1fr}.verify button{padding:11px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-
-<!-- کانوس پس‌زمینه خطوط درخشان -->
-<canvas id="glowCanvas"></canvas>
-
-<!-- هاله نورانی پشت فرم -->
-<div class="ambient-glow"></div>
-
-<div class="login-container">
-  <div class="header-title">
-    <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    <span>ورود به سامانه</span>
+<div class="page"><main class="shell">
+<aside class="brand">
+  <div class="logo">KOREA<span>YADAK</span></div>
+  <div class="copy">
+    <div class="eyebrow">SECURE ACCOUNT</div>
+    <h1>حساب کاربری <span>کره یدک</span></h1>
+    <p>ثبت‌نام حرفه‌ای برای دسترسی به پنل، مدیریت اطلاعات، سفارش‌ها و امکانات اختصاصی فروشگاه.</p>
   </div>
-  <p class="subtitle">جهت دسترسی به مدیریت کُره یدک وارد شوید.</p>
-  
-  <input id="loginUsername" class="form-input" placeholder="نام کاربری" autocomplete="username">
-  
-  <div class="password-wrap">
-    <input id="loginPassword" type="password" class="form-input" placeholder="رمز عبور" autocomplete="current-password">
-    <button type="button" class="eye-btn" onclick="togglePass('loginPassword', this)">
-      <svg class="icon" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-    </button>
+  <div class="points">
+    <div class="point"><i class="fa-solid fa-shield-halved"></i><span>ساختار آماده برای احراز هویت واقعی</span></div>
+    <div class="point"><i class="fa-solid fa-envelope-circle-check"></i><span>تأیید ایمیل قبل از فعال‌شدن حساب</span></div>
+    <div class="point"><i class="fa-solid fa-user-lock"></i><span>ورود امن با نام کاربری و رمز عبور</span></div>
   </div>
-  
-  <div id="loginError" class="err-msg"></div>
-  <button class="btn-primary" onclick="login()">ورود به پنل</button>
-</div>
+</aside>
+
+<section class="form">
+  <div class="head">
+    <div><h2 id="title">ساخت حساب</h2><p id="subtitle">اطلاعات واقعی خودت را وارد کن.</p></div>
+    <div class="tabs"><button class="tab active" data-mode="register" type="button">ثبت‌نام</button><button class="tab" data-mode="login" type="button">ورود</button></div>
+  </div>
+
+  <form id="form" novalidate>
+    <div id="register">
+      <div class="grid">
+        <div class="field"><label class="title" for="first">نام</label><div class="wrap"><i class="fa-regular fa-id-card"></i><input id="first" placeholder="مثلاً عرفان" autocomplete="given-name"></div></div>
+        <div class="field"><label class="title" for="last">نام خانوادگی</label><div class="wrap"><i class="fa-regular fa-user"></i><input id="last" placeholder="مثلاً محمودآبادی" autocomplete="family-name"></div></div>
+        <div class="field full"><label class="title" for="username">نام کاربری</label><div class="wrap"><i class="fa-solid fa-at"></i><input id="username" placeholder="مثلاً itzkaiko" autocomplete="username" minlength="4" maxlength="32"></div><small>فقط حروف انگلیسی، عدد، نقطه و زیرخط.</small></div>
+        <div class="field full"><label class="title" for="email">ایمیل</label><div class="verify"><div class="wrap"><i class="fa-regular fa-envelope"></i><input id="email" type="email" placeholder="example@email.com" autocomplete="email"></div><button id="verifyBtn" type="button"><i class="fa-regular fa-circle-check"></i> تأیید</button></div><small>بعداً دکمه به ارسال کد و تأیید واقعی ایمیل وصل می‌شود.</small></div>
+        <div class="field full"><label class="title" for="phone">شماره موبایل</label><div class="wrap"><i class="fa-solid fa-mobile-screen-button"></i><input id="phone" inputmode="tel" placeholder="0912xxxxxxx" autocomplete="tel"></div></div>
+        <div class="field"><label class="title" for="pass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="pass" type="password" placeholder="حداقل ۸ کاراکتر" autocomplete="new-password"></div></div>
+        <div class="field"><label class="title" for="pass2">تکرار رمز عبور</label><div class="wrap"><i class="fa-solid fa-shield-halved"></i><input id="pass2" type="password" placeholder="تکرار رمز" autocomplete="new-password"></div></div>
+      </div>
+      <label class="check"><input id="terms" type="checkbox"> قوانین و حریم خصوصی کره یدک را می‌پذیرم.</label>
+    </div>
+
+    <div id="login" hidden>
+      <div class="field"><label class="title" for="identifier">نام کاربری یا ایمیل</label><div class="wrap"><i class="fa-regular fa-circle-user"></i><input id="identifier" placeholder="username یا email" autocomplete="username"></div></div>
+      <div class="field"><label class="title" for="loginPass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="loginPass" type="password" placeholder="رمز عبور" autocomplete="current-password"></div></div>
+      <div class="row"><label class="check"><input id="remember" type="checkbox"> مرا به خاطر بسپار</label><a href="#" id="forgot" style="color:var(--primary);font-size:.76rem;text-decoration:none">فراموشی رمز؟</a></div>
+    </div>
+
+    <button id="submit" class="submit" type="submit"><i class="fa-solid fa-user-plus"></i> ساخت حساب</button>
+    <div id="message" class="message"></div>
+    <div class="legal">این نسخه فقط رابط کاربری است؛ endpointهای احراز هویت بعداً به همین فرم متصل می‌شوند.</div>
+  </form>
+</section>
+</main></div>
 
 <script>
-/* --- انیمیشن کانوَس: خطوط درخشان متحرک (Glow Lines) --- */
-const canvas = document.getElementById('glowCanvas');
-const ctx = canvas.getContext('2d');
+(() => {
+  let mode="register", verified=false;
+  const $=id=>document.getElementById(id);
+  const title=$("title"), subtitle=$("subtitle"), register=$("register"), login=$("login"), submit=$("submit"), message=$("message"), verify=$("verifyBtn");
 
-let width, height;
-function resizeCanvas() {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+  function msg(text,type=""){ message.textContent=text; message.className="message "+type; }
 
-// ایجاد لیزرهای درخشان افقی و عمودی
-const lines = [];
-const lineCount = 22;
+  function setMode(next){
+    mode=next;
+    document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
+    const reg=mode==="register";
+    register.hidden=!reg; login.hidden=reg;
+    title.textContent=reg?"ساخت حساب":"ورود به حساب";
+    subtitle.textContent=reg?"اطلاعات واقعی خودت را وارد کن.":"برای ورود، نام کاربری یا ایمیل و رمزت را وارد کن.";
+    submit.innerHTML=reg?'<i class="fa-solid fa-user-plus"></i> ساخت حساب':'<i class="fa-solid fa-right-to-bracket"></i> ورود';
+    msg("");
+  }
 
-for (let i = 0; i < lineCount; i++) {
-  lines.push({
-    x: Math.random() * width,
-    y: Math.random() * height,
-    length: Math.random() * 200 + 100,
-    speed: Math.random() * 2 + 0.5,
-    vertical: Math.random() > 0.5,
-    // طیف رنگی میان آبی مهمان (Cyan/Blue) و بنفش ادمین (Indigo/Purple)
-    color: Math.random() > 0.5 ? 'rgba(14, 165, 233, ' : 'rgba(99, 102, 241, ',
-    alpha: Math.random() * 0.5 + 0.2
+  document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+
+  verify.addEventListener("click",()=>{
+    const email=$("email").value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg("اول یک ایمیل معتبر وارد کن.","bad");return;}
+    verified=true; verify.innerHTML='<i class="fa-solid fa-check"></i> تأیید شد'; verify.style.color="var(--success)";
+    msg("ایمیل برای اتصال به مرحله تأیید کد آماده است.","ok");
   });
-}
+  $("email").addEventListener("input",()=>{verified=false;verify.innerHTML='<i class="fa-regular fa-circle-check"></i> تأیید';verify.style.color=""});
 
-function animateGlowLines() {
-  ctx.clearRect(0, 0, width, height);
+  $("forgot").addEventListener("click",e=>{e.preventDefault();msg("بخش بازیابی رمز آماده اتصال به endpoint جداگانه است.","ok")});
 
-  // رسم یک شبکه شطرنجی کم‌رنگ
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
-  ctx.lineWidth = 1;
-  const gridSize = 50;
-  for (let x = 0; x < width; x += gridSize) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
-  }
-  for (let y = 0; y < height; y += gridSize) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-  }
+  $("form").addEventListener("submit",e=>{
+    e.preventDefault();
+    msg("");
+    if(mode==="register"){
+      const f=$("first").value.trim(), l=$("last").value.trim(), u=$("username").value.trim(), em=$("email").value.trim(), ph=$("phone").value.replace(/\s|-/g,""), p=$("pass").value, p2=$("pass2").value;
+      if(!f||!l||!u||!em||!ph||!p||!p2) return msg("همه فیلدهای ضروری را کامل کن.","bad");
+      if(!/^[A-Za-z0-9._]+$/.test(u)) return msg("نام کاربری فقط باید شامل حروف انگلیسی، عدد، نقطه یا زیرخط باشد.","bad");
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return msg("ایمیل معتبر نیست.","bad");
+      if(!/^09\d{9}$/.test(ph)) return msg("شماره موبایل را مثل 0912xxxxxxx وارد کن.","bad");
+      if(p.length<8) return msg("رمز عبور حداقل ۸ کاراکتر باشد.","bad");
+      if(p!==p2) return msg("تکرار رمز عبور با رمز اصلی یکی نیست.","bad");
+      if(!$("terms").checked) return msg("باید قوانین را بپذیری.","bad");
+      if(!verified) return msg("قبل از ساخت حساب، ایمیل را تأیید کن.","bad");
 
-  // حرکت و رسم خطوط نورانی
-  lines.forEach(line => {
-    ctx.save();
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 12;
-
-    if (line.vertical) {
-      const grad = ctx.createLinearGradient(line.x, line.y, line.x, line.y + line.length);
-      grad.addColorStop(0, line.color + '0)');
-      grad.addColorStop(0.5, line.color + line.alpha + ')');
-      grad.addColorStop(1, line.color + '0)');
-
-      ctx.strokeStyle = grad;
-      ctx.shadowColor = line.color.includes('14') ? '#0ea5e9' : '#6366f1';
-      ctx.beginPath();
-      ctx.moveTo(line.x, line.y);
-      ctx.lineTo(line.x, line.y + line.length);
-      ctx.stroke();
-
-      line.y += line.speed;
-      if (line.y > height) { line.y = -line.length; line.x = Math.random() * width; }
-    } else {
-      const grad = ctx.createLinearGradient(line.x, line.y, line.x + line.length, line.y);
-      grad.addColorStop(0, line.color + '0)');
-      grad.addColorStop(0.5, line.color + line.alpha + ')');
-      grad.addColorStop(1, line.color + '0)');
-
-      ctx.strokeStyle = grad;
-      ctx.shadowColor = line.color.includes('14') ? '#0ea5e9' : '#6366f1';
-      ctx.beginPath();
-      ctx.moveTo(line.x, line.y);
-      ctx.lineTo(line.x + line.length, line.y);
-      ctx.stroke();
-
-      line.x += line.speed;
-      if (line.x > width) { line.x = -line.length; line.y = Math.random() * height; }
+      // Backend later:
+      // POST /api/auth/register
+      // { first_name, last_name, username, email, phone, password, email_verified }
+      return msg("فرم ثبت‌نام کامل و آماده اتصال به بک‌اند است.","ok");
     }
-    ctx.restore();
+
+    const id=$("identifier").value.trim(), p=$("loginPass").value;
+    if(!id||!p) return msg("نام کاربری/ایمیل و رمز عبور را وارد کن.","bad");
+
+    // Backend later:
+    // POST /api/auth/login
+    // { identifier, password, remember_me }
+    msg("فرم ورود آماده اتصال به بک‌اند است.","ok");
   });
 
-  requestAnimationFrame(animateGlowLines);
-}
-animateGlowLines();
-
-/* --- منطق احراز هویت و اسکریپت اصلی شما (بدون تغییر) --- */
-const API_BASE = "";
-const TOKEN_KEY = "koreyadak_token";
-
-async function checkSession() {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) return;
-  
-  try {
-    const res = await fetch(API_BASE + "/api/auth/me", {
-      headers: { "Authorization": "Bearer " + token }
-    });
-    if (res.ok) {
-      window.location.replace("/admin");
-    } else {
-      localStorage.removeItem(TOKEN_KEY);
-    }
-  } catch (e) {
-    console.error(e);
-  }
-}
-checkSession();
-
-function togglePass(id, btn) {
-  const el = document.getElementById(id);
-  if (el.type === "password") { 
-    el.type = "text"; 
-    btn.innerHTML = '<svg class="icon" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'; 
-  } else { 
-    el.type = "password"; 
-    btn.innerHTML = '<svg class="icon" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'; 
-  }
-}
-
-document.querySelectorAll('input').forEach(input => {
-  input.addEventListener('input', () => {
-    input.classList.remove('input-error');
-    document.getElementById("loginError").textContent = "";
-  });
-});
-
-async function login() {
-  const uInput = document.getElementById("loginUsername");
-  const pInput = document.getElementById("loginPassword");
-  const err = document.getElementById("loginError");
-  
-  let isValid = true;
-  if (!uInput.value.trim()) { uInput.classList.add("input-error"); isValid = false; }
-  if (!pInput.value.trim()) { pInput.classList.add("input-error"); isValid = false; }
-  if (!isValid) return;
-
-  try {
-    const response = await fetch(API_BASE + "/api/auth/login", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ username: uInput.value.trim(), password: pInput.value })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.detail || "نام کاربری یا رمز عبور اشتباه است.");
-    }
-    
-    localStorage.setItem(TOKEN_KEY, data.token);
-    window.location.replace("/admin");
-    
-  } catch (e) { 
-    err.textContent = e.message; 
-  }
-}
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") login();
-});
+  setMode("register");
+})();
 </script>
 </body>
 </html>
