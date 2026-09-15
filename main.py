@@ -459,23 +459,23 @@ async def serve_guest():
     return FileResponse("index.html")
 
 @app.get("/admin")
-async def serve_admin(current_user: dict = Depends(get_admin_user)):
+async def serve_admin():
     return FileResponse("admin.html")
 
 @app.get("/admin/buy")
-async def serve_buy(current_user: dict = Depends(get_admin_user)):
+async def serve_buy():
     return FileResponse("buy.html")
 
 @app.get("/admin/sell")
-async def serve_sell(current_user: dict = Depends(get_admin_user)):
+async def serve_sell():
     return FileResponse("sell.html")
 
 @app.get("/admin/report")
-async def serve_report(current_user: dict = Depends(get_admin_user)):
+async def serve_report():
     return FileResponse("report.html")
 
 @app.get("/order")
-async def serve_order(current_user: dict = Depends(get_current_user)):
+async def serve_order():
     return FileResponse("order.html")
 
 @app.get("/login")
@@ -608,7 +608,7 @@ def login(data: LoginRequest):
             cursor.execute(
                 """
                 SELECT id, username, first_name, last_name, email, phone,
-                       email_verified, password_hash, must_change_password
+                       email_verified, role, password_hash, must_change_password
                 FROM users
                 WHERE username = %s OR LOWER(email) = LOWER(%s)
                 ORDER BY CASE WHEN username = %s THEN 0 ELSE 1 END
