@@ -121,65 +121,185 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
 
 <script>
 (() => {
-  let mode="register", verified=false;
-  const $=id=>document.getElementById(id);
-  const title=$("title"), subtitle=$("subtitle"), register=$("register"), login=$("login"), submit=$("submit"), message=$("message"), verify=$("verifyBtn");
+  let mode = "register";
+  let verified = false;
+  const TOKEN_KEY = "kore_yadak_token";
+  const $ = id => document.getElementById(id);
+  const title = $("title"), subtitle = $("subtitle"), register = $("register"), login = $("login"), submit = $("submit"), message = $("message"), verify = $("verifyBtn");
 
-  function msg(text,type=""){ message.textContent=text; message.className="message "+type; }
+  function msg(text, type = "") {
+    message.textContent = text;
+    message.className = "message " + type;
+  }
 
-  function setMode(next){
-    mode=next;
-    document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
-    const reg=mode==="register";
-    register.hidden=!reg; login.hidden=reg;
-    title.textContent=reg?"ساخت حساب":"ورود به حساب";
-    subtitle.textContent=reg?"اطلاعات واقعی خودت را وارد کن.":"برای ورود، نام کاربری یا ایمیل و رمزت را وارد کن.";
-    submit.innerHTML=reg?'<i class="fa-solid fa-user-plus"></i> ساخت حساب':'<i class="fa-solid fa-right-to-bracket"></i> ورود';
+  function saveToken(token, remember) {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
+  }
+
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+  }
+
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+  }
+
+  async function api(path, options = {}) {
+    const headers = new Headers(options.headers || {});
+    if (options.body !== undefined) headers.set("Content-Type", "application/json");
+
+    const token = getToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+
+    const response = await fetch(path, { ...options, headers });
+    let payload = null;
+    try { payload = await response.json(); } catch (_) {}
+
+    if (!response.ok) {
+      let detail = "عملیات انجام نشد.";
+      if (payload?.detail) {
+        detail = Array.isArray(payload.detail)
+          ? payload.detail.map(x => x.msg || "خطای ورودی").join("\n")
+          : payload.detail;
+      }
+      throw new Error(detail);
+    }
+    return payload;
+  }
+
+  function setMode(next) {
+    mode = next;
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+    const reg = mode === "register";
+    register.hidden = !reg;
+    login.hidden = reg;
+    title.textContent = reg ? "ساخت حساب" : "ورود به حساب";
+    subtitle.textContent = reg ? "اطلاعات واقعی خودت را وارد کن." : "برای ورود، نام کاربری یا ایمیل و رمزت را وارد کن.";
+    submit.innerHTML = reg
+      ? '<i class="fa-solid fa-user-plus"></i> ساخت حساب'
+      : '<i class="fa-solid fa-right-to-bracket"></i> ورود';
     msg("");
   }
 
-  document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
 
-  verify.addEventListener("click",()=>{
-    const email=$("email").value.trim();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg("اول یک ایمیل معتبر وارد کن.","bad");return;}
-    verified=true; verify.innerHTML='<i class="fa-solid fa-check"></i> تأیید شد'; verify.style.color="var(--success)";
-    msg("ایمیل برای اتصال به مرحله تأیید کد آماده است.","ok");
-  });
-  $("email").addEventListener("input",()=>{verified=false;verify.innerHTML='<i class="fa-regular fa-circle-check"></i> تأیید';verify.style.color=""});
-
-  $("forgot").addEventListener("click",e=>{e.preventDefault();msg("بخش بازیابی رمز آماده اتصال به endpoint جداگانه است.","ok")});
-
-  $("form").addEventListener("submit",e=>{
-    e.preventDefault();
-    msg("");
-    if(mode==="register"){
-      const f=$("first").value.trim(), l=$("last").value.trim(), u=$("username").value.trim(), em=$("email").value.trim(), ph=$("phone").value.replace(/\s|-/g,""), p=$("pass").value, p2=$("pass2").value;
-      if(!f||!l||!u||!em||!ph||!p||!p2) return msg("همه فیلدهای ضروری را کامل کن.","bad");
-      if(!/^[A-Za-z0-9._]+$/.test(u)) return msg("نام کاربری فقط باید شامل حروف انگلیسی، عدد، نقطه یا زیرخط باشد.","bad");
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return msg("ایمیل معتبر نیست.","bad");
-      if(!/^09\d{9}$/.test(ph)) return msg("شماره موبایل را مثل 0912xxxxxxx وارد کن.","bad");
-      if(p.length<8) return msg("رمز عبور حداقل ۸ کاراکتر باشد.","bad");
-      if(p!==p2) return msg("تکرار رمز عبور با رمز اصلی یکی نیست.","bad");
-      if(!$("terms").checked) return msg("باید قوانین را بپذیری.","bad");
-      if(!verified) return msg("قبل از ساخت حساب، ایمیل را تأیید کن.","bad");
-
-      // Backend later:
-      // POST /api/auth/register
-      // { first_name, last_name, username, email, phone, password, email_verified }
-      return msg("فرم ثبت‌نام کامل و آماده اتصال به بک‌اند است.","ok");
+  verify.addEventListener("click", async () => {
+    const email = $("email").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg("اول یک ایمیل معتبر وارد کن.", "bad");
+      return;
     }
 
-    const id=$("identifier").value.trim(), p=$("loginPass").value;
-    if(!id||!p) return msg("نام کاربری/ایمیل و رمز عبور را وارد کن.","bad");
-
-    // Backend later:
-    // POST /api/auth/login
-    // { identifier, password, remember_me }
-    msg("فرم ورود آماده اتصال به بک‌اند است.","ok");
+    verify.disabled = true;
+    try {
+      await api("/api/auth/email/check", {
+        method: "POST",
+        body: JSON.stringify({ email })
+      });
+      verified = true;
+      verify.innerHTML = '<i class="fa-solid fa-check"></i> تأیید شد';
+      verify.style.color = "var(--success)";
+      msg("ایمیل معتبر است و برای ثبت‌نام آماده شد.", "ok");
+    } catch (error) {
+      verified = false;
+      msg(error.message, "bad");
+    } finally {
+      verify.disabled = false;
+    }
   });
 
-  setMode("register");
+  $("email").addEventListener("input", () => {
+    verified = false;
+    verify.innerHTML = '<i class="fa-regular fa-circle-check"></i> تأیید';
+    verify.style.color = "";
+  });
+
+  $("forgot").addEventListener("click", e => {
+    e.preventDefault();
+    msg("بازیابی رمز عبور هنوز endpoint مستقل ندارد.", "ok");
+  });
+
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    msg("");
+    submit.disabled = true;
+
+    try {
+      if (mode === "register") {
+        const f = $("first").value.trim();
+        const l = $("last").value.trim();
+        const u = $("username").value.trim();
+        const em = $("email").value.trim();
+        const ph = $("phone").value.replace(/\s|-/g, "");
+        const p = $("pass").value;
+        const p2 = $("pass2").value;
+
+        if (!f || !l || !u || !em || !ph || !p || !p2) throw new Error("همه فیلدهای ضروری را کامل کن.");
+        if (!/^[A-Za-z][A-Za-z0-9_.-]{2,31}$/.test(u)) throw new Error("نام کاربری فقط باید با حرف انگلیسی شروع شود و 3 تا 32 کاراکتر باشد.");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) throw new Error("ایمیل معتبر نیست.");
+        if (!/^09\d{9}$/.test(ph)) throw new Error("شماره موبایل را مثل 0912xxxxxxx وارد کن.");
+        if (p.length < 8) throw new Error("رمز عبور حداقل ۸ کاراکتر باشد.");
+        if (!/[A-Za-z]/.test(p) || !/\d/.test(p) || !/^[A-Za-z0-9]+$/.test(p)) throw new Error("رمز عبور باید فقط شامل حروف انگلیسی و اعداد و حداقل یک حرف و یک عدد باشد.");
+        if (p !== p2) throw new Error("تکرار رمز عبور با رمز اصلی یکی نیست.");
+        if (!$("terms").checked) throw new Error("باید قوانین را بپذیری.");
+        if (!verified) throw new Error("قبل از ساخت حساب، ایمیل را از طریق دکمه تأیید بررسی کن.");
+
+        const result = await api("/api/auth/register", {
+          method: "POST",
+          body: JSON.stringify({
+            first_name: f,
+            last_name: l,
+            username: u,
+            email: em,
+            phone: ph,
+            password: p,
+            password_repeat: p2,
+            email_verified: true,
+            terms_accepted: true
+          })
+        });
+
+        $("identifier").value = result.user.username;
+        $("loginPass").value = p;
+        setMode("login");
+        msg("حساب با موفقیت ساخته شد؛ حالا وارد حساب شو.", "ok");
+        return;
+      }
+
+      const identifier = $("identifier").value.trim();
+      const password = $("loginPass").value;
+      const remember = $("remember").checked;
+      if (!identifier || !password) throw new Error("نام کاربری/ایمیل و رمز عبور را وارد کن.");
+
+      const result = await api("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ identifier, password, remember_me: remember })
+      });
+
+      saveToken(result.token, remember);
+      msg("ورود موفق بود. در حال انتقال به پنل...", "ok");
+      window.location.href = "/admin";
+    } catch (error) {
+      msg(error.message || "خطایی رخ داد.", "bad");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  (async () => {
+    setMode("register");
+    const token = getToken();
+    if (!token) return;
+    try {
+      await api("/api/auth/me");
+      window.location.href = "/admin";
+    } catch (_) {
+      clearToken();
+    }
+  })();
 })();
 </script>
 </body>
