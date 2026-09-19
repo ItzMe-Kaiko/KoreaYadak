@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f8fb">
+<title>کُره یدک | فروشگاه تخصصی قطعات خودرو</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --bg:#f7f8fb;
+  --surface:#ffffff;
+  --surface-2:#f1f3f7;
+  --text:#171923;
+  --muted:#717887;
+  --line:#e3e6ec;
+  --primary:#5d24c7;
+  --primary-2:#7b3fe4;
+  --primary-soft:#f0e9ff;
+  --success:#18a769;
+  --danger:#d94b58;
+  --shadow:0 12px 32px rgba(23,25,35,.07);
+  --radius:20px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Vazirmatn",system-ui,sans-serif;
+  overflow-x:hidden;
+}
+a{color:inherit}
+button,input,select{font:inherit}
+button{border:0}
+.font-mono{font-family:"JetBrains Mono",monospace}
+.container{width:min(1180px,calc(100% - 32px));margin:auto}
+.topbar{
+  position:sticky;top:0;z-index:1000;
+  background:rgba(247,248,251,.9);
+  border-bottom:1px solid rgba(227,230,236,.85);
+  backdrop-filter:blur(14px);
+}
+.topbar-inner{
+  min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.logo{
+  text-decoration:none;font-weight:900;font-size:1.2rem;letter-spacing:.4px;
+}
+.logo span{color:var(--primary)}
+.nav{display:flex;gap:8px;align-items:center}
+.nav a{
+  text-decoration:none;padding:9px 12px;border-radius:12px;color:var(--muted);font-size:.86rem;
+}
+.nav a:hover,.nav a.active{background:var(--primary-soft);color:var(--primary)}
+.account-btn{
+  min-height:42px;padding:0 13px;border:1px solid var(--line);background:var(--surface);border-radius:13px;cursor:pointer;
+}
+.account-btn.authenticated{color:var(--primary);border-color:#d7c8f7;background:#faf7ff}
+.hero{
+  padding:30px 0 18px;
+}
+.hero-shell{
+  position:relative;overflow:hidden;
+  border-radius:28px;
+  padding:34px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(123,63,228,.20),transparent 35%),
+    radial-gradient(circle at 0% 100%,rgba(93,36,199,.11),transparent 32%),
+    linear-gradient(135deg,#1d1632,#2b1b45);
+  color:#fff;
+  box-shadow:0 22px 60px rgba(49,27,85,.20);
+}
+.hero-shell:after{
+  content:"";position:absolute;inset:auto -80px -120px auto;width:350px;height:350px;border-radius:50%;
+  background:rgba(255,255,255,.06);filter:blur(2px);pointer-events:none;
+}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;position:relative;z-index:1}
+.hero h1{font-size:clamp(2rem,4vw,3.45rem);line-height:1.15;margin:0 0 10px}
+.hero p{margin:0;color:#ded8eb;line-height:1.9;max-width:640px}
+.hero-kicker{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.09);font-size:.78rem}
+.hero-kicker .dot{width:8px;height:8px;border-radius:50%;background:#48df9a;box-shadow:0 0 10px #48df9a}
+.hero-search{
+  margin-top:22px;padding:10px;border-radius:18px;background:#fff;display:flex;gap:8px;box-shadow:0 16px 40px rgba(0,0,0,.14);
+}
+.hero-search input{
+  min-width:0;flex:1;border:0;outline:0;padding:0 12px;color:var(--text);background:transparent;font-size:.96rem;
+}
+.hero-search button{
+  flex:0 0 auto;padding:11px 16px;border-radius:13px;background:var(--primary);color:#fff;cursor:pointer;font-weight:700;
+}
+.hero-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.hero-pill{padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:999px;color:#e8e2ef;font-size:.76rem}
+.hero-visual{display:flex;justify-content:center}
+.dashboard-card{
+  width:min(390px,100%);padding:16px;border-radius:22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13);
+}
+.dashboard-card .mini-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mini-count{font-size:1.9rem;font-weight:900}
+.mini-line{height:9px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin:9px 0}
+.mini-line b{display:block;height:100%;width:82%;background:linear-gradient(90deg,#b395ff,#fff);border-radius:inherit}
+.mini-row{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:13px}
+.mini-box{padding:13px;border-radius:14px;background:rgba(255,255,255,.06)}
+.section{padding:26px 0}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:14px}
+.section-title{margin:0;font-size:1.35rem}
+.section-sub{margin:5px 0 0;color:var(--muted);font-size:.83rem}
+.brands-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.brand-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;
+  min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  box-shadow:var(--shadow);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.brand-card:hover{transform:translateY(-3px);border-color:#d6c7f5;box-shadow:0 16px 34px rgba(71,41,126,.10)}
+.brand-logo-box{
+  width:72px;height:56px;display:grid;place-items:center;border-radius:15px;background:#faf9fd;border:1px solid #eeebf4;
+}
+.brand-logo-box img{max-width:75%;max-height:75%;object-fit:contain}
+.brand-text-logo{font-weight:900;font-size:1.28rem;color:#3b2a58}
+.brand-name{font-weight:800}
+.brand-note{font-size:.72rem;color:var(--muted)}
+.quick-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.quick-card{
+  text-align:center;padding:13px 8px;border:1px solid var(--line);border-radius:15px;background:var(--surface);color:var(--text);
+}
+.quick-card i{display:block;font-size:1.1rem;color:var(--primary);margin-bottom:7px}
+.quick-card span{font-size:.78rem}
+.store-shell{
+  background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow);
+}
+.filter-bar{
+  display:grid;grid-template-columns:1.5fr 1fr auto;gap:9px;padding:10px;border-radius:18px;background:var(--surface-2);
+}
+.search-box,.filter-select,.stock-btn{
+  min-height:48px;border:1px solid var(--line);border-radius:14px;background:#fff;
+}
+.search-box{display:flex;align-items:center;gap:9px;padding:0 13px}
+.search-box i{color:#9a7bcc}
+.search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--text)}
+.filter-select{width:100%;padding:0 12px;color:var(--text);outline:0}
+.stock-btn{padding:0 14px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.stock-btn.active{color:var(--success);border-color:#aee6cf;background:#f1fbf6}
+.results-info{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:15px 2px 13px;color:var(--muted);font-size:.8rem}
+.results-info strong{color:var(--text)}
+.parts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.part-card{
+  background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px;
+  box-shadow:0 6px 16px rgba(21,25,35,.045);
+}
+.part-card-top{display:grid;grid-template-columns:84px 1fr auto;gap:11px;align-items:start}
+.part-image{width:84px;height:84px;border-radius:14px;background:#f4f5f8;border:1px solid #ebedf2;display:grid;place-items:center;overflow:hidden}
+.part-image img{width:100%;height:100%;object-fit:cover}
+.image-placeholder{text-align:center;color:#afb5c0;font-size:.66rem;display:flex;flex-direction:column;gap:5px;align-items:center}
+.image-placeholder i{font-size:1.2rem}
+.part-heading{min-width:0}
+.part-heading h3{margin:4px 0 7px;font-size:1rem;line-height:1.45}
+.part-meta{display:flex;gap:5px;flex-wrap:wrap}
+.soft-chip{font-size:.65rem;padding:4px 7px;border-radius:999px;background:#f4f2f9;color:#756c84}
+.brand-chip{color:var(--primary);background:var(--primary-soft)}
+.part-number-line{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.part-number{padding:5px 8px;border-radius:8px;background:#f6f6f8;color:#484d59;font:600 .74rem "JetBrains Mono",monospace;direction:ltr}
+.genuine-chip{padding:4px 7px;border-radius:8px;background:#fff4d7;color:#a26d00;font-size:.64rem;font-weight:800}
+.availability{padding:5px 7px;border-radius:999px;font-size:.64rem;display:inline-flex;gap:5px;align-items:center;white-space:nowrap}
+.availability.available{color:#117c52;background:#eaf9f1}
+.availability.unavailable{color:#8a909b;background:#f2f3f5}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.fit-row{border-top:1px solid #f0f1f4;padding-top:10px}
+.fit-title{color:#666e7b;font-size:.72rem;margin-bottom:6px}
+.cars-list{display:flex;gap:5px;flex-wrap:wrap}
+.car-chip{font-size:.68rem;padding:5px 7px;border-radius:8px;background:#f7f8fa;border:1px solid #ebeef2;color:#444a56}
+.muted{font-size:.72rem;color:#969ca7}
+.part-description{margin:0;color:#68707d;font-size:.75rem;line-height:1.7}
+.part-footer-row{display:flex;justify-content:space-between;gap:10px;align-items:end;border-top:1px solid #f0f1f4;padding-top:10px}
+.price-label,.date-box span{display:block;color:#9aa0ab;font-size:.65rem;margin-bottom:3px}
+.price-value{display:block;color:var(--primary);font-size:.98rem}
+.date-box{text-align:left}.date-box b{font-size:.65rem;color:#5b616d}
+.details-toggle{
+  width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:11px;
+  background:#fafafa;border:1px solid #eceef2;color:#707783;cursor:pointer;font-size:.72rem;
+}
+.details-toggle.open{border-color:#ddd0f7;color:var(--primary);background:#fbf9ff}
+.details-toggle:disabled{opacity:.75;cursor:default}
+.details-toggle > span{display:flex;gap:7px;align-items:center}
+.details-toggle > i{transition:transform .2s ease}
+.details-toggle.open > i{transform:rotate(180deg)}
+.part-details{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .22s ease,opacity .22s ease}
+.part-details.open{grid-template-rows:1fr;opacity:1}
+.part-details:before{content:"";grid-row:1/2;min-height:0}
+.part-details > *{overflow:hidden;grid-row:1/2}
+.details-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:2px}
+.details-section{padding:11px;border-radius:13px;background:#f8f8fa;border:1px solid #edf0f3}
+.details-title{display:block;font-size:.69rem;font-weight:800;margin-bottom:8px;color:#5b616d}
+.spec-list{display:grid;gap:7px}
+.spec-row{display:flex;justify-content:space-between;gap:8px;font-size:.66rem}
+.spec-row span{color:#858b96}.spec-row strong{color:#424751;text-align:left}
+.future-specs{font-size:.67rem;line-height:1.7;color:#8a909b;display:flex;gap:7px}
+.future-specs i{color:#a07cda}
+mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
+.parts-footer{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:16px}
+.load-more-btn{padding:10px 16px;border-radius:12px;background:var(--primary-soft);color:var(--primary);border:1px solid #ddcff7;cursor:pointer;font-weight:800}
+.pagination-meta{font-size:.72rem;color:#9298a3}
+.store-loading,.empty-state{
+  grid-column:1/-1;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;color:var(--muted)
+}
+.store-loading strong,.empty-state strong{color:var(--text)}
+.store-loading span,.empty-state span{font-size:.75rem}
+.loader-spinner{width:32px;height:32px;border:3px solid #e5e6eb;border-top-color:var(--primary);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-icon{width:50px;height:50px;border-radius:16px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-size:1.2rem}
+.error-state .empty-icon{background:#fff0f1;color:var(--danger)}
+.future-strip{
+  margin-top:14px;padding:14px 16px;border-radius:16px;background:#f7f4fd;border:1px solid #e8ddf8;color:#6e6780;font-size:.74rem;line-height:1.8;
+}
+.future-strip strong{color:#4e3477}
+.footer{padding:25px 0 95px;color:#858b96;font-size:.74rem;text-align:center}
+.mobile-bottom{
+  display:none;
+}
+.account-modal{
+  position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:rgba(21,23,31,.38);backdrop-filter:blur(10px);opacity:0;visibility:hidden;transition:.22s ease
+}
+.account-modal.open{opacity:1;visibility:visible}
+.account-panel{
+  width:min(520px,100%);background:#fff;border-radius:22px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.2);transform:translateY(12px);transition:.24s ease
+}
+.account-modal.open .account-panel{transform:none}
+.account-modal-head{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:15px}
+.account-modal-head h3{margin:0 0 5px}.account-modal-head p{margin:0;color:var(--muted);font-size:.72rem}
+.account-close{width:38px;height:38px;border-radius:12px;background:#f4f4f7;color:#6b7180;cursor:pointer}
+.account-summary{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:15px;background:#fafafd;margin-bottom:12px}
+.account-avatar{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary)}
+.account-summary strong{display:block}.account-summary span{font-size:.7rem;color:var(--muted)}
+.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.account-field{padding:11px 12px;border:1px solid var(--line);border-radius:13px}
+.account-field.full{grid-column:1/-1}.account-field small{display:block;font-size:.62rem;color:#969ca7;margin-bottom:4px}.account-field strong{font-size:.77rem}
+.account-actions{display:flex;gap:9px;margin-top:14px}.account-action-btn{flex:1;min-height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;cursor:pointer}.account-action-btn.danger{color:var(--danger)}
+@media(max-width:980px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-visual{display:none}
+  .brands-grid{grid-template-columns:repeat(3,1fr)}
+  .quick-grid{grid-template-columns:repeat(3,1fr)}
+  .parts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .container{width:min(100% - 20px,560px)}
+  .topbar{display:none}
+  .hero{padding-top:12px}
+  .hero-shell{border-radius:22px;padding:20px 16px}
+  .hero h1{font-size:2rem}
+  .hero p{font-size:.79rem}
+  .hero-search{flex-direction:column;background:rgba(255,255,255,.96)}
+  .hero-search input{min-height:42px}
+  .hero-search button{width:100%}
+  .brands-grid{grid-template-columns:repeat(2,1fr);gap:9px}
+  .brand-card{min-height:125px;padding:12px}
+  .brand-logo-box{width:62px;height:48px}
+  .quick-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .quick-card{padding:10px 6px}
+  .filter-bar{grid-template-columns:1fr;gap:8px}
+  .stock-btn{width:100%}
+  .store-shell{padding:11px;border-radius:19px}
+  .results-info{font-size:.73rem}
+  .parts-grid{grid-template-columns:1fr;gap:10px}
+  .part-card{border-radius:16px;padding:12px}
+  .part-card-top{grid-template-columns:72px 1fr auto;gap:9px}
+  .part-image{width:72px;height:72px}
+  .part-heading h3{font-size:.92rem}
+  .availability{font-size:.6rem}
+  .details-grid{grid-template-columns:1fr}
+  .mobile-bottom{
+    display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:10px;right:10px;bottom:10px;z-index:1800;
+    background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border:1px solid #e5e7ec;border-radius:18px;
+    box-shadow:0 15px 40px rgba(15,20,30,.14);padding:6px;
+  }
+  .mobile-bottom a,.mobile-bottom button{
+    text-decoration:none;background:transparent;color:#818894;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:48px;border-radius:13px;cursor:pointer
+  }
+  .mobile-bottom a.active,.mobile-bottom button.active{background:var(--primary-soft);color:var(--primary)}
+  .mobile-bottom i{font-size:1rem}.mobile-bottom span{font-size:.62rem}
+  .account-grid{grid-template-columns:1fr}.account-field.full{grid-column:auto}
+  .account-actions{flex-direction:column}
+  .footer{padding-bottom:82px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container topbar-inner">
+    <a class="logo" href="/">کُره<span>یدک</span></a>
+    <nav class="nav" aria-label="ناوبری">
+      <a class="active" href="#home">خانه</a>
+      <a href="#brands">برندها</a>
+      <a href="#categories">دسته‌بندی</a>
+      <a href="#store">جستجوی قطعه</a>
+      <a href="/admin">پنل مدیریت</a>
+    </nav>
+    <button class="account-btn" id="loginBtn" type="button"><i class="fas fa-right-to-bracket"></i> ورود</button>
+  </div>
+</div>
+
+<main id="home">
+  <section class="hero">
+    <div class="container">
+      <div class="hero-shell">
+        <div class="hero-grid">
+          <div>
+            <div class="hero-kicker"><span class="dot"></span> استعلام آنلاین قطعات خودرو</div>
+            <h1>قطعه‌ات را پیدا کن،<br>بدون گشتن اضافه.</h1>
+            <p>پارت‌نامبر، اسم قطعه یا مدل خودرو را وارد کن. اطلاعاتی که الان داریم همین‌جا جلوی چشمته؛ اطلاعات کامل‌تر مثل عکس و مشخصات فنی هم برای ساختار آینده صفحه آماده شده.</p>
+
+            <form class="hero-search" id="heroSearchForm">
+              <input id="heroSearchInput" autocomplete="off" placeholder="مثلاً فیلتر روغن، 26300-2G000 یا سانتافه..." />
+              <button type="submit"><i class="fas fa-magnifying-glass"></i> جستجوی قطعه</button>
+            </form>
+
+            <div class="hero-pills">
+              <span class="hero-pill">هیوندای</span>
+              <span class="hero-pill">کیا</span>
+              <span class="hero-pill">تویوتا</span>
+              <span class="hero-pill">MVM</span>
+              <span class="hero-pill">KMC</span>
+            </div>
+          </div>
+
+          <div class="hero-visual">
+            <div class="dashboard-card">
+              <div class="mini-top">
+                <div>
+                  <div style="font-size:.74rem;color:#cfc5de">نتایج فعلی جستجو</div>
+                  <div class="mini-count font-mono" id="heroPartsCount">—</div>
+                </div>
+                <i class="fas fa-database" style="font-size:1.4rem;color:#d8c9f1"></i>
+              </div>
+              <div class="mini-line"><b></b></div>
+              <div style="font-size:.72rem;color:#c7bdd5;line-height:1.8">طراحی کارت‌ها طوریه که نبودن عکس یا مشخصات کامل، ظاهر فروشگاه را خراب نکند.</div>
+              <div class="mini-row">
+                <div class="mini-box"><div style="font-size:.67rem;color:#c7bdd5">قیمت</div><strong style="font-size:.84rem">قابل نمایش</strong></div>
+                <div class="mini-box"><div style="font-size:.67rem;color:#c7bdd5">پارت‌نامبر</div><strong class="font-mono" style="font-size:.76rem">A-0001</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="brands">
+    <div class="container">
+      <div class="section-head">
+        <div><h2 class="section-title">برندهای پشتیبانی‌شده</h2><p class="section-sub">فروشگاه را فقط روی برندهایی که واقعاً پوشش می‌دهیم متمرکز نگه داشتیم.</p></div>
+      </div>
+      <div class="brands-grid">
+        <div class="brand-card">
+          <div class="brand-logo-box"><img src="https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_carlogo.svg" alt="Toyota" loading="lazy"></div>
+          <div class="brand-name">تویوتا</div><div class="brand-note">قطعات سازگار تویوتا</div>
+        </div>
+        <div class="brand-card">
+          <div class="brand-logo-box"><img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Hyundai_Motor_Company_logo.svg" alt="Hyundai" loading="lazy"></div>
+          <div class="brand-name">هیوندای</div><div class="brand-note">قطعات سازگار هیوندای</div>
+        </div>
+        <div class="brand-card">
+          <div class="brand-logo-box"><img src="https://upload.wikimedia.org/wikipedia/commons/4/47/KIA_logo2.svg" alt="Kia" loading="lazy"></div>
+          <div class="brand-name">کیا</div><div class="brand-note">قطعات سازگار کیا</div>
+        </div>
+        <div class="brand-card">
+          <div class="brand-logo-box"><div class="brand-text-logo">MVM</div></div>
+          <div class="brand-name">MVM</div><div class="brand-note">قطعات سازگار MVM</div>
+        </div>
+        <div class="brand-card">
+          <div class="brand-logo-box"><div class="brand-text-logo">KMC</div></div>
+          <div class="brand-name">KMC</div><div class="brand-note">قطعات سازگار KMC</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="categories">
+    <div class="container">
+      <div class="section-head">
+        <div><h2 class="section-title">دسته‌بندی‌های قطعه</h2><p class="section-sub">فعلاً برای نظم ظاهری؛ وقتی فیلد category به دیتابیس اضافه شد، همین‌ها فیلتر واقعی می‌شوند.</p></div>
+      </div>
+      <div class="quick-grid">
+        <div class="quick-card"><i class="fas fa-car-burst"></i><span>موتور</span></div>
+        <div class="quick-card"><i class="fas fa-gears"></i><span>گیربکس</span></div>
+        <div class="quick-card"><i class="fas fa-circle-stop"></i><span>ترمز</span></div>
+        <div class="quick-card"><i class="fas fa-car-side"></i><span>تعلیق</span></div>
+        <div class="quick-card"><i class="fas fa-bolt"></i><span>برقی</span></div>
+        <div class="quick-card"><i class="fas fa-screwdriver-wrench"></i><span>بدنه و مصرفی</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="store">
+    <div class="container">
+      <div class="store-shell">
+        <div class="section-head">
+          <div><h2 class="section-title">جستجوی قطعات</h2><p class="section-sub">نام قطعه، پارت‌نامبر یا خودروی سازگار را جستجو کن.</p></div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-box">
+            <i class="fas fa-magnifying-glass"></i>
+            <input id="search" autocomplete="off" placeholder="نام قطعه، پارت‌نامبر یا خودرو..." dir="auto">
+          </div>
+          <select id="car" class="filter-select">
+            <option value="">همه خودروها</option>
+          </select>
+          <button id="inStockBtn" class="stock-btn" type="button" onclick="toggleInStockFilter()">
+            <i class="fas fa-box-open"></i> فقط موجود
+          </button>
+        </div>
+
+        <div class="results-info">
+          <span id="count"><strong>در حال بارگذاری...</strong></span>
+          <span>نمایش سریع و موبایل‌محور</span>
+        </div>
+
+        <div id="results" class="parts-grid"></div>
+        <div id="partsFooter" class="parts-footer"></div>
+
+        <div class="future-strip">
+          <strong>ساختار آینده قطعه:</strong>
+          همین کارت‌ها از الان برای <b>عکس قطعه، توضیحات، برند، دسته‌بندی و مشخصات فنی</b> آماده‌اند. وقتی این فیلدها را به دیتابیس اضافه کنیم، لازم نیست UI را از نو بسازیم.
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">کُره یدک — فروشگاه تخصصی قطعات خودروهای تحت پوشش</div>
+</footer>
+
+<nav class="mobile-bottom" aria-label="ناوبری موبایل">
+  <a href="#home" class="active"><i class="fas fa-house"></i><span>خانه</span></a>
+  <a href="#brands"><i class="fas fa-layer-group"></i><span>برندها</span></a>
+  <a href="#store"><i class="fas fa-magnifying-glass"></i><span>قطعات</span></a>
+  <button id="mobileAccountBtn" type="button"><i class="fas fa-user"></i><span>حساب</span></button>
+</nav>
+
+<!-- حساب کاربری -->
+<div class="account-modal" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" aria-hidden="true">
+  <div class="account-panel">
+    <div class="account-modal-head">
+      <div><h3 id="accountModalTitle">تنظیمات حساب</h3><p>اطلاعات حساب فعلی شما</p></div>
+      <button class="account-close" id="accountModalClose" type="button" aria-label="بستن"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="account-summary">
+      <div class="account-avatar"><i class="fas fa-user"></i></div>
+      <div><strong id="accountDisplayName">—</strong><span id="accountRoleText">—</span></div>
+    </div>
+
+    <div class="account-grid">
+      <div class="account-field"><small>نام کاربری</small><strong id="accountUsername">—</strong></div>
+      <div class="account-field"><small>نقش حساب</small><strong id="accountRole">—</strong></div>
+      <div class="account-field"><small>نام</small><strong id="accountFirstName">—</strong></div>
+      <div class="account-field"><small>نام خانوادگی</small><strong id="accountLastName">—</strong></div>
+      <div class="account-field full"><small>ایمیل</small><strong id="accountEmail">—</strong></div>
+      <div class="account-field full"><small>شماره موبایل</small><strong id="accountPhone">—</strong></div>
+    </div>
+
+    <div class="account-actions">
+      <button class="account-action-btn" id="accountGoStore" type="button"><i class="fas fa-store"></i> رفتن به فروشگاه</button>
+      <button class="account-action-btn danger" id="accountLogout" type="button"><i class="fas fa-arrow-right-from-bracket"></i> خروج از حساب</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+        // UI سبک صفحه اصلی
+        window.addEventListener("scroll", () => {
+            const topbar = document.querySelector(".topbar");
+            if (topbar) topbar.classList.toggle("shadowed", window.scrollY > 10);
+        }, {passive:true});
+
+        const heroSearchForm = document.getElementById("heroSearchForm");
+        const heroSearchInput = document.getElementById("heroSearchInput");
+        heroSearchForm?.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const value = heroSearchInput.value.trim();
+            if (typeof searchInput !== "undefined") {
+                searchInput.value = value;
+            }
+            document.getElementById("store")?.scrollIntoView({behavior:"smooth", block:"start"});
+            setTimeout(() => {
+                if (typeof loadParts === "function") loadParts();
+            }, 80);
+        });
+
+        document.getElementById("mobileAccountBtn")?.addEventListener("click", () => {
+            if (typeof currentUser !== "undefined" && currentUser) openAccountModal();
+            else window.location.href = "/login";
+        });
+
+// -----------------------------------------
+        // بخش دوم: منطق API قطعات و جستجو (کاملاً هماهنگ با بک‌اند پایتون شما)
+        // -----------------------------------------
+        const API_BASE = "";
+        const searchInput = document.getElementById("search");
+        const carSelect = document.getElementById("car");
+        const resultsContainer = document.getElementById("results");
+        const countSpan = document.getElementById("count");
+        let onlyInStock = false;
+
+        async function api(path, options = {}) {
+            const response = await fetch(API_BASE + path, options);
+            let data = {};
+            try { data = await response.json(); } catch (_) {}
+            if (!response.ok) throw new Error(data.detail || "خطایی رخ داد.");
+            return data;
+        }
+
+        function toggleInStockFilter() {
+            onlyInStock = !onlyInStock;
+            document.getElementById("inStockBtn").classList.toggle("active", onlyInStock);
+            loadParts();
+        }
+
+        async function loadCars() {
+            try {
+                const cars = await api("/api/cars");
+                carSelect.innerHTML = '<option value="">همه خودروها</option>';
+                cars.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c; opt.textContent = c;
+                    carSelect.appendChild(opt);
+                });
+            } catch(_) {}
+        }
+
+        const PAGE_SIZE = 24;
+        let allParts = [];
+        let visiblePartCount = PAGE_SIZE;
+
+        function updatePartsFooter() {
+            const footer = document.getElementById("partsFooter");
+            if (!footer) return;
+            const shown = Math.min(visiblePartCount, allParts.length);
+            if (allParts.length <= PAGE_SIZE) {
+                footer.innerHTML = allParts.length
+                    ? `<div class="pagination-meta">${shown} مورد نمایش داده شد</div>`
+                    : "";
+                return;
+            }
+
+            footer.innerHTML = `
+                ${shown < allParts.length ? `<button class="load-more-btn" type="button" onclick="showMoreParts()">
+                    <i class="fas fa-layer-group"></i> نمایش  ${Math.min(PAGE_SIZE, allParts.length - shown)} مورد بیشتر
+                </button>` : ""}
+                <div class="pagination-meta">${shown.toLocaleString('fa-IR')} از ${allParts.length.toLocaleString('fa-IR')} مورد نمایش داده شده</div>
+            `;
+        }
+
+        function showMoreParts() {
+            visiblePartCount = Math.min(visiblePartCount + PAGE_SIZE, allParts.length);
+            renderParts();
+        }
+
+        function parseSpecifications(value) {
+            if (!value) return {};
+            if (typeof value === "object") return value;
+            if (typeof value === "string") {
+                try {
+                    const parsed = JSON.parse(value);
+                    return parsed && typeof parsed === "object" ? parsed : {};
+                } catch (_) {
+                    return {};
+                }
+            }
+            return {};
+        }
+
+        function getPartImage(p) {
+            return p.image_url || p.image || p.photo_url || p.thumbnail_url || "";
+        }
+
+        function renderSpecifications(specs) {
+            const entries = Object.entries(specs).filter(([k, v]) => v !== null && v !== undefined && String(v).trim() !== "");
+            if (!entries.length) {
+                return `<div class="future-specs">
+                    <i class="fas fa-circle-info"></i>
+                    مشخصات فنی این قطعه هنوز به بانک اطلاعاتی اضافه نشده.
+                </div>`;
+            }
+            return entries.slice(0, 8).map(([key, value]) => `
+                <div class="spec-row">
+                    <span>${escapeHtml(key)}</span>
+                    <strong>${escapeHtml(Array.isArray(value) ? value.join("، ") : value)}</strong>
+                </div>
+            `).join("");
+        }
+
+        function renderParts() {
+            const q = searchInput.value.trim();
+            const visibleParts = allParts.slice(0, visiblePartCount);
+
+            resultsContainer.innerHTML = visibleParts.map((p) => {
+                const isAvailable = Number(p.stock || 0) >= 1;
+                const formattedPrice = p.price !== null && p.price !== undefined && p.price !== "" && Number(p.price) > 0
+                    ? Number(p.price).toLocaleString("fa-IR") + " تومان"
+                    : "برای استعلام";
+                const cars = (p.compatible_cars || "")
+                    .split(/[،,]/)
+                    .map(c => c.trim())
+                    .filter(Boolean)
+                    .slice(0, 5);
+                const specs = parseSpecifications(p.specifications ?? p.specs ?? p.attributes);
+                const image = getPartImage(p);
+                const hasExtendedData = Boolean(
+                    image || p.description || p.brand || p.category || Object.keys(specs).length
+                );
+
+                return `
+                <article class="part-card">
+                    <div class="part-card-top">
+                        <div class="part-image ${image ? "has-image" : ""}">
+                            ${image
+                                ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(p.name || "قطعه یدکی")}" loading="lazy"
+                                    onerror="this.remove();this.parentElement.classList.remove('has-image');">`
+                                : `<div class="image-placeholder"><i class="fas fa-cog"></i><span>بدون تصویر</span></div>`
+                            }
+                        </div>
+
+                        <div class="part-heading">
+                            <div class="part-meta">
+                                ${p.brand ? `<span class="soft-chip brand-chip">${escapeHtml(p.brand)}</span>` : ""}
+                                ${p.category ? `<span class="soft-chip">${escapeHtml(p.category)}</span>` : ""}
+                            </div>
+
+                            <h3>${highlight(escapeHtml(p.name || "بدون نام"), q)}</h3>
+
+                            <div class="part-number-line">
+                                ${p.is_genuine ? '<span class="genuine-chip"><i class="fas fa-shield-check"></i> اصلی</span>' : ""}
+                                <span class="part-number">${highlight(escapeHtml(p.part_number || "ثبت نشده"), q)}</span>
+                            </div>
+                        </div>
+
+                        <span class="availability ${isAvailable ? "available" : "unavailable"}">
+                            <span class="status-dot"></span>
+                            ${isAvailable ? "موجود" : "ناموجود"}
+                        </span>
+                    </div>
+
+                    <div class="fit-row">
+                        <div class="fit-title"><i class="fas fa-car-side"></i> سازگار با</div>
+                        <div class="cars-list">
+                            ${cars.length
+                                ? cars.map(c => `<span class="car-chip">${highlight(escapeHtml(c), q)}</span>`).join("")
+                                : `<span class="muted">برای این قطعه خودروی سازگار ثبت نشده.</span>`
+                            }
+                        </div>
+                    </div>
+
+                    ${p.description ? `<p class="part-description">${escapeHtml(p.description)}</p>` : ""}
+
+                    <div class="part-footer-row">
+                        <div>
+                            <span class="price-label">قیمت</span>
+                            <strong class="price-value">${formattedPrice}</strong>
+                        </div>
+                        <div class="date-box">
+                            <span>آخرین بروزرسانی</span>
+                            <b>${formatDate(p.price_updated_at || p.updated_at || p.updatedAt)}</b>
+                        </div>
+                    </div>
+
+                    <button class="details-toggle" type="button"
+                        onclick="togglePartDetails(${Number(p.id) || 0}, this)"
+                        ${hasExtendedData ? "" : "disabled"}>
+                        <span><i class="fas fa-sliders"></i> ${hasExtendedData ? "مشخصات و جزئیات" : "جزئیات تکمیلی به‌زودی"}</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+
+                    <div id="part-details-${Number(p.id) || 0}" class="part-details">
+                        <div class="details-grid">
+                            <div class="details-section">
+                                <span class="details-title">مشخصات فنی</span>
+                                <div class="spec-list">
+                                    ${renderSpecifications(specs)}
+                                </div>
+                            </div>
+                            <div class="details-section">
+                                <span class="details-title">اطلاعات ثبت</span>
+                                <div class="spec-list">
+                                    <div class="spec-row"><span>پارت نامبر</span><strong>${escapeHtml(p.part_number || "—")}</strong></div>
+                                    <div class="spec-row"><span>تاریخ قیمت</span><strong>${formatDate(p.price_updated_at || p.updated_at)}</strong></div>
+                                    <div class="spec-row"><span>موجودی</span><strong>${Number(p.stock || 0).toLocaleString("fa-IR")}</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>`;
+            }).join("");
+
+            updatePartsFooter();
+        }
+
+        function togglePartDetails(id, btn) {
+            const panel = document.getElementById(`part-details-${id}`);
+            if (!panel || btn.disabled) return;
+            panel.classList.toggle("open");
+            btn.classList.toggle("open");
+        }
+
+        let partsAbortController = null;
+
+        async function loadParts() {
+            if (partsAbortController) partsAbortController.abort();
+            partsAbortController = new AbortController();
+
+            const params = new URLSearchParams();
+            if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
+            if (carSelect.value.trim()) params.set("car", carSelect.value.trim());
+            if (onlyInStock) params.set("in_stock", "true");
+
+            resultsContainer.innerHTML = `
+                <div class="store-loading">
+                    <div class="loader-spinner"></div>
+                    <strong>در حال پیدا کردن قطعه...</strong>
+                    <span>فقط نتیجه‌های قابل نمایش ساخته می‌شوند.</span>
+                </div>`;
+            document.getElementById("partsFooter").innerHTML = "";
+
+            try {
+                let parts = await api("/api/parts?" + params.toString(), {
+                    signal: partsAbortController.signal
+                });
+
+                if (onlyInStock) {
+                    parts = parts.filter(p => Number(p.stock || 0) >= 1);
+                }
+
+                allParts = Array.isArray(parts) ? parts : [];
+                visiblePartCount = PAGE_SIZE;
+
+                countSpan.textContent = allParts.length
+                    ? `${allParts.length.toLocaleString("fa-IR")} نتیجه`
+                    : "۰ نتیجه";
+
+                if (heroPartsCount) {
+                    heroPartsCount.textContent = allParts.length.toLocaleString("fa-IR");
+                }
+
+                if (!allParts.length) {
+                    resultsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fas fa-magnifying-glass"></i></div>
+                            <strong>قطعه‌ای پیدا نشد</strong>
+                            <span>نام قطعه، پارت‌نامبر یا خودروی دیگری را امتحان کن.</span>
+                        </div>`;
+                    return;
+                }
+
+                renderParts();
+            } catch (e) {
+                if (e?.name === "AbortError") return;
+                allParts = [];
+                document.getElementById("partsFooter").innerHTML = "";
+                resultsContainer.innerHTML = `
+                    <div class="empty-state error-state">
+                        <div class="empty-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                        <strong>ارتباط با سرور برقرار نشد</strong>
+                        <span>${escapeHtml(e.message || "خطای ناشناخته")}</span>
+                    </div>`;
+            }
+        }
+
+        function toggleAccordion(id, btn) {
+            const wrapper = document.getElementById(`wrapper-${id}`);
+            if (!wrapper) return;
+            wrapper.classList.toggle("open");
+            btn.classList.toggle("active");
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'ثبت نشده';
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr;
+                return d.toLocaleDateString('fa-IR');
+            } catch (_) { return dateStr; }
+        }
+
+        function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+        function highlight(text, q) {
+            if (!text || !q) return text || "";
+            const words = q.trim().split(/\s+/).filter(Boolean).map(escapeRegExp);
+            if (!words.length) return text;
+            const reg = new RegExp("(" + words.join("|") + ")", "gi");
+            return text.replace(reg, "<mark>$1</mark>");
+        }
+
+
+        // -----------------------------------------
+        // احراز هویت مشترک با /login /admin /order
+        // -----------------------------------------
+        const loginBtn = document.getElementById("loginBtn");
+        const heroPartsCount = document.getElementById("heroPartsCount");
+        const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+        const mobileNavOverlay = document.getElementById("mobileNavOverlay");
+        const mobileNavDrawer = document.getElementById("mobileNavDrawer");
+        const mobileNavClose = document.getElementById("mobileNavClose");
+        const drawerUserName = document.getElementById("drawerUserName");
+        const drawerUserRole = document.getElementById("drawerUserRole");
+        const drawerAccountBtn = document.getElementById("drawerAccountBtn");
+        const drawerLoginBtn = document.getElementById("drawerLoginBtn");
+        const drawerLogoutBtn = document.getElementById("drawerLogoutBtn");
+        const accountModal = document.getElementById("accountModal");
+        const accountModalClose = document.getElementById("accountModalClose");
+        const accountLogout = document.getElementById("accountLogout");
+        const accountGoStore = document.getElementById("accountGoStore");
+
+        let currentUser = null;
+
+        function getStoredToken() {
+            return localStorage.getItem("koreyadak_token");
+        }
+
+        function clearStoredToken() {
+            localStorage.removeItem("koreyadak_token");
+        }
+
+        function isLoggedIn() {
+            return !!getStoredToken();
+        }
+
+        function roleLabel(role) {
+            return role === "admin" ? "مدیر سامانه" : "حساب مشتری";
+        }
+
+        function syncLoginButton(user = null) {
+            if (!loginBtn) return;
+
+            if (user?.username) {
+                loginBtn.classList.add("authenticated");
+                loginBtn.innerHTML = `
+                    <i class="fas fa-user"></i>
+                    <span class="account-label">${escapeHtml(user.username)}</span>
+                    <i class="fas fa-chevron-down account-chevron"></i>
+                `;
+                loginBtn.title = "تنظیمات حساب";
+            } else {
+                loginBtn.classList.remove("authenticated");
+                loginBtn.innerHTML = `
+                    <i class="fas fa-right-to-bracket"></i>
+                    <span class="account-label">ورود</span>
+                `;
+                loginBtn.title = "ورود به حساب";
+            }
+        }
+
+        function syncDrawerUser(user = null) {
+            if (!drawerUserName || !drawerUserRole) return;
+
+            if (user?.username) {
+                drawerUserName.textContent = user.username;
+                drawerUserRole.textContent = roleLabel(user.role);
+                drawerAccountBtn.hidden = false;
+                drawerLoginBtn.hidden = true;
+                drawerLogoutBtn.hidden = false;
+            } else {
+                drawerUserName.textContent = "مهمان";
+                drawerUserRole.textContent = "وارد حساب نشده‌اید";
+                drawerAccountBtn.hidden = true;
+                drawerLoginBtn.hidden = false;
+                drawerLogoutBtn.hidden = true;
+            }
+        }
+
+        function fillAccountModal(user) {
+            const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+            document.getElementById("accountDisplayName").textContent = displayName || user?.username || "حساب کاربری";
+            document.getElementById("accountRoleText").textContent = roleLabel(user?.role);
+            document.getElementById("accountUsername").textContent = user?.username || "ثبت نشده";
+            document.getElementById("accountRole").textContent = roleLabel(user?.role);
+            document.getElementById("accountFirstName").textContent = user?.first_name || "ثبت نشده";
+            document.getElementById("accountLastName").textContent = user?.last_name || "ثبت نشده";
+            document.getElementById("accountEmail").textContent = user?.email || "ثبت نشده";
+            document.getElementById("accountPhone").textContent = user?.phone || "ثبت نشده";
+        }
+
+        function openAccountModal() {
+            if (!currentUser) {
+                window.location.href = "/login";
+                return;
+            }
+            fillAccountModal(currentUser);
+            accountModal.classList.add("open");
+            accountModal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("nav-drawer-lock");
+        }
+
+        function closeAccountModal() {
+            accountModal.classList.remove("open");
+            accountModal.setAttribute("aria-hidden", "true");
+            if (!mobileNavDrawer.classList.contains("open")) {
+                document.body.classList.remove("nav-drawer-lock");
+            }
+        }
+
+        function openMobileNav() {
+            mobileNavDrawer.classList.add("open");
+            mobileNavOverlay.classList.add("open");
+            mobileMenuToggle.classList.add("open");
+            mobileMenuToggle.setAttribute("aria-expanded", "true");
+            mobileNavDrawer.setAttribute("aria-hidden", "false");
+            mobileNavOverlay.setAttribute("aria-hidden", "false");
+            document.body.classList.add("nav-drawer-lock");
+        }
+
+        function closeMobileNav() {
+            mobileNavDrawer.classList.remove("open");
+            mobileNavOverlay.classList.remove("open");
+            mobileMenuToggle.classList.remove("open");
+            mobileMenuToggle.setAttribute("aria-expanded", "false");
+            mobileNavDrawer.setAttribute("aria-hidden", "true");
+            mobileNavOverlay.setAttribute("aria-hidden", "true");
+            if (!accountModal.classList.contains("open")) {
+                document.body.classList.remove("nav-drawer-lock");
+            }
+        }
+
+        async function syncAuthUI() {
+            const token = getStoredToken();
+            if (!token) {
+                currentUser = null;
+                syncLoginButton();
+                syncDrawerUser();
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/auth/me", {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+
+                if (!res.ok) throw new Error("Unauthorized");
+
+                currentUser = await res.json();
+                syncLoginButton(currentUser);
+                syncDrawerUser(currentUser);
+            } catch (_) {
+                currentUser = null;
+                clearStoredToken();
+                syncLoginButton();
+                syncDrawerUser();
+            }
+        }
+
+        async function logoutFromAll() {
+            const token = getStoredToken();
+
+            try {
+                if (token) {
+                    await fetch("/api/auth/logout", {
+                        method: "POST",
+                        headers: { "Authorization": "Bearer " + token }
+                    });
+                }
+            } catch (_) {
+                // Local logout must still work if the network is unavailable.
+            }
+
+            clearStoredToken();
+            currentUser = null;
+            closeAccountModal();
+            closeMobileNav();
+            syncLoginButton();
+            syncDrawerUser();
+        }
+
+        loginBtn?.addEventListener("click", () => {
+            if (currentUser) {
+                openAccountModal();
+            } else {
+                window.location.href = "/login";
+            }
+        });
+
+        mobileMenuToggle?.addEventListener("click", () => {
+            if (mobileNavDrawer.classList.contains("open")) closeMobileNav();
+            else openMobileNav();
+        });
+
+        mobileNavClose?.addEventListener("click", closeMobileNav);
+        mobileNavOverlay?.addEventListener("click", closeMobileNav);
+
+        document.querySelectorAll(".drawer-link").forEach(link => {
+            link.addEventListener("click", () => closeMobileNav());
+        });
+
+        drawerAccountBtn?.addEventListener("click", () => {
+            closeMobileNav();
+            openAccountModal();
+        });
+
+        drawerLoginBtn?.addEventListener("click", () => {
+            closeMobileNav();
+            window.location.href = "/login";
+        });
+
+        drawerLogoutBtn?.addEventListener("click", logoutFromAll);
+        accountLogout?.addEventListener("click", logoutFromAll);
+        accountGoStore?.addEventListener("click", () => {
+            window.location.href = "/order";
+        });
+        accountModalClose?.addEventListener("click", closeAccountModal);
+
+        accountModal?.addEventListener("click", (event) => {
+            if (event.target === accountModal) closeAccountModal();
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                closeMobileNav();
+                closeAccountModal();
+            }
+        });
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function handleNavAuthRouting() {
+            const token = getStoredToken();
+            if (!token) return;
+
+            // If an already-authenticated admin/customer returns to the home page,
+            // the account button stays here and does not force a redirect.
+            // Navigation to /admin or /order remains an explicit user action.
+        }
+
+        syncAuthUI();
+        handleNavAuthRouting();
+
+
+        // رویدادهای تایپ در سرچ و لود اولیه
+        let searchTimer;
+        searchInput.addEventListener("input", () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(loadParts, 300);
+        });
+        carSelect.addEventListener("change", loadParts);
+
+        // اجرای اولیه توابع بک‌اند
+        loadCars();
+        loadParts();
+</script>
+</body>
+</html>
