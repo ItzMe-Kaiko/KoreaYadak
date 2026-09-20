@@ -2,134 +2,98 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>کره یدک | حساب کاربری</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f8fb">
+<title>کُره یدک | حساب کاربری</title>
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-:root{--bg-dark: #05070b; 
-            --bg-card: #0a0f18;
-            --primary: #00e5ff;
-            --primary-glow: rgba(0, 229, 255, 0.4);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #1e293b;
-            --success: #10b981;
-            --danger: #ef4444;}
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',sans-serif}
-html,body{min-height:100%}
-body{min-height:100vh;overflow-x:hidden;color:var(--text-main);background:
-radial-gradient(circle at 50% -10%,rgba(0,229,255,.11),transparent 34%),
-radial-gradient(circle at 8% 80%,rgba(30,64,175,.10),transparent 26%),
-radial-gradient(circle at 92% 65%,rgba(6,182,212,.08),transparent 24%),var(--bg-dark);
-position:relative;isolation:isolate}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;background-image:
-linear-gradient(rgba(148,163,184,.045) 1px,transparent 1px),
-linear-gradient(90deg,rgba(148,163,184,.045) 1px,transparent 1px);
-background-size:72px 72px;mask-image:linear-gradient(to bottom,black 0%,rgba(0,0,0,.72) 62%,transparent 100%);
--webkit-mask-image:linear-gradient(to bottom,black 0%,rgba(0,0,0,.72) 62%,transparent 100%);
-animation:gridDrift 24s linear infinite}
-body:after{content:"";position:fixed;width:560px;height:560px;top:-260px;left:50%;transform:translateX(-50%);
-border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,rgba(0,229,255,.12),rgba(0,229,255,.035) 32%,transparent 70%);
-filter:blur(14px);animation:glow 8s ease-in-out infinite}
-@keyframes gridDrift{from{background-position:0 0,0 0}to{background-position:72px 72px,72px 72px}}
-@keyframes glow{0%,100%{opacity:.65;transform:translateX(-50%) scale(.96)}50%{opacity:1;transform:translateX(-50%) scale(1.06)}}
-.page{width:min(1080px,calc(100% - 32px));min-height:100vh;margin:auto;display:grid;place-items:center;padding:32px 0}
-.shell{width:100%;display:grid;grid-template-columns:.92fr 1.08fr;border:1px solid rgba(148,163,184,.11);border-radius:28px;overflow:hidden;
-background:linear-gradient(145deg,rgba(13,19,31,.82),rgba(7,11,18,.9));box-shadow:0 35px 90px rgba(0,0,0,.38),0 0 50px rgba(0,229,255,.055);
-backdrop-filter:blur(18px);animation:enter .8s cubic-bezier(.22,1,.36,1) both}
-@keyframes enter{from{opacity:0;transform:translateY(22px) scale(.985);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
-@keyframes floatField{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-@keyframes pulseBorder{0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,0)}50%{box-shadow:0 0 0 4px rgba(0,229,255,.045)}}
-@keyframes tabPop{from{transform:scale(.96);opacity:.65}to{transform:scale(1);opacity:1}}
-@keyframes successPop{0%{transform:scale(.96);opacity:0}70%{transform:scale(1.02);opacity:1}100%{transform:scale(1);opacity:1}}
-.field{animation:floatField 6s ease-in-out infinite}
-.field:nth-child(2n){animation-delay:.6s}.field:nth-child(3n){animation-delay:1.1s}
-.tab.active{animation:tabPop .24s ease-out}
-.submit:focus-visible{animation:pulseBorder 1.2s ease-in-out infinite}
-.ok{animation:successPop .35s ease-out both}
-.brand{padding:42px 38px;min-height:720px;display:flex;flex-direction:column;justify-content:space-between;border-left:1px solid rgba(148,163,184,.09);
-background:radial-gradient(circle at 50% 20%,rgba(0,229,255,.12),transparent 40%),linear-gradient(180deg,rgba(0,229,255,.035),transparent 60%)}
-.logo{font-size:1.65rem;font-weight:900;letter-spacing:1px} .logo span{color:var(--primary);text-shadow:0 0 18px var(--primary-glow)}
-.copy{max-width:340px;align-self:center;margin-top:50px} .eyebrow{color:var(--primary);font-size:.8rem;font-weight:800;letter-spacing:1.5px;margin-bottom:14px}
-.copy h1{font-size:clamp(2rem,4vw,3.3rem);line-height:1.15;margin-bottom:16px} .copy h1 span{color:var(--primary);text-shadow:0 0 24px rgba(0,229,255,.25)}
-.copy p{color:var(--text-muted);line-height:2;font-size:.98rem}
-.points{display:grid;gap:10px} .point{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:.88rem} .point i{color:var(--primary);width:18px}
-.form{padding:38px;background:rgba(4,8,14,.22)} .head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:25px}
-.head h2{font-size:1.55rem;margin-bottom:6px} .head p{color:var(--text-muted);font-size:.84rem;line-height:1.8}
-.tabs{display:flex;background:rgba(255,255,255,.025);border:1px solid rgba(148,163,184,.10);border-radius:12px;padding:4px;gap:4px}
-.tab{border:0;color:var(--text-muted);background:transparent;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;white-space:nowrap}
-.tab.active{color:var(--text-main);background:rgba(0,229,255,.10);box-shadow:inset 0 0 0 1px rgba(0,229,255,.14)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px} .field{margin-bottom:14px} .full{grid-column:1/-1}
-label.title{display:block;margin-bottom:7px;color:#cbd5e1;font-size:.84rem;font-weight:700}
-.wrap{position:relative} .wrap>i{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none}
-input{width:100%;padding:12px 42px 12px 13px;border-radius:12px;border:1px solid var(--border-color);background:rgba(255,255,255,.03);
-color:var(--text-main);outline:none;transition:.22s ease} input:focus{border-color:rgba(0,229,255,.55);background:rgba(0,229,255,.035);box-shadow:0 0 0 3px rgba(0,229,255,.07)}
-input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.72rem;color:#64748b}
-.verify{display:grid;grid-template-columns:1fr auto;gap:8px} .verify button{border:1px solid rgba(0,229,255,.22);color:var(--primary);background:rgba(0,229,255,.07);padding:0 14px;border-radius:12px;cursor:pointer;font-weight:800}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px} .check{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:.77rem}
-.check input{width:auto;accent-color:var(--primary);padding:0}
-.submit:disabled,.verify button:disabled{opacity:.6;cursor:not-allowed;transform:none!important}
-.submit{width:100%;border:1px solid rgba(0,229,255,.3);border-radius:14px;padding:13px;margin-top:8px;cursor:pointer;color:#031217;background:linear-gradient(135deg,#00e5ff,#5ee7f5);box-shadow:0 12px 28px rgba(0,229,255,.14);font-weight:900;font-size:.95rem}
-.message{min-height:22px;margin-top:10px;font-size:.78rem;line-height:1.7} .ok{color:#34d399} .bad{color:#f87171}
-.field-error{display:none;margin-top:6px;font-size:.72rem;line-height:1.6;color:#f87171}.field-error.show{display:block;animation:successPop .22s ease-out both}.has-error .wrap>i{color:#f87171!important}.has-error input{border-color:rgba(239,68,68,.75)!important;background:rgba(239,68,68,.045)!important;box-shadow:0 0 0 3px rgba(239,68,68,.07)!important}.has-success input{border-color:rgba(16,185,129,.65)!important;box-shadow:0 0 0 3px rgba(16,185,129,.06)!important}.code-area{display:none;margin-top:8px}.code-area.show{display:block;animation:enter .3s ease both}.code-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;color:#64748b;font-size:.7rem}.code-input{letter-spacing:6px;text-align:center;font-family:'JetBrains Mono',monospace!important;font-size:1.1rem;padding-left:13px!important}.verify button{transition:.22s ease}.verify button.sent{color:#fbbf24;border-color:rgba(251,191,36,.28);background:rgba(251,191,36,.07)}
-.legal{margin-top:18px;color:#64748b;font-size:.7rem;line-height:1.8;text-align:center}
+:root{--bg:#f7f8fb;--surface:#fff;--surface-2:#f1f3f7;--text:#171923;--muted:#717887;--line:#e3e6ec;--primary:#5d24c7;--primary-2:#7b3fe4;--primary-soft:#f0e9ff;--success:#18a769;--danger:#d94b58;--shadow:0 18px 50px rgba(23,25,35,.09)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:"Vazirmatn",system-ui,sans-serif;overflow-x:hidden}
+a{color:inherit}button,input{font:inherit}button{border:0}
+.page{min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(247,248,251,.9);border-bottom:1px solid rgba(227,230,236,.9);backdrop-filter:blur(14px)}
+.topbar-inner{width:min(1180px,calc(100% - 32px));min-height:70px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{text-decoration:none;font-weight:900;font-size:1.2rem;letter-spacing:.4px}.logo span{color:var(--primary)}
+.back-btn{min-height:42px;padding:0 14px;border:1px solid var(--line);background:var(--surface);border-radius:13px;text-decoration:none;font-size:.82rem;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:.2s ease}.back-btn:hover{color:var(--primary);border-color:#d7c8f7;transform:translateY(-1px)}
+.main{width:min(1050px,calc(100% - 32px));margin:auto;flex:1;display:grid;place-items:center;padding:34px 0 48px}
+.auth-shell{width:100%;display:grid;grid-template-columns:.9fr 1.1fr;background:var(--surface);border:1px solid var(--line);border-radius:28px;overflow:hidden;box-shadow:0 24px 70px rgba(23,25,35,.10);animation:enter .45s ease both}
+@keyframes enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.visual{padding:34px;min-height:650px;color:#fff;position:relative;overflow:hidden;background:radial-gradient(circle at 100% 0%,rgba(123,63,228,.35),transparent 38%),radial-gradient(circle at 0% 100%,rgba(93,36,199,.24),transparent 35%),linear-gradient(135deg,#20163a,#2f2050)}
+.visual:after{content:"";position:absolute;width:330px;height:330px;border-radius:50%;left:-105px;bottom:-145px;background:rgba(255,255,255,.06)}
+.visual-top{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:1}.visual-logo{font-weight:900;font-size:1.15rem}.visual-badge{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);font-size:.68rem;color:#e6def2}
+.visual-copy{position:relative;z-index:1;margin-top:150px;max-width:390px}.visual-kicker{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:.7rem;margin-bottom:16px}.visual-dot{width:7px;height:7px;border-radius:50%;background:#52e2a4;box-shadow:0 0 10px rgba(82,226,164,.65)}
+.visual h1{margin:0 0 14px;font-size:clamp(2rem,4vw,3.2rem);line-height:1.15}.visual h1 span{color:#c9b2f7}.visual p{margin:0;color:#ddd6e8;line-height:2;font-size:.83rem}.visual-points{position:absolute;left:34px;right:34px;bottom:30px;z-index:1;display:grid;gap:9px}.visual-point{display:flex;align-items:center;gap:9px;color:#d6d0df;font-size:.74rem}.visual-point i{width:18px;color:#cab6ef}
+.form{padding:34px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:24px}.head h2{margin:0 0 5px;font-size:1.45rem}.head p{margin:0;color:var(--muted);font-size:.77rem;line-height:1.8}
+.tabs{display:flex;gap:4px;padding:4px;border:1px solid var(--line);background:var(--surface-2);border-radius:13px}.tab{padding:8px 13px;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;font-weight:800}.tab.active{background:var(--surface);color:var(--primary);box-shadow:0 4px 12px rgba(23,25,35,.06)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:13px}.full{grid-column:1/-1}label.title{display:block;margin-bottom:6px;font-size:.77rem;font-weight:800;color:#4d5360}.wrap{position:relative}.wrap>i{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#9aa0ab;pointer-events:none}input{width:100%;min-height:46px;padding:0 40px 0 12px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--text);outline:0;transition:.2s ease}input:focus{border-color:#cdbbf0;box-shadow:0 0 0 3px rgba(93,36,199,.08);background:#fdfcff}input::placeholder{color:#a4a9b2}
+.verify{display:grid;grid-template-columns:1fr auto;gap:8px}.verify button{padding:0 13px;border:1px solid #ddcff7;border-radius:12px;background:var(--primary-soft);color:var(--primary);font-size:.72rem;font-weight:900;cursor:pointer}.verify button.sent{background:#fff7df;border-color:#f0dfaa;color:#a06c00}.verify button:disabled{opacity:.6;cursor:not-allowed}.code-area{display:none;margin-top:8px}.code-area.show{display:block}.code-input{text-align:center;letter-spacing:6px;font-family:"JetBrains Mono",monospace;padding-left:12px}.code-meta{display:flex;justify-content:space-between;gap:8px;margin-top:6px;color:#9aa0ab;font-size:.62rem}.field-error{display:none;margin-top:5px;font-size:.66rem;line-height:1.7;color:var(--danger)}.field-error.show{display:block}.has-error input{border-color:#ecabb3!important;background:#fff8f8!important}.has-success input{border-color:#8bd9bb!important;background:#f7fffb!important}small{display:block;margin-top:5px;font-size:.62rem;color:#9aa0ab}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:5px 0 2px}.check{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.7rem}.check input{width:auto;min-height:0;accent-color:var(--primary);padding:0}.row a{color:var(--primary);font-size:.7rem;text-decoration:none}
+.submit{width:100%;min-height:46px;margin-top:8px;border-radius:13px;background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;cursor:pointer;font-weight:900;box-shadow:0 12px 28px rgba(93,36,199,.18);transition:.2s ease}.submit:hover{transform:translateY(-1px)}.submit:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.message{min-height:21px;margin-top:10px;text-align:center;font-size:.72rem;line-height:1.7}.ok{color:var(--success)}.bad{color:var(--danger)}.legal{margin-top:16px;text-align:center;color:#9aa0ab;font-size:.61rem;line-height:1.8}
 [hidden]{display:none!important}
-@media(max-width:860px){.shell{grid-template-columns:1fr;max-width:620px}.brand{min-height:auto;padding:28px;border-left:0;border-bottom:1px solid rgba(148,163,184,.09)}.copy{margin-top:34px}.points{margin-top:30px}}
-@media(max-width:560px){.page{width:min(100% - 18px,620px);padding:10px 0}.form,.brand{padding:22px 18px}.head{flex-direction:column}.grid{grid-template-columns:1fr}.full{grid-column:auto}.tabs{width:100%}.tab{flex:1}.verify{grid-template-columns:1fr}.verify button{padding:11px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(max-width:860px){.auth-shell{grid-template-columns:1fr;max-width:650px}.visual{min-height:300px}.visual-copy{margin-top:55px}.visual-points{position:relative;left:auto;right:auto;bottom:auto;margin-top:28px}.form{padding:24px}}
+@media(max-width:560px){.topbar-inner,.main{width:min(100% - 20px,620px)}.topbar-inner{min-height:62px}.main{padding:18px 0 28px}.auth-shell{border-radius:22px}.visual{padding:22px;min-height:0}.visual h1{font-size:2rem}.visual-copy{margin-top:42px}.visual-points{margin-top:24px}.head{flex-direction:column}.tabs{width:100%}.tab{flex:1}.form{padding:20px 16px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.verify{grid-template-columns:1fr}.verify button{min-height:44px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="page"><main class="shell">
-<aside class="brand">
-  <div class="logo">KOREA<span>YADAK</span></div>
-  <div class="copy">
-    <div class="eyebrow">SECURE ACCOUNT</div>
-    <h1>حساب کاربری <span>کره یدک</span></h1>
-    <p>ثبت‌نام حرفه‌ای برای دسترسی به پنل، مدیریت اطلاعات، سفارش‌ها و امکانات اختصاصی فروشگاه.</p>
-  </div>
-  <div class="points">
-    <div class="point"><i class="fa-solid fa-shield-halved"></i><span>ساختار آماده برای احراز هویت واقعی</span></div>
-    <div class="point"><i class="fa-solid fa-envelope-circle-check"></i><span>تأیید ایمیل قبل از فعال‌شدن حساب</span></div>
-    <div class="point"><i class="fa-solid fa-user-lock"></i><span>ورود امن با نام کاربری و رمز عبور</span></div>
-  </div>
-</aside>
-
-<section class="form">
-  <div class="head">
-    <div><h2 id="title">ساخت حساب</h2><p id="subtitle">اطلاعات واقعی خودت را وارد کن.</p></div>
-    <div class="tabs"><button class="tab active" data-mode="register" type="button">ثبت‌نام</button><button class="tab" data-mode="login" type="button">ورود</button></div>
-  </div>
-
-  <form id="form" novalidate>
-    <div id="register">
-      <div class="grid">
-        <div class="field" id="field-first"><label class="title" for="first">نام</label><div class="wrap"><i class="fa-regular fa-id-card"></i><input id="first" placeholder="نام" autocomplete="given-name"></div><div class="field-error" id="error-first"></div></div>
-        <div class="field" id="field-last"><label class="title" for="last">نام خانوادگی</label><div class="wrap"><i class="fa-regular fa-user"></i><input id="last" placeholder="نام خانوادگی" autocomplete="family-name"></div><div class="field-error" id="error-last"></div></div>
-        <div class="field full" id="field-username"><label class="title" for="username">نام کاربری</label><div class="wrap"><i class="fa-solid fa-at"></i><input id="username" placeholder="نام کاربری" autocomplete="username" minlength="4" maxlength="32"></div><small>فقط حروف انگلیسی، عدد، نقطه و زیرخط.</small><div class="field-error" id="error-username"></div></div>
-        <div class="field full" id="field-email"><label class="title" for="email">ایمیل</label><div class="verify"><div class="wrap"><i class="fa-regular fa-envelope"></i><input id="email" type="email" placeholder="ایمیل شما" autocomplete="email"></div><button id="verifyBtn" type="button"><i class="fa-regular fa-paper-plane"></i> ارسال کد</button></div><div id="emailCodeArea" class="code-area"><div class="wrap"><i class="fa-solid fa-key"></i><input id="emailCode" class="code-input" inputmode="numeric" maxlength="6" placeholder="کد ۶ رقمی"></div><div class="code-meta"><span>کد به ایمیل شما ارسال شد.</span><span id="codeTimer"></span></div><div class="field-error" id="error-email-code"></div></div><small>برای فعال‌سازی حساب، مالکیت ایمیل با کد ۶ رقمی بررسی می‌شود.</small><div class="field-error" id="error-email"></div></div>
-        <div class="field full" id="field-phone"><label class="title" for="phone">شماره موبایل</label><div class="wrap"><i class="fa-solid fa-mobile-screen-button"></i><input id="phone" inputmode="tel" placeholder="شماره موبایل" autocomplete="tel"></div><div class="field-error" id="error-phone"></div></div>
-        <div class="field" id="field-pass"><label class="title" for="pass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="pass" type="password" placeholder="حداقل ۸ کاراکتر" autocomplete="new-password"></div><div class="field-error" id="error-pass"></div></div>
-        <div class="field" id="field-pass2"><label class="title" for="pass2">تکرار رمز عبور</label><div class="wrap"><i class="fa-solid fa-shield-halved"></i><input id="pass2" type="password" placeholder="تکرار رمز" autocomplete="new-password"></div><div class="field-error" id="error-pass2"></div></div>
-      </div>
-      <label class="check"><input id="terms" type="checkbox"> قوانین و حریم خصوصی کره یدک را می‌پذیرم.</label>
+<div class="page">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="logo" href="/">کُره<span>یدک</span></a>
+      <a class="back-btn" href="/"><i class="fas fa-arrow-right"></i> بازگشت به خانه</a>
     </div>
-
-    <div id="login" hidden>
-      <div class="field" id="field-identifier"><label class="title" for="identifier">نام کاربری یا ایمیل</label><div class="wrap"><i class="fa-regular fa-circle-user"></i><input id="identifier" placeholder="نام کاربری یا ایمیل" autocomplete="username"></div><div class="field-error" id="error-identifier"></div></div>
-      <div class="field" id="field-loginPass"><label class="title" for="loginPass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="loginPass" type="password" placeholder="رمز عبور" autocomplete="current-password"></div><div class="field-error" id="error-loginPass"></div></div>
-      <div class="row"><label class="check"><input id="remember" type="checkbox"> مرا به خاطر بسپار</label><a href="#" id="forgot" style="color:var(--primary);font-size:.76rem;text-decoration:none">فراموشی رمز؟</a></div>
-    </div>
-
-    <button id="submit" class="submit" type="submit"><i class="fa-solid fa-user-plus"></i> ساخت حساب</button>
-    <div id="message" class="message"></div>
-    <div class="legal">ورود و ثبت‌نام مستقیماً با سامانه حساب کاربری کره یدک انجام می‌شود.</div>
-  </form>
-</section>
-</main></div>
-
+  </header>
+  <main class="main">
+    <section class="auth-shell">
+      <aside class="visual">
+        <div class="visual-top"><div class="visual-logo">KOREA YADAK</div><div class="visual-badge">حساب کاربری</div></div>
+        <div class="visual-copy">
+          <div class="visual-kicker"><span class="visual-dot"></span> ورود امن به سامانه</div>
+          <h1>حساب کاربری <span>کُره یدک</span></h1>
+          <p>از همین‌جا وارد سفارش‌ها، اطلاعات حساب و امکانات اختصاصی فروشگاه شو؛ همه‌چیز با همان ظاهر و هویت صفحه اصلی کُره یدک.</p>
+        </div>
+        <div class="visual-points">
+          <div class="visual-point"><i class="fas fa-shield-halved"></i><span>احراز هویت واقعی با نشست امن</span></div>
+          <div class="visual-point"><i class="fas fa-envelope-circle-check"></i><span>تأیید ایمیل قبل از فعال‌شدن حساب</span></div>
+          <div class="visual-point"><i class="fas fa-cart-shopping"></i><span>اتصال مستقیم حساب به سبد خرید</span></div>
+        </div>
+      </aside>
+      <section class="form">
+        <div class="head">
+          <div><h2 id="title">ساخت حساب</h2><p id="subtitle">اطلاعات واقعی خودت را وارد کن.</p></div>
+          <div class="tabs"><button class="tab active" data-mode="register" type="button">ثبت‌نام</button><button class="tab" data-mode="login" type="button">ورود</button></div>
+        </div>
+        <form id="form" novalidate>
+          <div id="register">
+            <div class="grid">
+              <div class="field" id="field-first"><label class="title" for="first">نام</label><div class="wrap"><i class="fa-regular fa-id-card"></i><input id="first" placeholder="نام" autocomplete="given-name"></div><div class="field-error" id="error-first"></div></div>
+              <div class="field" id="field-last"><label class="title" for="last">نام خانوادگی</label><div class="wrap"><i class="fa-regular fa-user"></i><input id="last" placeholder="نام خانوادگی" autocomplete="family-name"></div><div class="field-error" id="error-last"></div></div>
+              <div class="field full" id="field-username"><label class="title" for="username">نام کاربری</label><div class="wrap"><i class="fa-solid fa-at"></i><input id="username" placeholder="نام کاربری" autocomplete="username" minlength="3" maxlength="32"></div><small>فقط حروف انگلیسی، عدد، نقطه، خط تیره و زیرخط.</small><div class="field-error" id="error-username"></div></div>
+              <div class="field full" id="field-email"><label class="title" for="email">ایمیل</label><div class="verify"><div class="wrap"><i class="fa-regular fa-envelope"></i><input id="email" type="email" placeholder="ایمیل شما" autocomplete="email"></div><button id="verifyBtn" type="button"><i class="fa-regular fa-paper-plane"></i> ارسال کد</button></div><div id="emailCodeArea" class="code-area"><div class="wrap"><i class="fa-solid fa-key"></i><input id="emailCode" class="code-input" inputmode="numeric" maxlength="6" placeholder="کد ۶ رقمی"></div><div class="code-meta"><span>کد به ایمیل شما ارسال شد.</span><span id="codeTimer"></span></div><div class="field-error" id="error-email-code"></div></div><small>برای فعال‌سازی حساب، مالکیت ایمیل با کد ۶ رقمی بررسی می‌شود.</small><div class="field-error" id="error-email"></div></div>
+              <div class="field full" id="field-phone"><label class="title" for="phone">شماره موبایل</label><div class="wrap"><i class="fa-solid fa-mobile-screen-button"></i><input id="phone" inputmode="tel" placeholder="شماره موبایل" autocomplete="tel"></div><div class="field-error" id="error-phone"></div></div>
+              <div class="field" id="field-pass"><label class="title" for="pass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="pass" type="password" placeholder="حداقل ۸ کاراکتر" autocomplete="new-password"></div><div class="field-error" id="error-pass"></div></div>
+              <div class="field" id="field-pass2"><label class="title" for="pass2">تکرار رمز عبور</label><div class="wrap"><i class="fa-solid fa-shield-halved"></i><input id="pass2" type="password" placeholder="تکرار رمز" autocomplete="new-password"></div><div class="field-error" id="error-pass2"></div></div>
+            </div>
+            <label class="check"><input id="terms" type="checkbox"> قوانین و حریم خصوصی کُره یدک را می‌پذیرم.</label>
+          </div>
+          <div id="login" hidden>
+            <div class="field" id="field-identifier"><label class="title" for="identifier">نام کاربری یا ایمیل</label><div class="wrap"><i class="fa-regular fa-circle-user"></i><input id="identifier" placeholder="نام کاربری یا ایمیل" autocomplete="username"></div><div class="field-error" id="error-identifier"></div></div>
+            <div class="field" id="field-loginPass"><label class="title" for="loginPass">رمز عبور</label><div class="wrap"><i class="fa-solid fa-lock"></i><input id="loginPass" type="password" placeholder="رمز عبور" autocomplete="current-password"></div><div class="field-error" id="error-loginPass"></div></div>
+            <div class="row"><label class="check"><input id="remember" type="checkbox"> مرا به خاطر بسپار</label><a href="#" id="forgot">فراموشی رمز؟</a></div>
+          </div>
+          <button id="submit" class="submit" type="submit"><i class="fa-solid fa-user-plus"></i> ساخت حساب</button>
+          <div id="message" class="message"></div>
+          <div class="legal">ورود و ثبت‌نام مستقیماً با سامانه حساب کاربری کُره یدک انجام می‌شود.</div>
+        </form>
+      </section>
+    </section>
+  </main>
+</div>
 <script>
 (() => {
   let mode = "register";
@@ -164,8 +128,12 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
     field.classList.toggle("has-success", yes);
   }
 
-  function saveToken(token) { localStorage.setItem(TOKEN_KEY, token); sessionStorage.removeItem(TOKEN_KEY); }
-  function getToken() { return localStorage.getItem(TOKEN_KEY); }
+  function saveToken(token, remember = false) {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
+  }
+  function getToken() { return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY); }
   function clearToken() { localStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(TOKEN_KEY); }
 
   async function api(path, options = {}) {
@@ -219,7 +187,7 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
       verify.classList.add("sent");
       verify.innerHTML = '<i class="fa-solid fa-key"></i> تأیید کد';
       startTimer(result.expires_in || 300);
-      msg("کد تأیید به ایمیل ارسال شد.", "ok");
+      msg("کد تأیید ارسال شد؛ پوشه Spam/Junk را هم بررسی کن.", "ok");
     } catch (error) {
       fieldError("email", error.message);
     } finally { verify.disabled = false; }
@@ -301,7 +269,7 @@ input::placeholder{color:#64748b} small{display:block;margin-top:6px;font-size:.
       if (!password) { fieldError("loginPass", "رمز عبور را وارد کن."); valid=false; }
       if (!valid) return;
       const result = await api("/api/auth/login", { method:"POST", body:JSON.stringify({ identifier, password, remember_me:$("remember").checked }) });
-      saveToken(result.token);
+      saveToken(result.token, $("remember").checked);
       // Read the role again from the authenticated session so redirect never depends on stale/missing login payload data.
       const current = await api("/api/auth/me");
       window.location.href = current.role === "admin" ? "/admin" : "/order";
