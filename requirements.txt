@@ -13,3 +13,4 @@ typing_extensions==4.16.0
 uvicorn==0.52.4
 psycopg2-binary
 weasyprint
+python-multipart
