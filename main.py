@@ -5,6 +5,8 @@ import secrets
 import io
 import os
 import smtplib
+from pathlib import Path
+from uuid import uuid4
 from email.message import EmailMessage
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone, timedelta
@@ -12,9 +14,10 @@ from typing import Optional
 from fastapi.responses import Response
 from weasyprint import HTML
 
-from fastapi import Cookie, Depends, FastAPI, HTTPException, Query, status
+from fastapi import Cookie, Depends, FastAPI, File, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
 
@@ -123,9 +126,47 @@ def init_db_schema():
                     is_genuine INTEGER NOT NULL DEFAULT 0,
                     price REAL DEFAULT 0,
                     price_updated_at TEXT,
-                    last_updated_by TEXT
+                    last_updated_by TEXT,
+                    image_url TEXT,
+                    description TEXT,
+                    brand TEXT,
+                    category TEXT,
+                    specifications TEXT,
+                    is_featured INTEGER NOT NULL DEFAULT 0,
+                    home_order INTEGER NOT NULL DEFAULT 0
                 );
             """)
+
+            # Safe migration for existing databases.
+            for statement in (
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS image_url TEXT",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS description TEXT",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS brand TEXT",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS category TEXT",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS specifications TEXT",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS is_featured INTEGER NOT NULL DEFAULT 0",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS home_order INTEGER NOT NULL DEFAULT 0",
+            ):
+                cursor.execute(statement)
+
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_parts_brand ON parts(brand)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_parts_category ON parts(category)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_parts_featured ON parts(is_featured, home_order)")
+
+            # Persistent cart for authenticated users. Guest carts stay local and
+            # are merged into this table after login.
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cart_items (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    part_id INTEGER NOT NULL REFERENCES parts(id) ON DELETE CASCADE,
+                    quantity INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    UNIQUE(user_id, part_id)
+                );
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_cart_user ON cart_items(user_id, updated_at DESC)")
 
             # Sell Invoices
             cursor.execute("""
@@ -203,6 +244,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Kore Yadak API", lifespan=lifespan)
+
+MEDIA_ROOT = Path("media")
+PART_MEDIA_ROOT = MEDIA_ROOT / "parts"
+PART_MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=str(MEDIA_ROOT)), name="media")
 
 app.add_middleware(
     CORSMiddleware,
@@ -472,19 +518,42 @@ class SellInvoiceCreate(BaseModel):
 class PartCreate(BaseModel):
     name: str
     part_number: str
-    compatible_cars: str
-    stock: int = Field(ge=0, description="Stock cannot be negative")
+    compatible_cars: str = ""
+    stock: int = Field(default=0, ge=0, description="Stock cannot be negative")
     is_genuine: bool = False
-    price: float = Field(ge=0.0, description="Price cannot be negative")
+    price: float = Field(default=0.0, ge=0.0, description="Price cannot be negative")
+    image_url: Optional[str] = None
+    description: Optional[str] = None
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    specifications: Optional[str] = None
+    is_featured: bool = False
+    home_order: int = 0
 
 
 class PartUpdate(BaseModel):
     name: str
     part_number: str
-    compatible_cars: str
-    stock: int
+    compatible_cars: str = ""
+    stock: int = Field(default=0, ge=0)
     is_genuine: bool = False
     price: Optional[float] = None
+    image_url: Optional[str] = None
+    description: Optional[str] = None
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    specifications: Optional[str] = None
+    is_featured: bool = False
+    home_order: int = 0
+
+
+class CartItemRequest(BaseModel):
+    part_id: int
+    quantity: int = Field(default=1, ge=1, le=99)
+
+
+class CartMergeRequest(BaseModel):
+    items: list[CartItemRequest] = []
 
 
 class PriceUpdate(BaseModel):
@@ -1268,44 +1337,61 @@ def delete_buy_invoice(
 # Routes: Parts Management
 # ------------------------------------------------------------------------------
 
+def _part_select_sql(alias: str = "") -> str:
+    prefix = f"{alias}." if alias else ""
+    return f"""
+        {prefix}id, {prefix}part_number, {prefix}name, {prefix}compatible_cars,
+        {prefix}stock, {prefix}is_genuine, {prefix}price, {prefix}price_updated_at,
+        {prefix}last_updated_by, {prefix}image_url, {prefix}description,
+        {prefix}brand, {prefix}category, {prefix}specifications,
+        {prefix}is_featured, {prefix}home_order
+    """
+
+
 @app.get("/api/parts")
 def get_parts(
     q: str = Query(default=""),
     car: str = Query(default=""),
-    in_stock: bool = Query(default=False)
+    brand: str = Query(default=""),
+    category: str = Query(default=""),
+    in_stock: bool = Query(default=False),
+    limit: int = Query(default=500, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0)
 ):
     conditions = []
     parameters = []
 
     if q.strip():
-        terms = q.strip().split()
-        for term in terms:
+        for term in q.strip().split():
             search = f"%{term}%"
             conditions.append("""
                 (
                     part_number ILIKE %s
                     OR name ILIKE %s
                     OR compatible_cars ILIKE %s
+                    OR COALESCE(brand, '') ILIKE %s
+                    OR COALESCE(category, '') ILIKE %s
                 )
             """)
-            parameters.extend([search, search, search])
+            parameters.extend([search, search, search, search, search])
 
     if car.strip():
         conditions.append("compatible_cars ILIKE %s")
         parameters.append(f"%{car.strip()}%")
-
+    if brand.strip():
+        conditions.append("brand ILIKE %s")
+        parameters.append(f"%{brand.strip()}%")
+    if category.strip():
+        conditions.append("category ILIKE %s")
+        parameters.append(f"%{category.strip()}%")
     if in_stock:
         conditions.append("stock > 0")
 
-    query = """
-        SELECT id, part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by
-        FROM parts
-    """
-
+    query = f"SELECT {_part_select_sql()} FROM parts"
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
-
-    query += " ORDER BY id"
+    query += " ORDER BY is_featured DESC, home_order ASC, id ASC LIMIT %s OFFSET %s"
+    parameters.extend([limit, offset])
 
     with get_db() as conn:
         with conn.cursor() as cursor:
@@ -1313,21 +1399,32 @@ def get_parts(
             return cursor.fetchall()
 
 
+@app.get("/api/home-products")
+def get_home_products(limit: int = Query(default=8, ge=1, le=12)):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT {_part_select_sql()}
+                FROM parts
+                WHERE is_featured = 1 OR stock > 0
+                ORDER BY is_featured DESC, home_order ASC, id DESC
+                LIMIT %s
+                """,
+                (limit,)
+            )
+            return cursor.fetchall()
+
+
 @app.get("/api/parts/{part_id}")
 def get_part(part_id: int):
     with get_db() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT id, part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by
-                FROM parts WHERE id = %s
-            """, (part_id,))
+            cursor.execute(f"SELECT {_part_select_sql()} FROM parts WHERE id = %s", (part_id,))
             row = cursor.fetchone()
-
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Part not found")
-
     return dict(row)
-
 
 @app.get("/api/cars")
 def get_cars():
@@ -1348,12 +1445,8 @@ def get_cars():
 
 
 @app.post("/api/parts")
-def add_part(
-    data: PartCreate,
-    current_user: dict = Depends(get_admin_user)
-):
+def add_part(data: PartCreate, current_user: dict = Depends(get_admin_user)):
     part_number = data.part_number.strip()
-
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT name FROM parts WHERE part_number = %s", (part_number,))
@@ -1363,62 +1456,65 @@ def add_part(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"این پارت نامبر قبلاً برای «{duplicate['name']}» ثبت شده است."
                 )
-
             now_str = utc_now() if data.price > 0 else None
             cursor.execute("""
-                INSERT INTO parts (part_number, name, compatible_cars, stock, is_genuine, price, price_updated_at, last_updated_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO parts (
+                    part_number, name, compatible_cars, stock, is_genuine, price,
+                    price_updated_at, last_updated_by, image_url, description,
+                    brand, category, specifications, is_featured, home_order
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (
                 part_number, data.name.strip(), data.compatible_cars.strip(),
                 data.stock, 1 if data.is_genuine else 0, data.price,
-                now_str, current_user["username"]
+                now_str, current_user["username"], data.image_url, data.description,
+                data.brand, data.category, data.specifications,
+                1 if data.is_featured else 0, max(0, data.home_order)
             ))
             new_id = cursor.fetchone()["id"]
-
     return {"message": "قطعه جدید با موفقیت اضافه شد.", "id": new_id}
 
 
 @app.put("/api/parts/{part_id}")
-def update_part(
-    part_id: int,
-    data: PartUpdate,
-    current_user: dict = Depends(get_admin_user)
-):
+def update_part(part_id: int, data: PartUpdate, current_user: dict = Depends(get_admin_user)):
     part_number = data.part_number.strip()
     safe_stock = max(0, data.stock)
-
     with get_db() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT price, price_updated_at FROM parts WHERE id = %s", (part_id,))
+            cursor.execute("""
+                SELECT price, price_updated_at, image_url, description, brand, category,
+                       specifications, is_featured, home_order
+                FROM parts WHERE id = %s
+            """, (part_id,))
             existing = cursor.fetchone()
             if existing is None:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="قطعه یافت نشد.")
-
             cursor.execute("SELECT id FROM parts WHERE part_number = %s AND id != %s", (part_number, part_id))
             if cursor.fetchone() is not None:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="این پارت نامبر متعلق به قطعه دیگری است."
-                )
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="این پارت نامبر متعلق به قطعه دیگری است.")
 
             new_price = data.price if data.price is not None else existing["price"]
-            price_updated_at = (
-                utc_now() if float(new_price or 0) != float(existing["price"] or 0)
-                else existing["price_updated_at"]
-            )
+            price_updated_at = utc_now() if float(new_price or 0) != float(existing["price"] or 0) else existing["price_updated_at"]
+            image_url = data.image_url if data.image_url is not None else existing.get("image_url")
+            description = data.description if data.description is not None else existing.get("description")
+            brand = data.brand if data.brand is not None else existing.get("brand")
+            category = data.category if data.category is not None else existing.get("category")
+            specifications = data.specifications if data.specifications is not None else existing.get("specifications")
 
             cursor.execute("""
                 UPDATE parts
-                SET part_number = %s, name = %s, compatible_cars = %s, stock = %s,
-                    is_genuine = %s, price = %s, price_updated_at = %s, last_updated_by = %s
-                WHERE id = %s
+                SET part_number=%s, name=%s, compatible_cars=%s, stock=%s, is_genuine=%s,
+                    price=%s, price_updated_at=%s, last_updated_by=%s, image_url=%s,
+                    description=%s, brand=%s, category=%s, specifications=%s,
+                    is_featured=%s, home_order=%s
+                WHERE id=%s
             """, (
-                part_number, data.name.strip(), data.compatible_cars.strip(),
-                safe_stock, 1 if data.is_genuine else 0, new_price,
-                price_updated_at, current_user["username"], part_id
+                part_number, data.name.strip(), data.compatible_cars.strip(), safe_stock,
+                1 if data.is_genuine else 0, new_price, price_updated_at, current_user["username"],
+                image_url, description, brand, category, specifications,
+                1 if data.is_featured else 0, max(0, data.home_order), part_id
             ))
-
     return {"message": "اطلاعات قطعه با موفقیت به‌روزرسانی شد."}
 
 
@@ -1476,8 +1572,119 @@ def delete_part(
     with get_db() as conn:
         with conn.cursor() as cursor:
             cursor.execute("DELETE FROM parts WHERE id = %s", (part_id,))
-
     return {"message": "قطعه با موفقیت حذف شد."}
+
+
+@app.post("/api/parts/{part_id}/image")
+async def upload_part_image(
+    part_id: int,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_admin_user)
+):
+    allowed_types = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/avif": ".avif"}
+    extension = allowed_types.get(file.content_type or "")
+    if not extension:
+        raise HTTPException(status_code=415, detail="فرمت تصویر مجاز نیست. فقط JPG، PNG، WEBP یا AVIF.")
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="حجم تصویر نباید بیشتر از ۵ مگابایت باشد.")
+
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, image_url FROM parts WHERE id = %s", (part_id,))
+            existing = cursor.fetchone()
+            if existing is None:
+                raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
+
+            filename = f"{part_id}-{uuid4().hex}{extension}"
+            target = PART_MEDIA_ROOT / filename
+            target.write_bytes(content)
+            image_url = f"/media/parts/{filename}"
+            cursor.execute(
+                "UPDATE parts SET image_url=%s, last_updated_by=%s WHERE id=%s",
+                (image_url, current_user["username"], part_id)
+            )
+
+    old_url = existing.get("image_url")
+    if old_url and old_url.startswith("/media/parts/"):
+        old_path = MEDIA_ROOT / old_url.removeprefix("/media/")
+        try:
+            if old_path != target and old_path.exists():
+                old_path.unlink()
+        except OSError:
+            pass
+    return {"message": "تصویر قطعه با موفقیت ذخیره شد.", "image_url": image_url}
+
+
+def _serialize_cart_items(cursor, user_id: int):
+    cursor.execute("""
+        SELECT p.id, p.part_number, p.name, p.image_url, p.price, p.stock,
+               ci.quantity, ci.updated_at
+        FROM cart_items ci
+        JOIN parts p ON p.id = ci.part_id
+        WHERE ci.user_id = %s
+        ORDER BY ci.updated_at DESC, ci.id DESC
+    """, (user_id,))
+    return [{**dict(row), "qty": int(row.get("quantity") or 1)} for row in cursor.fetchall()]
+
+
+@app.get("/api/cart")
+def get_cart(current_user: dict = Depends(get_current_user)):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            return {"items": _serialize_cart_items(cursor, current_user["id"])}
+
+
+@app.post("/api/cart/merge")
+def merge_cart(data: CartMergeRequest, current_user: dict = Depends(get_current_user)):
+    now = utc_now()
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            for item in data.items:
+                cursor.execute("SELECT id FROM parts WHERE id=%s", (item.part_id,))
+                if not cursor.fetchone():
+                    continue
+                cursor.execute("""
+                    INSERT INTO cart_items (user_id, part_id, quantity, created_at, updated_at)
+                    VALUES (%s,%s,%s,%s,%s)
+                    ON CONFLICT (user_id, part_id)
+                    DO UPDATE SET quantity=LEAST(99, cart_items.quantity + EXCLUDED.quantity), updated_at=EXCLUDED.updated_at
+                """, (current_user["id"], item.part_id, min(99, item.quantity), now, now))
+            return {"items": _serialize_cart_items(cursor, current_user["id"])}
+
+
+@app.post("/api/cart/items")
+def add_cart_item(data: CartItemRequest, current_user: dict = Depends(get_current_user)):
+    now = utc_now()
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, stock FROM parts WHERE id=%s", (data.part_id,))
+            part = cursor.fetchone()
+            if not part:
+                raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
+            cursor.execute("""
+                INSERT INTO cart_items (user_id, part_id, quantity, created_at, updated_at)
+                VALUES (%s,%s,%s,%s,%s)
+                ON CONFLICT (user_id, part_id)
+                DO UPDATE SET quantity=LEAST(99, cart_items.quantity + EXCLUDED.quantity), updated_at=EXCLUDED.updated_at
+            """, (current_user["id"], data.part_id, min(99, data.quantity), now, now))
+            return {"items": _serialize_cart_items(cursor, current_user["id"])}
+
+
+@app.delete("/api/cart/items/{part_id}")
+def delete_cart_item(part_id: int, current_user: dict = Depends(get_current_user)):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM cart_items WHERE user_id=%s AND part_id=%s", (current_user["id"], part_id))
+            return {"items": _serialize_cart_items(cursor, current_user["id"])}
+
+
+@app.delete("/api/cart")
+def clear_cart(current_user: dict = Depends(get_current_user)):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM cart_items WHERE user_id=%s", (current_user["id"],))
+    return {"items": []}
 
 # ------------------------------------------------------------------------------
 # Helpers: Report Data Fetcher
