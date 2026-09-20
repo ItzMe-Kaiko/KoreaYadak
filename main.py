@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import hmac
 import re
 import secrets
@@ -22,6 +23,43 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
 
 from database import get_connection
+
+logger = logging.getLogger("koreyadak.mail")
+
+def _load_local_env():
+    """Load a small .env file for local development without overriding real environment variables."""
+    candidates = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parent / ".env",
+        Path(__file__).resolve().parent.parent / ".env",
+    ]
+    seen = set()
+    for path in candidates:
+        path = path.resolve()
+        if path in seen or not path.is_file():
+            continue
+        seen.add(path)
+        try:
+            for raw in path.read_text(encoding="utf-8").splitlines():
+                line = raw.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith("export "):
+                    line = line[7:].lstrip()
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                if not key or key in os.environ:
+                    continue
+                if len(value) >= 2 and value[0] == value[-1] and value[0] in {"\"", "'"}:
+                    value = value[1:-1]
+                os.environ[key] = value
+        except OSError:
+            continue
+
+_load_local_env()
 
 # ------------------------------------------------------------------------------
 # Context Manager & Database Initialization
@@ -267,6 +305,67 @@ security = HTTPBearer(auto_error=False)
 USERNAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{2,31}$")
 PASSWORD_LETTER_RE = re.compile(r"[A-Za-z]")
 PASSWORD_DIGIT_RE = re.compile(r"\d")
+
+
+def _smtp_config():
+    username = (os.getenv("GMAIL_ADDRESS") or os.getenv("SMTP_USERNAME") or "").strip()
+    password = (os.getenv("GMAIL_APP_PASSWORD") or os.getenv("SMTP_PASSWORD") or "").replace(" ", "").strip()
+    host = (os.getenv("SMTP_HOST") or "smtp.gmail.com").strip()
+    from_address = (os.getenv("SMTP_FROM") or username).strip()
+    try:
+        port = int(os.getenv("SMTP_PORT") or ("465" if os.getenv("SMTP_USE_SSL", "").lower() in {"1", "true", "yes", "on"} else "587"))
+    except ValueError:
+        port = 587
+    use_ssl = os.getenv("SMTP_USE_SSL", "").lower() in {"1", "true", "yes", "on"} or port == 465
+    return username, password, host, port, use_ssl, from_address
+
+
+def _send_email_message(message: EmailMessage):
+    username, password, host, port, use_ssl, _ = _smtp_config()
+    if not username:
+        raise HTTPException(status_code=503, detail="GMAIL_ADDRESS یا SMTP_USERNAME روی سرور تنظیم نشده است.")
+    if not password:
+        raise HTTPException(status_code=503, detail="GMAIL_APP_PASSWORD یا SMTP_PASSWORD روی سرور تنظیم نشده است.")
+
+    candidates = [(host, port, use_ssl)]
+    # Gmail commonly works on 587/STARTTLS or 465/SSL. If the default Gmail
+    # transport cannot connect, try the other standard transport automatically.
+    if host == "smtp.gmail.com" and port == 587 and not use_ssl:
+        candidates.append((host, 465, True))
+
+    last_error = None
+    for candidate_host, candidate_port, candidate_ssl in candidates:
+        try:
+            if candidate_ssl:
+                with smtplib.SMTP_SSL(candidate_host, candidate_port, timeout=20) as smtp:
+                    smtp.ehlo()
+                    smtp.login(username, password)
+                    smtp.send_message(message)
+            else:
+                with smtplib.SMTP(candidate_host, candidate_port, timeout=20) as smtp:
+                    smtp.ehlo()
+                    smtp.starttls()
+                    smtp.ehlo()
+                    smtp.login(username, password)
+                    smtp.send_message(message)
+            logger.info("Verification email sent successfully via %s:%s", candidate_host, candidate_port)
+            return
+        except smtplib.SMTPAuthenticationError as exc:
+            logger.exception("SMTP authentication failed for %s", username)
+            raise HTTPException(
+                status_code=502,
+                detail="احراز هویت Gmail انجام نشد. برای Gmail باید ۲مرحله‌ای فعال باشد و App Password وارد شود."
+            ) from exc
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPSenderRefused) as exc:
+            logger.exception("SMTP rejected sender/recipient")
+            raise HTTPException(status_code=502, detail="سرور ایمیل فرستنده یا گیرنده را قبول نکرد.") from exc
+        except (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected, TimeoutError, OSError, smtplib.SMTPException) as exc:
+            last_error = exc
+            logger.warning("SMTP attempt failed via %s:%s: %s", candidate_host, candidate_port, exc)
+            continue
+
+    logger.warning("All SMTP attempts failed: %s", last_error)
+    raise HTTPException(status_code=502, detail="ارتباط با سرور ایمیل برقرار نشد. تنظیمات SMTP یا دسترسی شبکه سرور را بررسی کن.")
 
 
 def utc_now() -> str:
@@ -631,10 +730,9 @@ def check_email(data: dict):
             if cursor.fetchone() is not None:
                 raise HTTPException(status_code=429, detail="کد قبلی هنوز تازه است؛ حدود یک دقیقه بعد دوباره درخواست بده.")
 
-            sender = os.getenv("GMAIL_ADDRESS", "").strip()
-            app_password = os.getenv("GMAIL_APP_PASSWORD", "").replace(" ", "").strip()
-            if not sender or not app_password:
-                raise HTTPException(status_code=503, detail="سرویس ارسال ایمیل هنوز روی سرور تنظیم نشده است.")
+            username, _, _, _, _, from_address = _smtp_config()
+            if not username:
+                raise HTTPException(status_code=503, detail="GMAIL_ADDRESS یا SMTP_USERNAME روی سرور تنظیم نشده است.")
 
             code = f"{secrets.randbelow(1000000):06d}"
             code_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
@@ -647,7 +745,7 @@ def check_email(data: dict):
 
             msg = EmailMessage()
             msg["Subject"] = "کد تأیید ایمیل | کره یدک"
-            msg["From"] = sender
+            msg["From"] = from_address or username
             msg["To"] = email
             msg.set_content(
                 f"کد تأیید ایمیل کره یدک: {code}\n\n"
@@ -655,13 +753,10 @@ def check_email(data: dict):
             )
 
             try:
-                with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as smtp:
-                    smtp.starttls()
-                    smtp.login(sender, app_password)
-                    smtp.send_message(msg)
-            except Exception:
+                _send_email_message(msg)
+            except HTTPException:
                 cursor.execute("DELETE FROM email_verifications WHERE id = %s", (verification_id,))
-                raise HTTPException(status_code=502, detail="ارسال کد تأیید ایمیل انجام نشد. تنظیمات Gmail را بررسی کن.")
+                raise
 
     return {"message": "کد تأیید به ایمیل ارسال شد.", "verification_id": verification_id, "expires_in": 300}
 
