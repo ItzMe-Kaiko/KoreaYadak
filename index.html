@@ -56,10 +56,119 @@ button{border:0}
   text-decoration:none;padding:9px 12px;border-radius:12px;color:var(--muted);font-size:.86rem;
 }
 .nav a:hover,.nav a.active{background:var(--primary-soft);color:var(--primary)}
+.nav a.parts-link{
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#fff;
+  box-shadow:0 8px 18px rgba(93,36,199,.18);
+}
+.nav a.parts-link:hover,.nav a.parts-link.active{
+  background:linear-gradient(135deg,#4f1fb0,var(--primary));
+  color:#fff;
+  transform:translateY(-1px);
+}
 .account-btn{
   min-height:42px;padding:0 13px;border:1px solid var(--line);background:var(--surface);border-radius:13px;cursor:pointer;
 }
 .account-btn.authenticated{color:var(--primary);border-color:#d7c8f7;background:#faf7ff}
+
+.top-actions{display:flex;align-items:center;gap:8px}
+.cart-btn{
+  position:relative;min-height:42px;padding:0 13px;border:1px solid var(--line);
+  background:var(--surface);border-radius:13px;cursor:pointer;color:var(--text);
+  display:inline-flex;align-items:center;gap:8px;transition:.2s ease;
+}
+.cart-btn:hover{transform:translateY(-1px);border-color:#d7c8f7;color:var(--primary);box-shadow:0 8px 20px rgba(93,36,199,.10)}
+.cart-count-badge{
+  min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;
+  display:grid;place-items:center;font-size:.62rem;font-weight:900;line-height:1;
+}
+.cart-count-badge.zero{background:#eceef2;color:#777e8b}
+.home-product-shell{
+  border:1px solid var(--line);background:var(--surface);border-radius:24px;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.home-product-head{display:flex;align-items:end;justify-content:space-between;gap:16px;padding:20px 20px 12px}
+.home-product-head h2{margin:4px 0 5px;font-size:1.3rem}
+.home-product-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #eef0f3;
+}
+.home-product-card{
+  min-width:0;padding:14px;border-left:1px solid #eef0f3;display:flex;flex-direction:column;gap:10px;
+  transition:.2s ease;background:#fff;
+}
+.home-product-card:last-child{border-left:0}
+.home-product-card:hover{background:#fcfbff;transform:translateY(-2px)}
+.home-product-image{
+  height:180px;border-radius:16px;background:linear-gradient(145deg,#f3f4f7,#fafafd);
+  border:1px solid #eaecf1;overflow:hidden;display:grid;place-items:center;position:relative;
+}
+.home-product-image img{width:100%;height:100%;object-fit:contain;padding:8px}
+.home-product-image .img-fallback{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#a0a6b0;font-size:.68rem}
+.home-product-image .img-fallback i{font-size:2.25rem;color:#c3a8ef}
+.home-product-meta{display:flex;gap:5px;flex-wrap:wrap}
+.home-product-chip{font-size:.6rem;padding:4px 7px;border-radius:999px;background:#f4f2f9;color:#6f667c}
+.home-product-chip.stock{background:#eaf9f1;color:#117c52}
+.home-product-card h3{margin:0;font-size:.86rem;line-height:1.65}
+.home-product-code{font:600 .65rem "JetBrains Mono",monospace;color:#777f8c;direction:ltr;text-align:right}
+.home-product-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
+.home-product-price{color:var(--primary);font-weight:900;font-size:.78rem}
+.add-cart-btn{
+  min-height:36px;padding:0 10px;border:1px solid #ddcff7;background:var(--primary-soft);color:var(--primary);
+  border-radius:11px;cursor:pointer;font-size:.66rem;font-weight:900;white-space:nowrap;
+}
+.add-cart-btn:hover{background:#e8ddfb}
+.support-shell{
+  border-radius:24px;padding:22px;background:linear-gradient(135deg,#171b27,#29233f);
+  color:#fff;box-shadow:0 22px 55px rgba(31,24,55,.16);position:relative;overflow:hidden;
+}
+.support-shell:after{
+  content:"";position:absolute;width:240px;height:240px;border-radius:50%;left:-75px;bottom:-125px;
+  background:rgba(255,255,255,.06);
+}
+.support-grid{display:grid;grid-template-columns:1.15fr repeat(3,1fr);gap:10px;position:relative;z-index:1}
+.support-main h3{margin:0 0 6px;font-size:1.2rem}
+.support-main p{margin:0;color:#cbc6d6;line-height:1.9;font-size:.72rem}
+.support-card{
+  padding:15px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);
+  text-decoration:none;display:flex;align-items:center;gap:10px;min-height:88px;transition:.2s ease;
+}
+.support-card:hover{background:rgba(255,255,255,.11);transform:translateY(-2px)}
+.support-icon{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.10);display:grid;place-items:center;color:#d7c5f7}
+.support-card strong{display:block;font-size:.74rem}.support-card span{display:block;color:#bdb7ca;font-size:.62rem;margin-top:3px}
+.cart-drawer{
+  position:fixed;inset:0;z-index:3000;background:rgba(18,20,28,.38);backdrop-filter:blur(8px);
+  opacity:0;visibility:hidden;transition:.2s ease;
+}
+.cart-drawer.open{opacity:1;visibility:visible}
+.cart-panel{
+  position:absolute;top:0;right:0;height:100%;width:min(420px,100%);
+  background:#fff;box-shadow:-20px 0 60px rgba(10,15,25,.18);transform:translateX(24px);transition:.23s ease;
+  display:flex;flex-direction:column;
+}
+.cart-drawer.open .cart-panel{transform:none}
+.cart-head{padding:18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cart-head h3{margin:0;font-size:1rem}.cart-head p{margin:4px 0 0;color:var(--muted);font-size:.66rem}
+.cart-close{width:38px;height:38px;border-radius:12px;background:#f4f4f7;color:#6b7180;cursor:pointer}
+.cart-body{flex:1;overflow:auto;padding:14px}
+.cart-empty{min-height:260px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:8px;color:var(--muted)}
+.cart-empty i{width:56px;height:56px;border-radius:18px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-size:1.25rem}
+.cart-item{display:grid;grid-template-columns:58px 1fr auto;gap:10px;padding:10px 0;border-bottom:1px solid #f0f1f4;align-items:center}
+.cart-item:last-child{border-bottom:0}.cart-item img{width:58px;height:58px;border-radius:12px;object-fit:contain;background:#f6f7fa;border:1px solid #eceef2}
+.cart-item strong{display:block;font-size:.72rem;line-height:1.55}.cart-item span{display:block;color:var(--muted);font-size:.61rem;margin-top:3px}
+.cart-item-remove{width:30px;height:30px;border-radius:9px;background:#fff0f1;color:var(--danger);cursor:pointer}
+.cart-foot{border-top:1px solid var(--line);padding:14px}
+.cart-note{font-size:.62rem;line-height:1.7;color:var(--muted);margin-bottom:10px}
+.cart-actions{display:flex;gap:8px}.cart-actions a,.cart-clear{
+  flex:1;min-height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:7px;
+  text-decoration:none;font-size:.68rem;font-weight:900;cursor:pointer;border:1px solid var(--line);background:#fff;
+}
+.cart-actions a.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.cart-clear{color:var(--danger)}
+.toast{
+  position:fixed;left:18px;bottom:18px;z-index:4000;padding:11px 14px;border-radius:13px;background:#171923;color:#fff;
+  font-size:.68rem;box-shadow:0 15px 35px rgba(0,0,0,.18);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s ease;
+}
+.toast.show{opacity:1;transform:none}
 .hero{
   padding:30px 0 18px;
 }
@@ -89,10 +198,111 @@ button{border:0}
 .hero-search input{
   min-width:0;flex:1;border:0;outline:0;padding:0 12px;color:var(--text);background:transparent;font-size:.96rem;
 }
-.hero-search button{
-  flex:0 0 auto;padding:11px 16px;border-radius:13px;background:var(--primary);color:#fff;cursor:pointer;font-weight:700;
-}
 .hero-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.parts-launch{
+  display:inline-flex;align-items:center;gap:9px;
+  margin-top:22px;padding:13px 17px;border-radius:14px;
+  background:linear-gradient(135deg,#fff,#f2eaff);
+  color:var(--primary);text-decoration:none;font-weight:900;
+  box-shadow:0 14px 32px rgba(0,0,0,.14);
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.parts-launch:hover{transform:translateY(-2px);box-shadow:0 18px 36px rgba(0,0,0,.18)}
+.home-page{display:block}
+#home.page-hidden{display:none}
+.parts-page{
+  display:none;
+  padding:28px 0 70px;
+}
+.parts-page.active{
+  display:block;
+  animation:partsPageIn .24s ease both;
+}
+@keyframes partsPageIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+.parts-hero{
+  margin-bottom:16px;padding:26px;
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(123,63,228,.14),transparent 34%),
+    linear-gradient(135deg,#ffffff,#f7f3ff);
+  border:1px solid #e7def7;
+  box-shadow:var(--shadow);
+}
+.parts-hero-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
+}
+.parts-hero h1{margin:0 0 7px;font-size:clamp(1.55rem,3vw,2.3rem)}
+.parts-hero p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.9}
+.parts-hero-badge{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;
+  padding:8px 11px;border-radius:999px;
+  background:var(--primary-soft);color:var(--primary);
+  border:1px solid #dfd1f8;font-size:.74rem;font-weight:800;
+}
+.parts-page 
+/* --- richer home modules --- */
+.home-intro-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0 4px}
+.home-info-card{position:relative;overflow:hidden;min-height:112px;padding:17px;border:1px solid var(--line);border-radius:19px;background:var(--surface);box-shadow:var(--shadow);transition:.2s ease}
+.home-info-card:hover{transform:translateY(-3px);box-shadow:0 18px 36px rgba(23,25,35,.09);border-color:#d8dce5}
+.home-info-card:after{content:"";position:absolute;width:115px;height:115px;border-radius:50%;left:-30px;bottom:-58px;background:rgba(93,36,199,.055)}
+.home-info-card .info-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);font-size:1.05rem;margin-bottom:10px}
+.home-info-card strong{display:block;font-size:.9rem;margin-bottom:4px}
+.home-info-card span{display:block;color:var(--muted);font-size:.71rem;line-height:1.7;max-width:270px}
+.home-info-card.accent{background:linear-gradient(135deg,#241838,#3e2261);border-color:#3c2757;color:#fff}
+.home-info-card.accent .info-icon{background:rgba(255,255,255,.11);color:#fff}
+.home-info-card.accent span{color:#ddd5e8}
+.market-grid{display:grid;grid-template-columns:1.15fr .9fr .9fr;gap:12px;margin-top:8px}
+.market-banner{position:relative;overflow:hidden;min-height:154px;border-radius:22px;padding:20px;color:#fff;box-shadow:var(--shadow)}
+.market-banner h3{margin:0 0 6px;font-size:1.1rem}
+.market-banner p{margin:0;max-width:320px;line-height:1.8;font-size:.73rem;color:rgba(255,255,255,.83)}
+.market-banner a{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:9px 11px;border-radius:11px;text-decoration:none;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.15);font-size:.7rem;font-weight:800}
+.market-banner .banner-icon{position:absolute;left:18px;bottom:14px;font-size:4.3rem;opacity:.12;transform:rotate(-10deg)}
+.market-banner.one{background:linear-gradient(135deg,#5d24c7,#8b59e8)}
+.market-banner.two{background:linear-gradient(135deg,#17202f,#273a58)}
+.market-banner.three{background:linear-gradient(135deg,#166b50,#23a877)}
+.section-kicker{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border-radius:999px;background:#faf8ff;color:var(--primary);border:1px solid #e7def7;font-size:.68rem;font-weight:800;margin-bottom:8px}
+.feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.feature-card{position:relative;overflow:hidden;min-height:122px;padding:14px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(180deg,#fff,#fbfbfd);box-shadow:0 8px 20px rgba(23,25,35,.045)}
+.feature-card:hover{border-color:#d8c9f4;transform:translateY(-2px)}
+.feature-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.feature-icon{width:38px;height:38px;border-radius:12px;background:#f2edff;color:var(--primary);display:grid;place-items:center}
+.feature-card b{font-size:.84rem}
+.feature-card p{margin:10px 0 0;color:var(--muted);font-size:.68rem;line-height:1.65}
+.feature-tag{font-size:.58rem;padding:4px 7px;border-radius:999px;background:#f2f5f8;color:#737a86}
+.cars-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.car-tile{display:flex;align-items:center;gap:11px;min-height:72px;padding:11px 12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);text-decoration:none;box-shadow:0 7px 18px rgba(23,25,35,.035);transition:.2s ease}
+.car-tile:hover{transform:translateY(-2px);border-color:#d8c9f4}
+.car-tile-icon{width:38px;height:38px;border-radius:12px;background:#f3f0f8;color:#55436d;display:grid;place-items:center;flex:0 0 auto}
+.car-tile strong{display:block;font-size:.76rem}
+.car-tile span{display:block;color:var(--muted);font-size:.62rem;margin-top:3px}
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.trust-card{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:15px;border:1px solid var(--line);background:#fff}
+.trust-card i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#f4f0fa;color:var(--primary);flex:0 0 auto}
+.trust-card strong{display:block;font-size:.72rem}
+.trust-card span{display:block;color:var(--muted);font-size:.61rem;margin-top:2px}
+.home-cta{position:relative;overflow:hidden;margin-top:4px;padding:20px 22px;border-radius:22px;background:linear-gradient(100deg,#efe8ff,#f9f7ff);border:1px solid #dfd3f2;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.home-cta:after{content:"";position:absolute;right:-45px;bottom:-65px;width:190px;height:190px;border-radius:50%;background:rgba(93,36,199,.06)}
+.home-cta h3{margin:0 0 5px;font-size:1rem}
+.home-cta p{margin:0;color:var(--muted);font-size:.7rem;line-height:1.7}
+.home-cta a{position:relative;z-index:1;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:11px 14px;border-radius:12px;background:var(--primary);color:#fff;text-decoration:none;font-size:.72rem;font-weight:800;box-shadow:0 10px 22px rgba(93,36,199,.2)}
+@media(max-width:980px){
+  .market-grid{grid-template-columns:1fr 1fr}.market-banner:first-child{grid-column:1/-1}
+  .feature-grid,.cars-grid{grid-template-columns:repeat(2,1fr)}
+  .trust-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .home-intro-row,.market-grid{grid-template-columns:1fr}
+  .market-banner:first-child{grid-column:auto}
+  .feature-grid,.cars-grid,.trust-grid{grid-template-columns:repeat(2,1fr)}
+  .home-info-card{min-height:105px}
+  .home-cta{flex-direction:column;align-items:flex-start;padding:17px}
+  .home-cta a{width:100%;justify-content:center}
+}
+
+.store-shell{padding:18px}
 .hero-pill{padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:999px;color:#e8e2ef;font-size:.76rem}
 .hero-visual{display:flex;justify-content:center}
 .dashboard-card{
@@ -252,9 +462,10 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
   .hero-shell{border-radius:22px;padding:20px 16px}
   .hero h1{font-size:2rem}
   .hero p{font-size:.79rem}
-  .hero-search{flex-direction:column;background:rgba(255,255,255,.96)}
-  .hero-search input{min-height:42px}
-  .hero-search button{width:100%}
+  .parts-launch{width:100%;justify-content:center}
+  .parts-hero{padding:19px 15px;border-radius:20px}
+  .parts-hero-head{align-items:flex-start;flex-direction:column}
+  .parts-hero-badge{width:100%;justify-content:center}
   .brands-grid{grid-template-columns:repeat(2,1fr);gap:9px}
   .brand-card{min-height:125px;padding:12px}
   .brand-logo-box{width:62px;height:48px}
@@ -285,6 +496,29 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
   .account-actions{flex-direction:column}
   .footer{padding-bottom:82px}
 }
+
+@media(max-width:980px){
+  .home-product-grid{grid-template-columns:repeat(2,1fr)}
+  .home-product-card:nth-child(even){border-left:0}
+  .support-grid{grid-template-columns:repeat(2,1fr)}
+  .support-main{grid-column:1/-1}
+}
+@media(max-width:700px){
+  .top-actions{gap:5px}
+  .cart-btn span{display:none}
+  .cart-btn{width:42px;padding:0;justify-content:center}
+  .home-product-head{align-items:flex-start;flex-direction:column;padding:17px 15px 12px}
+  .home-product-grid{grid-template-columns:repeat(2,1fr)}
+  .home-product-card{padding:10px}
+  .home-product-image{height:145px}
+  .home-product-card h3{font-size:.78rem}
+  .home-product-bottom{align-items:stretch;flex-direction:column}
+  .add-cart-btn{width:100%}
+  .support-grid{grid-template-columns:1fr}
+  .support-main{grid-column:auto}
+  .support-shell{padding:16px}
+  .support-card{min-height:72px}
+}
 @media(prefers-reduced-motion:reduce){
   *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
@@ -296,13 +530,20 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
   <div class="container topbar-inner">
     <a class="logo" href="/">کُره<span>یدک</span></a>
     <nav class="nav" aria-label="ناوبری">
-      <a class="active" href="#home">خانه</a>
-      <a href="#brands">برندها</a>
-      <a href="#categories">دسته‌بندی</a>
-      <a href="#store">جستجوی قطعه</a>
+      <a class="active" href="#home" data-nav-key="home">خانه</a>
+      <a href="#brands" data-nav-key="brands">برندها</a>
+      <a href="#categories" data-nav-key="categories">دسته‌بندی</a>
+      <a class="parts-link" href="#parts" data-nav-key="parts"><i class="fas fa-magnifying-glass"></i> جستجوی قطعات</a>
       <a href="/admin">پنل مدیریت</a>
     </nav>
-    <button class="account-btn" id="loginBtn" type="button"><i class="fas fa-right-to-bracket"></i> ورود</button>
+    <div class="top-actions">
+      <button class="cart-btn" id="cartTopBtn" type="button" aria-label="سبد خرید">
+        <i class="fas fa-cart-shopping"></i>
+        <span>سبد خرید</span>
+        <b id="cartCountBadge" class="cart-count-badge">0</b>
+      </button>
+      <button class="account-btn" id="loginBtn" type="button"><i class="fas fa-right-to-bracket"></i> ورود</button>
+    </div>
   </div>
 </div>
 
@@ -316,10 +557,11 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
             <h1>قطعه‌ات را پیدا کن،<br>بدون گشتن اضافه.</h1>
             <p>پارت‌نامبر، اسم قطعه یا مدل خودرو را وارد کن. اطلاعاتی که الان داریم همین‌جا جلوی چشمته؛ اطلاعات کامل‌تر مثل عکس و مشخصات فنی هم برای ساختار آینده صفحه آماده شده.</p>
 
-            <form class="hero-search" id="heroSearchForm">
-              <input id="heroSearchInput" autocomplete="off" placeholder="مثلاً فیلتر روغن، 26300-2G000 یا سانتافه..." />
-              <button type="submit"><i class="fas fa-magnifying-glass"></i> جستجوی قطعه</button>
-            </form>
+            <a class="parts-launch" href="#parts">
+              <i class="fas fa-magnifying-glass"></i>
+              ورود به مرکز جستجوی قطعات
+              <i class="fas fa-arrow-left"></i>
+            </a>
 
             <div class="hero-pills">
               <span class="hero-pill">هیوندای</span>
@@ -334,8 +576,8 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
             <div class="dashboard-card">
               <div class="mini-top">
                 <div>
-                  <div style="font-size:.74rem;color:#cfc5de">نتایج فعلی جستجو</div>
-                  <div class="mini-count font-mono" id="heroPartsCount">—</div>
+                  <div style="font-size:.74rem;color:#cfc5de">مرکز اختصاصی قطعات</div>
+                  <div class="mini-count font-mono">24/7</div>
                 </div>
                 <i class="fas fa-database" style="font-size:1.4rem;color:#d8c9f1"></i>
               </div>
@@ -347,6 +589,61 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="section" aria-label="دسترسی سریع">
+    <div class="container">
+      <div class="home-intro-row">
+        <div class="home-info-card accent">
+          <div class="info-icon"><i class="fas fa-magnifying-glass"></i></div>
+          <strong>جستجوی اختصاصی قطعات</strong>
+          <span>برای جستجو یک فضای کامل و جدا داریم؛ خانه فقط ویترین و معرفی خدمات است.</span>
+        </div>
+        <div class="home-info-card">
+          <div class="info-icon"><i class="fas fa-car-side"></i></div>
+          <strong>بر اساس خودرو پیدا کن</strong>
+          <span>خودرو را انتخاب کن و سریع‌تر بین قطعات سازگار بگرد.</span>
+        </div>
+        <div class="home-info-card">
+          <div class="info-icon"><i class="fas fa-shield-halved"></i></div>
+          <strong>اطلاعات شفاف‌تر</strong>
+          <span>پارت‌نامبر، سازگاری، موجودی و جزئیات هر قطعه در یک جای مرتب.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="دسترسی‌های ویژه">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker"><i class="fas fa-wand-magic-sparkles"></i> ویترین کُره یدک</span>
+          <h2 class="section-title">سه راه سریع برای رسیدن به قطعه</h2>
+          <p class="section-sub">بدون شلوغ کردن خانه، مسیرهای مهم را همیشه جلوی دست گذاشتیم.</p>
+        </div>
+      </div>
+      <div class="market-grid">
+        <div class="market-banner one">
+          <h3>پارت‌نامبر داری؟ مستقیم جستجو کن.</h3>
+          <p>کد قطعه را وارد کن و وارد مرکز اختصاصی جستجو شو.</p>
+          <a href="#parts"><i class="fas fa-arrow-left"></i> رفتن به جستجوی قطعات</a>
+          <i class="fas fa-barcode banner-icon"></i>
+        </div>
+        <div class="market-banner two">
+          <h3>قطعه را بر اساس خودرو پیدا کن</h3>
+          <p>مدل خودرو را انتخاب کن و نتیجه‌های مرتبط را محدود کن.</p>
+          <a href="#parts"><i class="fas fa-car"></i> انتخاب خودرو</a>
+          <i class="fas fa-car-rear banner-icon"></i>
+        </div>
+        <div class="market-banner three">
+          <h3>قطعه‌ای پیدا نکردی؟</h3>
+          <p>درخواستت را ثبت کن تا مسیر سفارش و پیگیری ساده‌تر شود.</p>
+          <a href="/order"><i class="fas fa-paper-plane"></i> ثبت درخواست</a>
+          <i class="fas fa-box-open banner-icon"></i>
         </div>
       </div>
     </div>
@@ -385,19 +682,129 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
   <section class="section" id="categories">
     <div class="container">
       <div class="section-head">
-        <div><h2 class="section-title">دسته‌بندی‌های قطعه</h2><p class="section-sub">فعلاً برای نظم ظاهری؛ وقتی فیلد category به دیتابیس اضافه شد، همین‌ها فیلتر واقعی می‌شوند.</p></div>
+        <div>
+          <span class="section-kicker"><i class="fas fa-layer-group"></i> دسته‌بندی</span>
+          <h2 class="section-title">قطعه را از مسیر خودش پیدا کن</h2>
+          <p class="section-sub">ساختار دسته‌ها آماده است تا بعداً به فیلترهای واقعی دیتابیس وصل شود.</p>
+        </div>
+        <a class="parts-launch" style="margin-top:0" href="#parts"><i class="fas fa-magnifying-glass"></i> جستجوی کامل</a>
       </div>
-      <div class="quick-grid">
-        <div class="quick-card"><i class="fas fa-car-burst"></i><span>موتور</span></div>
-        <div class="quick-card"><i class="fas fa-gears"></i><span>گیربکس</span></div>
-        <div class="quick-card"><i class="fas fa-circle-stop"></i><span>ترمز</span></div>
-        <div class="quick-card"><i class="fas fa-car-side"></i><span>تعلیق</span></div>
-        <div class="quick-card"><i class="fas fa-bolt"></i><span>برقی</span></div>
-        <div class="quick-card"><i class="fas fa-screwdriver-wrench"></i><span>بدنه و مصرفی</span></div>
+      <div class="feature-grid">
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-car-burst"></i></div><span class="feature-tag">مکانیکی</span></div><b>موتور</b><p>قطعات موتور و متعلقات آن</p></div>
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-gears"></i></div><span class="feature-tag">مکانیکی</span></div><b>گیربکس</b><p>اجزای گیربکس و انتقال قدرت</p></div>
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-circle-stop"></i></div><span class="feature-tag">ایمنی</span></div><b>ترمز</b><p>قطعات ترمز و سیستم توقف</p></div>
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-car-side"></i></div><span class="feature-tag">تعلیق</span></div><b>تعلیق</b><p>قطعات جلوبندی و تعلیق</p></div>
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-bolt"></i></div><span class="feature-tag">الکتریکی</span></div><b>برقی</b><p>قطعات برقی و الکترونیکی خودرو</p></div>
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-snowflake"></i></div><span class="feature-tag">مصرفی</span></div><b>سیستم تهویه</b><p>قطعات کولر و تهویه خودرو</p></div>
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-car-battery"></i></div><span class="feature-tag">مصرفی</span></div><b>باتری و شارژ</b><p>قطعات مربوط به برق و شارژ</p></div>
+        <div class="feature-card"><div class="feature-top"><div class="feature-icon"><i class="fas fa-screwdriver-wrench"></i></div><span class="feature-tag">سرویس</span></div><b>بدنه و مصرفی</b><p>قطعات عمومی و اقلام سرویس</p></div>
       </div>
     </div>
   </section>
 
+  <section class="section" aria-label="خودروهای پرجستجو">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker"><i class="fas fa-fire"></i> مسیرهای محبوب</span>
+          <h2 class="section-title">خودروهای پرجستجو</h2>
+          <p class="section-sub">چند مدل نمونه برای اینکه مسیر رسیدن به قطعه کوتاه‌تر شود.</p>
+        </div>
+      </div>
+      <div class="cars-grid">
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>هیوندای سوناتا</strong><span>Hyundai Sonata</span></div></a>
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>هیوندای سانتافه</strong><span>Hyundai Santa Fe</span></div></a>
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>هیوندای توسان</strong><span>Hyundai Tucson</span></div></a>
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>کیا اسپورتیج</strong><span>Kia Sportage</span></div></a>
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>کیا سراتو</strong><span>Kia Cerato</span></div></a>
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>کیا اپتیما</strong><span>Kia Optima</span></div></a>
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>تویوتا کمری</strong><span>Toyota Camry</span></div></a>
+        <a class="car-tile" href="#parts"><div class="car-tile-icon"><i class="fas fa-car"></i></div><div><strong>تویوتا راو۴</strong><span>Toyota RAV4</span></div></a>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="section" aria-label="قطعات منتخب">
+    <div class="container">
+      <div class="home-product-shell">
+        <div class="home-product-head">
+          <div>
+            <span class="section-kicker"><i class="fas fa-box-open"></i> ویترین قطعات</span>
+            <h2>چند قطعه منتخب برای شروع</h2>
+            <p class="section-sub">چند نمونه را همین‌جا ببین؛ جستجوی کامل همچنان در صفحه اختصاصی قطعات انجام می‌شود.</p>
+          </div>
+          <a class="parts-launch" style="margin-top:0" href="#parts"><i class="fas fa-magnifying-glass"></i> دیدن همه قطعات</a>
+        </div>
+        <div class="home-product-grid" id="homeProductGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="support" aria-label="پشتیبانی">
+    <div class="container">
+      <div class="support-shell">
+        <div class="support-grid">
+          <div class="support-main">
+            <span class="section-kicker" style="color:#e4d9f6"><i class="fas fa-headset"></i> پشتیبانی کُره یدک</span>
+            <h3>اینجاییم که وسط پیدا کردن قطعه گیر نکنی.</h3>
+            <p>برای سوال درباره سازگاری قطعه، پیگیری درخواست یا ثبت مورد جدید، از مسیر مناسب استفاده کن.</p>
+          </div>
+          <a class="support-card" href="/order">
+            <div class="support-icon"><i class="fas fa-file-circle-plus"></i></div>
+            <div><strong>ثبت درخواست</strong><span>قطعه یا سفارش جدید</span></div>
+          </a>
+          <a class="support-card" href="/support">
+            <div class="support-icon"><i class="fas fa-comments"></i></div>
+            <div><strong>پشتیبانی آنلاین</strong><span>سوال و راهنمایی</span></div>
+          </a>
+          <a class="support-card" href="#parts">
+            <div class="support-icon"><i class="fas fa-screwdriver-wrench"></i></div>
+            <div><strong>بررسی قطعه</strong><span>جستجو و تطبیق قطعه</span></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="مزایای سامانه">
+    <div class="container">
+      <div class="trust-grid">
+        <div class="trust-card"><i class="fas fa-bolt"></i><div><strong>جستجوی سریع</strong><span>بدون شلوغی اضافه</span></div></div>
+        <div class="trust-card"><i class="fas fa-database"></i><div><strong>اتصال مستقیم به بانک قطعات</strong><span>نتیجه از داده واقعی سامانه</span></div></div>
+        <div class="trust-card"><i class="fas fa-mobile-screen-button"></i><div><strong>طراحی موبایل‌محور</strong><span>برای گوشی هم خوانا و سریع</span></div></div>
+        <div class="trust-card"><i class="fas fa-user-gear"></i><div><strong>پنل مدیریت</strong><span>مدیریت اطلاعات از یک نقطه</span></div></div>
+      </div>
+      <div class="home-cta">
+        <div>
+          <h3>ویترین ساده، مرکز جستجوی حرفه‌ای.</h3>
+          <p>خانه برای معرفی و کشف کردن است؛ جستجوی سنگین قطعات در صفحه اختصاصی خودش انجام می‌شود.</p>
+        </div>
+        <a href="#parts"><i class="fas fa-arrow-left"></i> ورود به جستجوی قطعات</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+  <section class="parts-page" id="partsPage">
+    <div class="container">
+      <div class="parts-hero">
+        <div class="parts-hero-head">
+          <div>
+            <div class="hero-kicker" style="background:var(--primary-soft);color:var(--primary);margin-bottom:10px;">
+              <span class="dot" style="background:var(--success);box-shadow:0 0 10px var(--success)"></span>
+              مرکز اختصاصی جستجو
+            </div>
+            <h1>جستجوی قطعات</h1>
+            <p>نام قطعه، پارت‌نامبر یا خودروی سازگار را وارد کن و فقط نتیجه‌های لازم را ببین.</p>
+          </div>
+          <div class="parts-hero-badge">
+            <i class="fas fa-database"></i>
+            جستجو مستقیم از بانک قطعات
+          </div>
+        </div>
+      </div>
   <section class="section" id="store">
     <div class="container">
       <div class="store-shell">
@@ -433,18 +840,39 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
       </div>
     </div>
   </section>
-</main>
+    </div>
+  </section>
 
 <footer class="footer">
   <div class="container">کُره یدک — فروشگاه تخصصی قطعات خودروهای تحت پوشش</div>
 </footer>
 
 <nav class="mobile-bottom" aria-label="ناوبری موبایل">
-  <a href="#home" class="active"><i class="fas fa-house"></i><span>خانه</span></a>
-  <a href="#brands"><i class="fas fa-layer-group"></i><span>برندها</span></a>
-  <a href="#store"><i class="fas fa-magnifying-glass"></i><span>قطعات</span></a>
+  <a href="#home" class="active" data-nav-key="home"><i class="fas fa-house"></i><span>خانه</span></a>
+  <a href="#brands" data-nav-key="brands"><i class="fas fa-layer-group"></i><span>برندها</span></a>
+  <a href="#parts" data-nav-key="parts"><i class="fas fa-magnifying-glass"></i><span>قطعات</span></a>
   <button id="mobileAccountBtn" type="button"><i class="fas fa-user"></i><span>حساب</span></button>
 </nav>
+
+
+<!-- سبد خرید -->
+<div class="cart-drawer" id="cartDrawer" aria-hidden="true">
+  <aside class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+    <div class="cart-head">
+      <div><h3 id="cartTitle">سبد قطعات</h3><p>قطعاتی که برای بررسی یا سفارش انتخاب کرده‌ای</p></div>
+      <button class="cart-close" id="cartClose" type="button" aria-label="بستن"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="cart-body" id="cartBody"></div>
+    <div class="cart-foot">
+      <div class="cart-note">قیمت و موجودی نهایی هنگام استعلام از سامانه بررسی می‌شود.</div>
+      <div class="cart-actions">
+        <button class="cart-clear" id="cartClear" type="button"><i class="fas fa-trash-can"></i> پاک کردن</button>
+        <a class="primary" href="/order"><i class="fas fa-arrow-left"></i> ادامه برای درخواست</a>
+      </div>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
 
 <!-- حساب کاربری -->
 <div class="account-modal" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle" aria-hidden="true">
@@ -482,20 +910,6 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
             const topbar = document.querySelector(".topbar");
             if (topbar) topbar.classList.toggle("shadowed", window.scrollY > 10);
         }, {passive:true});
-
-        const heroSearchForm = document.getElementById("heroSearchForm");
-        const heroSearchInput = document.getElementById("heroSearchInput");
-        heroSearchForm?.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const value = heroSearchInput.value.trim();
-            if (typeof searchInput !== "undefined") {
-                searchInput.value = value;
-            }
-            document.getElementById("store")?.scrollIntoView({behavior:"smooth", block:"start"});
-            setTimeout(() => {
-                if (typeof loadParts === "function") loadParts();
-            }, 80);
-        });
 
         document.getElementById("mobileAccountBtn")?.addEventListener("click", () => {
             if (typeof currentUser !== "undefined" && currentUser) openAccountModal();
@@ -746,11 +1160,6 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
                 countSpan.textContent = allParts.length
                     ? `${allParts.length.toLocaleString("fa-IR")} نتیجه`
                     : "۰ نتیجه";
-
-                if (heroPartsCount) {
-                    heroPartsCount.textContent = allParts.length.toLocaleString("fa-IR");
-                }
-
                 if (!allParts.length) {
                     resultsContainer.innerHTML = `
                         <div class="empty-state">
@@ -801,11 +1210,123 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
         }
 
 
+        
         // -----------------------------------------
+        // ویترین قطعات + سبد خرید سبک خانه
+        // فقط داده‌های نمونه‌ی کم‌حجم؛ دیتابیس اصلی در صفحه جستجو لود می‌شود.
+        // مسیر تصاویر برای پک ZIP آماده است: assets/home-products/...
+        // -----------------------------------------
+        const HOME_PRODUCTS = [
+            {id:"p1", name:"فیلتر روغن هیوندای", code:"26300-2G000", brand:"HYUNDAI", image:"assets/home-products/oil-filter.webp", price:"برای استعلام"},
+            {id:"p2", name:"لنت ترمز جلو کیا", code:"58101-2SA70", brand:"KIA", image:"assets/home-products/brake-pad.webp", price:"برای استعلام"},
+            {id:"p3", name:"فیلتر هوا تویوتا", code:"17801-0V020", brand:"TOYOTA", image:"assets/home-products/air-filter.webp", price:"برای استعلام"},
+            {id:"p4", name:"شمع موتور هیوندای", code:"18846-10060", brand:"HYUNDAI", image:"assets/home-products/spark-plug.webp", price:"برای استعلام"},
+            {id:"p5", name:"تسمه دینام کیا", code:"25212-2B000", brand:"KIA", image:"assets/home-products/belt.webp", price:"برای استعلام"},
+            {id:"p6", name:"فیلتر کابین تویوتا", code:"87139-06080", brand:"TOYOTA", image:"assets/home-products/cabin-filter.webp", price:"برای استعلام"},
+            {id:"p7", name:"لنت ترمز عقب کیا", code:"58302-2SA70", brand:"KIA", image:"assets/home-products/rear-pad.webp", price:"برای استعلام"},
+            {id:"p8", name:"فیلتر بنزین هیوندای", code:"31112-3Q500", brand:"HYUNDAI", image:"assets/home-products/fuel-filter.webp", price:"برای استعلام"}
+        ];
+        let cartItems = JSON.parse(localStorage.getItem("koreyadak_cart") || "[]");
+
+        function saveCart(){ localStorage.setItem("koreyadak_cart", JSON.stringify(cartItems)); }
+        function cartCount(){ return cartItems.reduce((sum,item)=>sum + (item.qty||1),0); }
+        function updateCartBadge(){
+            const badge=document.getElementById("cartCountBadge");
+            if(!badge)return;
+            const count=cartCount();
+            badge.textContent=count.toLocaleString("fa-IR");
+            badge.classList.toggle("zero",count===0);
+        }
+        function showToast(message){
+            const toast=document.getElementById("toast");
+            if(!toast)return;
+            toast.textContent=message;
+            toast.classList.add("show");
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer=setTimeout(()=>toast.classList.remove("show"),1800);
+        }
+        function fallbackImage(){
+            return `<div class="img-fallback"><i class="fas fa-cog"></i><span>تصویر قطعه</span></div>`;
+        }
+        function renderHomeProducts(){
+            const grid=document.getElementById("homeProductGrid");
+            if(!grid)return;
+            grid.innerHTML=HOME_PRODUCTS.map(p=>`
+              <article class="home-product-card">
+                <div class="home-product-image">
+                  <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'img-fallback',innerHTML:'<i class=&quot;fas fa-cog&quot;></i><span>تصویر قطعه</span>'}))">
+                </div>
+                <div class="home-product-meta">
+                  <span class="home-product-chip">${escapeHtml(p.brand)}</span>
+                  <span class="home-product-chip stock"><i class="fas fa-circle-check"></i> قابل استعلام</span>
+                </div>
+                <h3>${escapeHtml(p.name)}</h3>
+                <div class="home-product-code">${escapeHtml(p.code)}</div>
+                <div class="home-product-bottom">
+                  <span class="home-product-price">${escapeHtml(p.price)}</span>
+                  <button class="add-cart-btn" type="button" onclick="addToCart('${p.id}')"><i class="fas fa-cart-plus"></i> افزودن</button>
+                </div>
+              </article>
+            `).join("");
+        }
+        function addToCart(id){
+            const product=HOME_PRODUCTS.find(p=>p.id===id);
+            if(!product)return;
+            const existing=cartItems.find(x=>x.id===id);
+            if(existing) existing.qty=(existing.qty||1)+1;
+            else cartItems.push({...product,qty:1});
+            saveCart(); updateCartBadge(); renderCart();
+            showToast("قطعه به سبد اضافه شد");
+        }
+        function removeFromCart(id){
+            cartItems=cartItems.filter(x=>x.id!==id);
+            saveCart(); updateCartBadge(); renderCart();
+        }
+        function clearCart(){
+            cartItems=[];
+            saveCart(); updateCartBadge(); renderCart();
+        }
+        function renderCart(){
+            const body=document.getElementById("cartBody");
+            if(!body)return;
+            if(!cartItems.length){
+                body.innerHTML='<div class="cart-empty"><i class="fas fa-cart-shopping"></i><strong>سبدت فعلاً خالیه</strong><span>از قطعات منتخب خانه چیزی اضافه کن.</span></div>';
+                return;
+            }
+            body.innerHTML=cartItems.map(item=>`
+              <div class="cart-item">
+                <img src="${item.image}" alt="${escapeHtml(item.name)}" onerror="this.style.visibility='hidden'">
+                <div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code)} · تعداد ${Number(item.qty||1).toLocaleString("fa-IR")}</span></div>
+                <button class="cart-item-remove" type="button" onclick="removeFromCart('${item.id}')" aria-label="حذف"><i class="fas fa-trash"></i></button>
+              </div>
+            `).join("");
+        }
+        function openCart(){
+            renderCart();
+            const drawer=document.getElementById("cartDrawer");
+            drawer?.classList.add("open");
+            drawer?.setAttribute("aria-hidden","false");
+            document.body.classList.add("nav-drawer-lock");
+        }
+        function closeCart(){
+            const drawer=document.getElementById("cartDrawer");
+            drawer?.classList.remove("open");
+            drawer?.setAttribute("aria-hidden","true");
+            document.body.classList.remove("nav-drawer-lock");
+        }
+        renderHomeProducts();
+        updateCartBadge();
+        document.getElementById("cartTopBtn")?.addEventListener("click",openCart);
+        document.getElementById("cartClose")?.addEventListener("click",closeCart);
+        document.getElementById("cartClear")?.addEventListener("click",clearCart);
+        document.getElementById("cartDrawer")?.addEventListener("click",(e)=>{
+            if(e.target.id==="cartDrawer") closeCart();
+        });
+
+// -----------------------------------------
         // احراز هویت مشترک با /login /admin /order
         // -----------------------------------------
         const loginBtn = document.getElementById("loginBtn");
-        const heroPartsCount = document.getElementById("heroPartsCount");
         const mobileMenuToggle = document.getElementById("mobileMenuToggle");
         const mobileNavOverlay = document.getElementById("mobileNavOverlay");
         const mobileNavDrawer = document.getElementById("mobileNavDrawer");
@@ -1024,6 +1545,7 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
             if (event.key === "Escape") {
                 closeMobileNav();
                 closeAccountModal();
+                closeCart();
             }
         });
 
@@ -1051,15 +1573,68 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
 
         // رویدادهای تایپ در سرچ و لود اولیه
         let searchTimer;
-        searchInput.addEventListener("input", () => {
+        searchInput?.addEventListener("input", () => {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(loadParts, 300);
         });
-        carSelect.addEventListener("change", loadParts);
+        carSelect?.addEventListener("change", loadParts);
 
-        // اجرای اولیه توابع بک‌اند
-        loadCars();
-        loadParts();
+        // -----------------------------------------
+        // ناوبری صفحه‌ای: خانه ↔ مرکز جستجوی قطعات
+        // داده‌های قطعات فقط هنگام ورود به صفحه جستجو لود می‌شوند.
+        // -----------------------------------------
+        const homePage = document.getElementById("home");
+        const partsPage = document.getElementById("partsPage");
+        let partsPageInitialized = false;
+
+        function syncPageNav(navKey) {
+            document.querySelectorAll("[data-nav-key]").forEach(link => {
+                link.classList.toggle("active", link.dataset.navKey === navKey);
+            });
+        }
+
+        function showHomePage(navKey = "home") {
+            homePage?.classList.remove("page-hidden");
+            if (partsPage) partsPage.classList.remove("active");
+            syncPageNav(navKey);
+        }
+
+        async function showPartsPage() {
+            if (homePage) homePage.classList.add("page-hidden");
+            partsPage?.classList.add("active");
+            syncPageNav("parts");
+
+            if (!partsPageInitialized) {
+                partsPageInitialized = true;
+                await loadCars();
+                await loadParts();
+            }
+        }
+
+        function routePage() {
+            const hash = (window.location.hash || "#home").replace("#", "").trim() || "home";
+
+            if (hash === "parts") {
+                showPartsPage();
+                window.scrollTo({top: 0, behavior: "smooth"});
+                return;
+            }
+
+            const homeNavKey = ["brands", "categories"].includes(hash) ? hash : "home";
+            showHomePage(homeNavKey);
+
+            if (hash !== "home") {
+                const target = document.getElementById(hash);
+                if (target) {
+                    requestAnimationFrame(() => target.scrollIntoView({behavior: "smooth", block: "start"}));
+                }
+            } else {
+                window.scrollTo({top: 0, behavior: "smooth"});
+            }
+        }
+
+        window.addEventListener("hashchange", routePage);
+        routePage();
 </script>
 </body>
 </html>
