@@ -754,7 +754,7 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
             <div class="support-icon"><i class="fas fa-file-circle-plus"></i></div>
             <div><strong>ثبت درخواست</strong><span>قطعه یا سفارش جدید</span></div>
           </a>
-          <a class="support-card" href="/support">
+          <a class="support-card" href="#support">
             <div class="support-icon"><i class="fas fa-comments"></i></div>
             <div><strong>پشتیبانی آنلاین</strong><span>سوال و راهنمایی</span></div>
           </a>
@@ -834,8 +834,8 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
         <div id="partsFooter" class="parts-footer"></div>
 
         <div class="future-strip">
-          <strong>ساختار آینده قطعه:</strong>
-          همین کارت‌ها از الان برای <b>عکس قطعه، توضیحات، برند، دسته‌بندی و مشخصات فنی</b> آماده‌اند. وقتی این فیلدها را به دیتابیس اضافه کنیم، لازم نیست UI را از نو بسازیم.
+          <strong>اطلاعات واقعی قطعه:</strong>
+          تصویر، توضیحات، برند، دسته‌بندی و مشخصات فنی از بانک اطلاعاتی می‌آیند و بعداً از پنل مدیریت قابل تکمیل یا ویرایش هستند.
         </div>
       </div>
     </div>
@@ -1082,6 +1082,9 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
                             <span class="price-label">قیمت</span>
                             <strong class="price-value">${formattedPrice}</strong>
                         </div>
+                        <button class="add-cart-btn" type="button" onclick="addSearchPartToCart(${Number(p.id)||0})">
+                            <i class="fas fa-cart-plus"></i> افزودن
+                        </button>
                         <div class="date-box">
                             <span>آخرین بروزرسانی</span>
                             <b>${formatDate(p.price_updated_at || p.updated_at || p.updatedAt)}</b>
@@ -1212,116 +1215,129 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
 
         
         // -----------------------------------------
-        // ویترین قطعات + سبد خرید سبک خانه
-        // فقط داده‌های نمونه‌ی کم‌حجم؛ دیتابیس اصلی در صفحه جستجو لود می‌شود.
-        // مسیر تصاویر برای پک ZIP آماده است: assets/home-products/...
+        // ویترین قطعات + سبد خرید
+        // خانه فقط چند رکورد سبک از API می‌گیرد؛ کل بانک قطعات اینجا لود نمی‌شود.
         // -----------------------------------------
-        const HOME_PRODUCTS = [
-            {id:"p1", name:"فیلتر روغن هیوندای", code:"26300-2G000", brand:"HYUNDAI", image:"assets/home-products/oil-filter.webp", price:"برای استعلام"},
-            {id:"p2", name:"لنت ترمز جلو کیا", code:"58101-2SA70", brand:"KIA", image:"assets/home-products/brake-pad.webp", price:"برای استعلام"},
-            {id:"p3", name:"فیلتر هوا تویوتا", code:"17801-0V020", brand:"TOYOTA", image:"assets/home-products/air-filter.webp", price:"برای استعلام"},
-            {id:"p4", name:"شمع موتور هیوندای", code:"18846-10060", brand:"HYUNDAI", image:"assets/home-products/spark-plug.webp", price:"برای استعلام"},
-            {id:"p5", name:"تسمه دینام کیا", code:"25212-2B000", brand:"KIA", image:"assets/home-products/belt.webp", price:"برای استعلام"},
-            {id:"p6", name:"فیلتر کابین تویوتا", code:"87139-06080", brand:"TOYOTA", image:"assets/home-products/cabin-filter.webp", price:"برای استعلام"},
-            {id:"p7", name:"لنت ترمز عقب کیا", code:"58302-2SA70", brand:"KIA", image:"assets/home-products/rear-pad.webp", price:"برای استعلام"},
-            {id:"p8", name:"فیلتر بنزین هیوندای", code:"31112-3Q500", brand:"HYUNDAI", image:"assets/home-products/fuel-filter.webp", price:"برای استعلام"}
-        ];
+        let homeProducts = [];
         let cartItems = JSON.parse(localStorage.getItem("koreyadak_cart") || "[]");
 
         function saveCart(){ localStorage.setItem("koreyadak_cart", JSON.stringify(cartItems)); }
-        function cartCount(){ return cartItems.reduce((sum,item)=>sum + (item.qty||1),0); }
+        function cartCount(){ return cartItems.reduce((sum,item)=>sum + Number(item.qty || item.quantity || 1),0); }
         function updateCartBadge(){
-            const badge=document.getElementById("cartCountBadge");
-            if(!badge)return;
-            const count=cartCount();
-            badge.textContent=count.toLocaleString("fa-IR");
-            badge.classList.toggle("zero",count===0);
+            const badge=document.getElementById("cartCountBadge"); if(!badge)return;
+            const count=cartCount(); badge.textContent=count.toLocaleString("fa-IR"); badge.classList.toggle("zero",count===0);
         }
         function showToast(message){
-            const toast=document.getElementById("toast");
-            if(!toast)return;
-            toast.textContent=message;
-            toast.classList.add("show");
-            clearTimeout(window.__toastTimer);
-            window.__toastTimer=setTimeout(()=>toast.classList.remove("show"),1800);
+            const toast=document.getElementById("toast"); if(!toast)return;
+            toast.textContent=message; toast.classList.add("show");
+            clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>toast.classList.remove("show"),1800);
         }
-        function fallbackImage(){
-            return `<div class="img-fallback"><i class="fas fa-cog"></i><span>تصویر قطعه</span></div>`;
+        function fallbackImage(){ return `<div class="img-fallback"><i class="fas fa-cog"></i><span>تصویر قطعه</span></div>`; }
+        function normalizeCartItem(item){
+            return {
+                id:Number(item.id), name:item.name||"قطعه یدکی", code:item.code||item.part_number||"—",
+                part_number:item.part_number||item.code||"—", brand:item.brand||"", image:item.image||item.image_url||"",
+                price:item.price??"", qty:Number(item.qty||item.quantity||1)
+            };
         }
-        function renderHomeProducts(){
-            const grid=document.getElementById("homeProductGrid");
-            if(!grid)return;
-            grid.innerHTML=HOME_PRODUCTS.map(p=>`
-              <article class="home-product-card">
-                <div class="home-product-image">
-                  <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'img-fallback',innerHTML:'<i class=&quot;fas fa-cog&quot;></i><span>تصویر قطعه</span>'}))">
-                </div>
-                <div class="home-product-meta">
-                  <span class="home-product-chip">${escapeHtml(p.brand)}</span>
-                  <span class="home-product-chip stock"><i class="fas fa-circle-check"></i> قابل استعلام</span>
-                </div>
-                <h3>${escapeHtml(p.name)}</h3>
-                <div class="home-product-code">${escapeHtml(p.code)}</div>
-                <div class="home-product-bottom">
-                  <span class="home-product-price">${escapeHtml(p.price)}</span>
-                  <button class="add-cart-btn" type="button" onclick="addToCart('${p.id}')"><i class="fas fa-cart-plus"></i> افزودن</button>
-                </div>
-              </article>
-            `).join("");
-        }
-        function addToCart(id){
-            const product=HOME_PRODUCTS.find(p=>p.id===id);
-            if(!product)return;
-            const existing=cartItems.find(x=>x.id===id);
-            if(existing) existing.qty=(existing.qty||1)+1;
-            else cartItems.push({...product,qty:1});
-            saveCart(); updateCartBadge(); renderCart();
-            showToast("قطعه به سبد اضافه شد");
-        }
-        function removeFromCart(id){
-            cartItems=cartItems.filter(x=>x.id!==id);
+        function upsertLocalCart(product, quantity=1){
+            const normalized=normalizeCartItem(product);
+            const existing=cartItems.find(x=>Number(x.id)===Number(normalized.id));
+            if(existing) existing.qty=Math.min(99,(existing.qty||1)+quantity); else cartItems.push({...normalized,qty:Math.min(99,quantity)});
             saveCart(); updateCartBadge(); renderCart();
         }
-        function clearCart(){
-            cartItems=[];
-            saveCart(); updateCartBadge(); renderCart();
+
+        async function loadHomeProducts(){
+            const grid=document.getElementById("homeProductGrid"); if(!grid)return;
+            grid.innerHTML=`<div class="home-products-loading"><i class="fas fa-spinner fa-spin"></i><span>در حال آماده‌سازی ویترین قطعات...</span></div>`;
+            try{
+                const data=await api("/api/home-products?limit=8");
+                homeProducts=Array.isArray(data)?data:[];
+                if(!homeProducts.length){
+                    grid.innerHTML=`<div class="home-products-empty"><i class="fas fa-box-open"></i><span>هنوز قطعه‌ای برای ویترین خانه انتخاب نشده.</span></div>`; return;
+                }
+                grid.innerHTML=homeProducts.map(p=>{
+                    const image=p.image_url||"";
+                    const price=Number(p.price||0)>0?Number(p.price).toLocaleString("fa-IR")+" تومان":"برای استعلام";
+                    return `<article class="home-product-card">
+                      <a class="home-product-image" href="#parts" aria-label="${escapeHtml(p.name)}">
+                        ${image?`<img src="${escapeHtml(image)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.parentElement.innerHTML=fallbackImage()">`:fallbackImage()}
+                      </a>
+                      <div class="home-product-meta">
+                        ${p.brand?`<span class="home-product-chip">${escapeHtml(p.brand)}</span>`:""}
+                        <span class="home-product-chip stock"><i class="fas fa-circle-check"></i> ${Number(p.stock||0)>0?"موجود":"قابل استعلام"}</span>
+                      </div>
+                      <h3>${escapeHtml(p.name)}</h3>
+                      <div class="home-product-code">${escapeHtml(p.part_number||"ثبت نشده")}</div>
+                      <div class="home-product-bottom"><span class="home-product-price">${escapeHtml(price)}</span>
+                        <button class="add-cart-btn" type="button" onclick="addToCart(${Number(p.id)})"><i class="fas fa-cart-plus"></i> افزودن</button>
+                      </div>
+                    </article>`;
+                }).join("");
+            }catch(_){ grid.innerHTML=`<div class="home-products-empty"><i class="fas fa-triangle-exclamation"></i><span>ویترین فعلاً در دسترس نیست.</span></div>`; }
+        }
+
+        async function syncServerCart(){
+            if(!currentUser)return;
+            try{
+                const payload=cartItems.map(item=>({part_id:Number(item.id),quantity:Math.max(1,Number(item.qty||1))})).filter(item=>Number.isInteger(item.part_id));
+                const result=await api("/api/cart/merge",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+getStoredToken()},body:JSON.stringify({items:payload})});
+                cartItems=(result.items||[]).map(normalizeCartItem); saveCart(); updateCartBadge(); renderCart();
+            }catch(_){ }
+        }
+
+        async function addToCart(id){
+            const product=homeProducts.find(p=>Number(p.id)===Number(id)); if(!product)return;
+            if(currentUser){
+                try{
+                    const result=await api("/api/cart/items",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+getStoredToken()},body:JSON.stringify({part_id:Number(id),quantity:1})});
+                    cartItems=(result.items||[]).map(normalizeCartItem); saveCart(); updateCartBadge(); renderCart(); showToast("قطعه به سبد اضافه شد"); return;
+                }catch(_){ }
+            }
+            upsertLocalCart(product,1); showToast("قطعه به سبد اضافه شد");
+        }
+
+        async function addSearchPartToCart(partId){
+            const product=allParts.find(p=>Number(p.id)===Number(partId)); if(!product)return;
+            if(currentUser){
+                try{
+                    const result=await api("/api/cart/items",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+getStoredToken()},body:JSON.stringify({part_id:Number(partId),quantity:1})});
+                    cartItems=(result.items||[]).map(normalizeCartItem); saveCart(); updateCartBadge(); renderCart(); showToast("قطعه به سبد اضافه شد"); return;
+                }catch(_){ }
+            }
+            upsertLocalCart(product,1); showToast("قطعه به سبد اضافه شد");
+        }
+
+        async function removeFromCart(id){
+            if(currentUser){
+                try{
+                    const result=await api(`/api/cart/items/${Number(id)}`,{method:"DELETE",headers:{"Authorization":"Bearer "+getStoredToken()}});
+                    cartItems=(result.items||[]).map(normalizeCartItem); saveCart(); updateCartBadge(); renderCart(); return;
+                }catch(_){ }
+            }
+            cartItems=cartItems.filter(x=>Number(x.id)!==Number(id)); saveCart(); updateCartBadge(); renderCart();
+        }
+        async function clearCart(){
+            if(currentUser){ try{await api("/api/cart",{method:"DELETE",headers:{"Authorization":"Bearer "+getStoredToken()}});}catch(_){ } }
+            cartItems=[]; saveCart(); updateCartBadge(); renderCart();
         }
         function renderCart(){
-            const body=document.getElementById("cartBody");
-            if(!body)return;
-            if(!cartItems.length){
-                body.innerHTML='<div class="cart-empty"><i class="fas fa-cart-shopping"></i><strong>سبدت فعلاً خالیه</strong><span>از قطعات منتخب خانه چیزی اضافه کن.</span></div>';
-                return;
-            }
-            body.innerHTML=cartItems.map(item=>`
-              <div class="cart-item">
-                <img src="${item.image}" alt="${escapeHtml(item.name)}" onerror="this.style.visibility='hidden'">
-                <div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code)} · تعداد ${Number(item.qty||1).toLocaleString("fa-IR")}</span></div>
-                <button class="cart-item-remove" type="button" onclick="removeFromCart('${item.id}')" aria-label="حذف"><i class="fas fa-trash"></i></button>
-              </div>
-            `).join("");
+            const body=document.getElementById("cartBody"); if(!body)return;
+            if(!cartItems.length){ body.innerHTML='<div class="cart-empty"><i class="fas fa-cart-shopping"></i><strong>سبدت فعلاً خالیه</strong><span>از قطعات منتخب خانه چیزی اضافه کن.</span></div>'; return; }
+            body.innerHTML=cartItems.map(item=>{
+                const image=item.image||item.image_url||"";
+                const media=image?`<img src="${escapeHtml(image)}" alt="${escapeHtml(item.name)}" onerror="this.style.visibility='hidden'">`:`<div style="width:58px;height:58px;border-radius:12px;background:#f6f7fa;display:grid;place-items:center;color:#b2a4c9"><i class="fas fa-cog"></i></div>`;
+                return `<div class="cart-item">${media}<div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.code||item.part_number||"—")} · تعداد ${Number(item.qty||1).toLocaleString("fa-IR")}</span></div><button class="cart-item-remove" type="button" onclick="removeFromCart(${Number(item.id)})" aria-label="حذف"><i class="fas fa-trash"></i></button></div>`;
+            }).join("");
         }
-        function openCart(){
-            renderCart();
-            const drawer=document.getElementById("cartDrawer");
-            drawer?.classList.add("open");
-            drawer?.setAttribute("aria-hidden","false");
-            document.body.classList.add("nav-drawer-lock");
-        }
-        function closeCart(){
-            const drawer=document.getElementById("cartDrawer");
-            drawer?.classList.remove("open");
-            drawer?.setAttribute("aria-hidden","true");
-            document.body.classList.remove("nav-drawer-lock");
-        }
-        renderHomeProducts();
-        updateCartBadge();
+        function openCart(){ const drawer=document.getElementById("cartDrawer"); renderCart(); drawer?.classList.add("open"); drawer?.setAttribute("aria-hidden","false"); document.body.classList.add("nav-drawer-lock"); }
+        function closeCart(){ const drawer=document.getElementById("cartDrawer"); drawer?.classList.remove("open"); drawer?.setAttribute("aria-hidden","true"); if(!accountModal?.classList.contains("open"))document.body.classList.remove("nav-drawer-lock"); }
+        updateCartBadge(); renderCart();
         document.getElementById("cartTopBtn")?.addEventListener("click",openCart);
         document.getElementById("cartClose")?.addEventListener("click",closeCart);
         document.getElementById("cartClear")?.addEventListener("click",clearCart);
-        document.getElementById("cartDrawer")?.addEventListener("click",(e)=>{
-            if(e.target.id==="cartDrawer") closeCart();
-        });
+        document.getElementById("cartDrawer")?.addEventListener("click",e=>{if(e.target.id==="cartDrawer")closeCart();});
+
 
 // -----------------------------------------
         // احراز هویت مشترک با /login /admin /order
@@ -1567,7 +1583,8 @@ mark{background:#efe7ff;color:#6a35bd;padding:0 2px;border-radius:3px}
             // Navigation to /admin or /order remains an explicit user action.
         }
 
-        syncAuthUI();
+        syncAuthUI().then(() => syncServerCart());
+        loadHomeProducts();
         handleNavAuthRouting();
 
 
