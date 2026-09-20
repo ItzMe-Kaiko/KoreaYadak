@@ -6,6 +6,7 @@ import secrets
 import io
 import os
 import smtplib
+import psycopg2
 from pathlib import Path
 from uuid import uuid4
 from email.message import EmailMessage
@@ -171,7 +172,11 @@ def init_db_schema():
                     category TEXT,
                     specifications TEXT,
                     is_featured INTEGER NOT NULL DEFAULT 0,
-                    home_order INTEGER NOT NULL DEFAULT 0
+                    home_order INTEGER NOT NULL DEFAULT 0,
+                    image_data BYTEA,
+                    image_mime TEXT,
+                    image_size INTEGER,
+                    image_updated_at TEXT
                 );
             """)
 
@@ -184,6 +189,10 @@ def init_db_schema():
                 "ALTER TABLE parts ADD COLUMN IF NOT EXISTS specifications TEXT",
                 "ALTER TABLE parts ADD COLUMN IF NOT EXISTS is_featured INTEGER NOT NULL DEFAULT 0",
                 "ALTER TABLE parts ADD COLUMN IF NOT EXISTS home_order INTEGER NOT NULL DEFAULT 0",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS image_data BYTEA",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS image_mime TEXT",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS image_size INTEGER",
+                "ALTER TABLE parts ADD COLUMN IF NOT EXISTS image_updated_at TEXT",
             ):
                 cursor.execute(statement)
 
@@ -284,8 +293,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Kore Yadak API", lifespan=lifespan)
 
 MEDIA_ROOT = Path("media")
-PART_MEDIA_ROOT = MEDIA_ROOT / "parts"
-PART_MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=str(MEDIA_ROOT)), name="media")
 
 app.add_middleware(
@@ -1670,45 +1678,122 @@ def delete_part(
     return {"message": "قطعه با موفقیت حذف شد."}
 
 
+@app.get("/api/admin/dashboard")
+def admin_dashboard(current_user: dict = Depends(get_admin_user)):
+    """Compact management KPIs for the admin dashboard."""
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    COUNT(*) AS total_parts,
+                    COUNT(*) FILTER (WHERE stock > 0) AS in_stock_parts,
+                    COUNT(*) FILTER (WHERE stock <= 0) AS out_of_stock_parts,
+                    COUNT(*) FILTER (WHERE is_featured = 1) AS featured_parts,
+                    COALESCE(SUM(stock * COALESCE(price, 0)), 0) AS inventory_value
+                FROM parts
+            """)
+            part_stats = cursor.fetchone()
+
+            cursor.execute("SELECT COUNT(*) AS total_users FROM users")
+            total_users = cursor.fetchone()["total_users"]
+
+            cursor.execute("SELECT COUNT(*) AS sell_invoices FROM sell_invoices")
+            sell_invoices = cursor.fetchone()["sell_invoices"]
+
+            cursor.execute("SELECT COUNT(*) AS buy_invoices FROM buy_invoices")
+            buy_invoices = cursor.fetchone()["buy_invoices"]
+
+    return {
+        "total_parts": int(part_stats["total_parts"] or 0),
+        "in_stock_parts": int(part_stats["in_stock_parts"] or 0),
+        "out_of_stock_parts": int(part_stats["out_of_stock_parts"] or 0),
+        "featured_parts": int(part_stats["featured_parts"] or 0),
+        "inventory_value": float(part_stats["inventory_value"] or 0),
+        "total_users": int(total_users or 0),
+        "sell_invoices": int(sell_invoices or 0),
+        "buy_invoices": int(buy_invoices or 0),
+    }
+
+
+@app.get("/api/parts/{part_id}/image")
+def get_part_image(part_id: int):
+    """Serve a part image directly from PostgreSQL so Render restarts cannot erase it."""
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT image_data, image_mime FROM parts WHERE id = %s", (part_id,))
+            row = cursor.fetchone()
+
+    if row is None:
+        raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
+    if not row.get("image_data"):
+        raise HTTPException(status_code=404, detail="این قطعه هنوز تصویری ندارد.")
+
+    return Response(
+        content=bytes(row["image_data"]),
+        media_type=row.get("image_mime") or "application/octet-stream",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.post("/api/parts/{part_id}/image")
 async def upload_part_image(
     part_id: int,
     file: UploadFile = File(...),
     current_user: dict = Depends(get_admin_user)
 ):
-    allowed_types = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/avif": ".avif"}
-    extension = allowed_types.get(file.content_type or "")
-    if not extension:
+    allowed_types = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+        "image/avif": ".avif",
+    }
+    mime = (file.content_type or "").lower().strip()
+    if mime not in allowed_types:
         raise HTTPException(status_code=415, detail="فرمت تصویر مجاز نیست. فقط JPG، PNG، WEBP یا AVIF.")
+
     content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="فایل تصویر خالی است.")
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="حجم تصویر نباید بیشتر از ۵ مگابایت باشد.")
 
     with get_db() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT id, image_url FROM parts WHERE id = %s", (part_id,))
-            existing = cursor.fetchone()
-            if existing is None:
+            cursor.execute("SELECT id FROM parts WHERE id = %s", (part_id,))
+            if cursor.fetchone() is None:
                 raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
 
-            filename = f"{part_id}-{uuid4().hex}{extension}"
-            target = PART_MEDIA_ROOT / filename
-            target.write_bytes(content)
-            image_url = f"/media/parts/{filename}"
-            cursor.execute(
-                "UPDATE parts SET image_url=%s, last_updated_by=%s WHERE id=%s",
-                (image_url, current_user["username"], part_id)
-            )
+            image_url = f"/api/parts/{part_id}/image"
+            cursor.execute("""
+                UPDATE parts
+                SET image_url=%s, image_data=%s, image_mime=%s, image_size=%s,
+                    image_updated_at=%s, last_updated_by=%s
+                WHERE id=%s
+            """, (
+                image_url, psycopg2.Binary(content), mime, len(content),
+                utc_now(), current_user["username"], part_id
+            ))
 
-    old_url = existing.get("image_url")
-    if old_url and old_url.startswith("/media/parts/"):
-        old_path = MEDIA_ROOT / old_url.removeprefix("/media/")
-        try:
-            if old_path != target and old_path.exists():
-                old_path.unlink()
-        except OSError:
-            pass
-    return {"message": "تصویر قطعه با موفقیت ذخیره شد.", "image_url": image_url}
+    return {
+        "message": "تصویر قطعه با موفقیت ذخیره شد.",
+        "image_url": f"{image_url}?v={int(datetime.now(timezone.utc).timestamp())}"
+    }
+
+
+@app.delete("/api/parts/{part_id}/image")
+def delete_part_image(part_id: int, current_user: dict = Depends(get_admin_user)):
+    with get_db() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE parts
+                SET image_url=NULL, image_data=NULL, image_mime=NULL, image_size=NULL,
+                    image_updated_at=NULL, last_updated_by=%s
+                WHERE id=%s
+                RETURNING id
+            """, (current_user["username"], part_id))
+            if cursor.fetchone() is None:
+                raise HTTPException(status_code=404, detail="قطعه یافت نشد.")
+    return {"message": "تصویر قطعه حذف شد."}
 
 
 def _serialize_cart_items(cursor, user_id: int):
